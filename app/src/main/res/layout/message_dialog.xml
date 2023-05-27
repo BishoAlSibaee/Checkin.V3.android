@@ -24,7 +24,8 @@
         android:text="@string/confermationDialog_text"
         android:textColor="@color/light_blue_A200"
         android:textColorHighlight="@color/light_blue_A200"
-        android:textSize="24sp" />
+        android:textSize="24sp"
+        android:textStyle="bold" />
 
 
     <Button
