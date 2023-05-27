@@ -5782,8 +5782,6 @@ public class Rooms extends AppCompatActivity
 
     void setSCENES(List<SceneBean> SCENES) {
         for (int i = 0; i< ROOMS.size(); i++) {
-            //TODO for all rooms
-            if (ROOMS.get(i).RoomNumber == 104) {
                 if (!searchScene(SCENES, ROOMS.get(i).RoomNumber + "ServiceSwitchDNDScene2")) {
                     PreCondition pr = new PreCondition();
                     List<PreCondition> lpr = new ArrayList<>();
@@ -6057,7 +6055,6 @@ public class Rooms extends AppCompatActivity
                                 });
                     }
                 }
-            }
         }
     }
 
