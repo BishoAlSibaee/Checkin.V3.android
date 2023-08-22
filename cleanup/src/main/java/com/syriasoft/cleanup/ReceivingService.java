@@ -470,10 +470,7 @@ public class ReceivingService extends Service {
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(getApplicationContext());
         stackBuilder.addParentStack(MainActivity.class);
         stackBuilder.addNextIntent(intent);
-
-        PendingIntent p = stackBuilder.getPendingIntent(reqCode, PendingIntent.FLAG_UPDATE_CURRENT);
-
-        PendingIntent pendingIntent = PendingIntent.getActivity(context, reqCode, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent p = stackBuilder.getPendingIntent(reqCode, PendingIntent.FLAG_IMMUTABLE);
         Intent i = new Intent(this, MainActivity.class);
         i.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
         String CHANNEL_ID = "channel_name";// The id of the channel.

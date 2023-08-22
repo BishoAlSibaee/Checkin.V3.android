@@ -56,11 +56,11 @@ public class Devices_Adapter extends BaseAdapter {
     public View getView(int position, View convertView, ViewGroup parent) {
         convertView = inflater.inflate(R.layout.device_unit , null);
 
-        TextView name = (TextView) convertView.findViewById(R.id.deviceUnit_deviceName);
-        TextView order = (TextView) convertView.findViewById(R.id.order);
-        ImageView local = (ImageView) convertView.findViewById(R.id.deviceUnit_local);
-        ImageView net = (ImageView) convertView.findViewById(R.id.deviceUnit_net);
-        ImageView cloud = (ImageView) convertView.findViewById(R.id.deviceUnit_cloud);
+        TextView name = convertView.findViewById(R.id.deviceUnit_deviceName);
+        TextView order = convertView.findViewById(R.id.order);
+        ImageView local = convertView.findViewById(R.id.deviceUnit_local);
+        ImageView net = convertView.findViewById(R.id.deviceUnit_net);
+        ImageView cloud = convertView.findViewById(R.id.deviceUnit_cloud);
         ITuyaDevice mDevice = TuyaHomeSdk.newDeviceInstance(list.get(position).devId);
         name.setText(list.get(position).getName());
 
@@ -94,7 +94,6 @@ public class Devices_Adapter extends BaseAdapter {
 
             @Override
             public void onStatusChanged(String devId, boolean online) {
-                Log.d("onlineDevice"+list.get(position).name , String.valueOf(online));
                 if (online) {
                     net.setImageResource(android.R.drawable.presence_online);
                 }
@@ -134,9 +133,9 @@ public class Devices_Adapter extends BaseAdapter {
                 rr.setAdapter(r);
                 TextView title = (TextView) d.findViewById(R.id.RenameDialog_title);
                 title.setText("Modify " + list.get(position).getName() + " Device " + list.get(position).getIsOnline().toString());
-                Button cancel = (Button) d.findViewById(R.id.cancel_diallog);
-                Button rename = (Button) d.findViewById(R.id.DoTheRename);
-                Button delete = (Button) d.findViewById(R.id.deleteDevice);
+                Button cancel = d.findViewById(R.id.cancel_diallog);
+                Button rename = d.findViewById(R.id.DoTheRename);
+                Button delete = d.findViewById(R.id.deleteDevice);
                 cancel.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
@@ -156,7 +155,7 @@ public class Devices_Adapter extends BaseAdapter {
 
                             @Override
                             public void onSuccess() {
-                                Rooms.CHANGE_STATUS = true;
+                                Rooms.refreshSystem();
                                 Toast.makeText(finalConvertView.getContext(), "Device Renamed .", Toast.LENGTH_LONG).show();
                                 d.dismiss();
                             }
@@ -178,7 +177,7 @@ public class Devices_Adapter extends BaseAdapter {
 
                             @Override
                             public void onSuccess() {
-                                Rooms.CHANGE_STATUS = true;
+                                Rooms.refreshSystem();
                                 Toast.makeText(finalConvertView.getContext(), "Device Deleted .", Toast.LENGTH_LONG).show();
                                 d.dismiss();
                             }
@@ -187,7 +186,6 @@ public class Devices_Adapter extends BaseAdapter {
 
                 });
                 d.show();
-
                 d.setOnDismissListener(new DialogInterface.OnDismissListener() {
                     @Override
                     public void onDismiss(DialogInterface dialog) {

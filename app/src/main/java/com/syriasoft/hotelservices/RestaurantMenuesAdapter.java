@@ -66,7 +66,7 @@ public class RestaurantMenuesAdapter extends BaseAdapter {
                 i.putExtra("arabic" , list.get(position).arabic);
                 i.putExtra("Hotel" , list.get(position).Hotel);
                 i.putExtra("Facility" , list.get(position).Facility);
-                i.putExtra("Type" , RestaurantMenues.Type);
+                i.putExtra("Type" , RestaurantMenus.Type);
                 parent.getContext().startActivity(i);
             }
         });

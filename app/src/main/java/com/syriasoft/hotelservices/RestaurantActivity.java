@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Dialog;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -12,22 +13,16 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
-import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.firebase.database.DataSnapshot;
@@ -52,35 +47,37 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 
 public class RestaurantActivity extends AppCompatActivity {
 
-    List<restaurant_item> dinnerList = new ArrayList<restaurant_item>();
-    List<RestaurantOrderItem> orderList = new ArrayList<RestaurantOrderItem>();
-    static RecyclerView  dinner ,  ordersRecycler ;
+    List<restaurant_item> dinnerList = new ArrayList<>();
+    static RecyclerView  dinner ;
     String url ;
-    Activity act = this ;
-    static RestaurantOrderAdapter adapter;
+    public Activity act;
     int menuId ,Hotel , Facility ;
     String menuName , menuNameArabic ,Type ;
     static TextView items ;
     StringRequest re ;
-    private TextView CAPTION ;
     private TextView time , date;
-    private DatabaseReference myRefDND , myRefSos , myRefLaundry , myRefCleanup , myRefCheckout , myRefRoomService ,myRefdep ;
-    private static String insertServiceOrderUrl = LogIn.URL+"insertServiceOrder.php";
-    private static String removeServiceOrderUrl = LogIn.URL+"removeServiceOrder.php";
+    private DatabaseReference myRefSos;
     static Runnable backHomeThread ;
     static long x = 0 ;
     static Handler H ;
-    private LinearLayout mainlayout ;
     WindowInsetsControllerCompat windowInsetsController;
 
     @SuppressLint("WrongConstant")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_restaurant2);
+        if (Build.MODEL.equals("YC-55P") || Build.MODEL.equals("YS4B")) {
+            setContentView(R.layout.restaurant_small_screen);
+        }
+        else {
+            setContentView(R.layout.activity_restaurant2);
+        }
+        act = this ;
+        MyApp.restaurantActivities.add(act);
         date = findViewById(R.id.mainDate);
         time = findViewById(R.id.mainTime);
         blink();
@@ -91,8 +88,8 @@ public class RestaurantActivity extends AppCompatActivity {
         Hotel = b.getInt("Hotel");
         Facility = b.getInt("Facility");
         Type = b.getString("Type");
-        CAPTION = findViewById(R.id.CAPTION);
-        CAPTION.setText("RESTAURANT");
+        TextView CAPTION = findViewById(R.id.CAPTION);
+        CAPTION.setText(getResources().getString(R.string.restaurant));
         FullscreenActivity.RestaurantActivities.add(act);
         TextView caption = findViewById(R.id.menuName);
         items = findViewById(R.id.items_quantity_incart);
@@ -100,72 +97,66 @@ public class RestaurantActivity extends AppCompatActivity {
             items.setText(String.valueOf(FullscreenActivity.order.getItems().size()));
         }
         caption.setText(menuNameArabic);
-        final GridLayoutManager layoutManagerdinner = new GridLayoutManager(this,1,RecyclerView.HORIZONTAL,false);
-        layoutManagerdinner.setOrientation(LinearLayoutManager.HORIZONTAL);
+        final GridLayoutManager layoutManagerDinner = new GridLayoutManager(this,1,RecyclerView.HORIZONTAL,false);
+        layoutManagerDinner.setOrientation(LinearLayoutManager.HORIZONTAL);
         dinner = findViewById(R.id.Dinner);
-        dinner.setLayoutManager(layoutManagerdinner);
+        dinner.setLayoutManager(layoutManagerDinner);
         dinner.stopNestedScroll();
         final LoadingDialog l = new LoadingDialog(act);
         if (Type.equals("Restaurant")) {
             url = MyApp.ProjectURL + "facilitys/getRestaurantMenueMealsForRoom";
-            re = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
-                @Override
-                public void onResponse(String response) {
-                    l.stop();
-                    try {
-                        JSONObject result = new JSONObject(response);
-                        if (result.getString("result").equals("success")) {
-                            JSONArray arr = new JSONArray(result.getString("meals"));
-                            for (int i =0 ; i < arr.length() ; i++ ) {
-                                JSONObject row = arr.getJSONObject(i);
-                                String type = row.getString("menu");
-                                int id = row.getInt("id");
-                                int fac = row.getInt("facility_id");
-                                int hot = row.getInt("Hotel");
-                                int menuId = row.getInt("restaurantmenue_id");
-                                String name = row.getString("name");
-                                String desc = row.getString("desc");
-                                double price = row.getDouble("price");
-                                double discount = row.getDouble("descount");
-                                String photo = row.getString("photo");
-                                restaurant_item item = new restaurant_item(id,hot,fac,menuId,type,name,desc,price,discount,photo);
-                                dinnerList.add(item);
-                            }
-                        }
-                    } catch (JSONException e) {
-                        Log.e("rrr" , e.getMessage());
-                        new messageDialog(e.getMessage(),"failed",act);
-                    }
-                    restaurant_adapter dadapter = new restaurant_adapter(dinnerList , act);
-                    if (dinnerList.size() > 0) {
-                        dinner.setAdapter(dadapter);
-                        if (dinnerList.size()<4){
-                            ImageView previous , next ;
-                            previous = findViewById(R.id.leftSlide);
-                            next = findViewById(R.id.imageView18);
-                            previous.setVisibility(View.GONE);
-                            next.setVisibility(View.GONE);
-                        }
-                        else {
-                            ImageView previous , next ;
-                            previous = findViewById(R.id.leftSlide);
-                            next = findViewById(R.id.imageView18);
-                            previous.setVisibility(View.VISIBLE);
-                            next.setVisibility(View.VISIBLE);
+            re = new StringRequest(Request.Method.POST, url, response -> {
+                l.stop();
+                try {
+                    JSONObject result = new JSONObject(response);
+                    if (result.getString("result").equals("success")) {
+                        JSONArray arr = new JSONArray(result.getString("meals"));
+                        for (int i =0 ; i < arr.length() ; i++ ) {
+                            JSONObject row = arr.getJSONObject(i);
+                            String type = row.getString("menu");
+                            int id = row.getInt("id");
+                            int fac = row.getInt("facility_id");
+                            int hot = row.getInt("Hotel");
+                            int menuId = row.getInt("restaurantmenue_id");
+                            String name = row.getString("name");
+                            String desc = row.getString("desc");
+                            double price = row.getDouble("price");
+                            double discount = row.getDouble("descount");
+                            String photo = row.getString("photo");
+                            restaurant_item item = new restaurant_item(id,hot,fac,menuId,type,name,desc,price,discount,photo);
+                            dinnerList.add(item);
                         }
                     }
+                } catch (JSONException e) {
+                    Log.e("rrr" , e.getMessage());
+                    new messageDialog(e.getMessage(),"failed",act);
                 }
-            }, new Response.ErrorListener() {
-                @Override
-                public void onErrorResponse(VolleyError error) {
-                    l.stop();
-                    new messageDialog(error.toString(),"failed",act);
+                restaurant_adapter dadapter = new restaurant_adapter(dinnerList , act);
+                if (dinnerList.size() > 0) {
+                    dinner.setAdapter(dadapter);
+                    if (dinnerList.size()<4){
+                        ImageView previous , next ;
+                        previous = findViewById(R.id.leftSlide);
+                        next = findViewById(R.id.imageView18);
+                        previous.setVisibility(View.GONE);
+                        next.setVisibility(View.GONE);
+                    }
+                    else {
+                        ImageView previous , next ;
+                        previous = findViewById(R.id.leftSlide);
+                        next = findViewById(R.id.imageView18);
+                        previous.setVisibility(View.VISIBLE);
+                        next.setVisibility(View.VISIBLE);
+                    }
                 }
+            }, error -> {
+                l.stop();
+                new messageDialog(error.toString(),"failed",act);
             })
             {
                 @Override
-                protected Map<String, String> getParams() throws AuthFailureError {
-                    Map<String,String> params = new HashMap<String, String>();
+                protected Map<String, String> getParams() {
+                    Map<String,String> params = new HashMap<>();
                     params.put("menue_id" , String.valueOf(menuId));
                     params.put("facility_id" , String.valueOf(Facility));
                     return params;
@@ -174,63 +165,57 @@ public class RestaurantActivity extends AppCompatActivity {
         }
         else if (Type.equals("CoffeeShop")) {
             url = MyApp.ProjectURL + "facilitys/getCoffeShopMenueMealsForRoom";
-            re = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
-                @Override
-                public void onResponse(String response) {
-                    l.stop();
-                    try {
-                        JSONObject result = new JSONObject(response);
-                        if (result.getString("result").equals("success")) {
-                            JSONArray arr = new JSONArray(result.getString("meals"));
-                            for (int i =0 ; i < arr.length() ; i++ ) {
-                                JSONObject row = arr.getJSONObject(i);
-                                String type = row.getString("Menu");
-                                int id = row.getInt("id");
-                                int fac = row.getInt("facility_id");
-                                int hot = row.getInt("Hotel");
-                                int menuId = row.getInt("coffeeshopmenue_id");
-                                String name = row.getString("Name");
-                                String desc = row.getString("Desc");
-                                double price = row.getDouble("Price");
-                                double discount = row.getDouble("Discount");
-                                String photo = row.getString("photo");
-                                restaurant_item item = new restaurant_item(id,hot,fac,menuId,type,name,desc,price,discount,photo);
-                                dinnerList.add(item);
-                            }
-                        }
-                    } catch (JSONException e) {
-                        Log.e("rrr" , e.getMessage());
-                        new messageDialog(e.getMessage(),"failed",act);
-                    }
-                    restaurant_adapter dadapter = new restaurant_adapter(dinnerList , act);
-                    if (dinnerList.size() > 0) {
-                        dinner.setAdapter(dadapter);
-                        if (dinnerList.size()<4){
-                            ImageView previous , next ;
-                            previous = findViewById(R.id.leftSlide);
-                            next = findViewById(R.id.imageView18);
-                            previous.setVisibility(View.GONE);
-                            next.setVisibility(View.GONE);
-                        }
-                        else {
-                            ImageView previous , next ;
-                            previous = findViewById(R.id.leftSlide);
-                            next = findViewById(R.id.imageView18);
-                            previous.setVisibility(View.VISIBLE);
-                            next.setVisibility(View.VISIBLE);
+            re = new StringRequest(Request.Method.POST, url, response -> {
+                l.stop();
+                try {
+                    JSONObject result = new JSONObject(response);
+                    if (result.getString("result").equals("success")) {
+                        JSONArray arr = new JSONArray(result.getString("meals"));
+                        for (int i =0 ; i < arr.length() ; i++ ) {
+                            JSONObject row = arr.getJSONObject(i);
+                            String type = row.getString("Menu");
+                            int id = row.getInt("id");
+                            int fac = row.getInt("facility_id");
+                            int hot = row.getInt("Hotel");
+                            int menuId = row.getInt("coffeeshopmenue_id");
+                            String name = row.getString("Name");
+                            String desc = row.getString("Desc");
+                            double price = row.getDouble("Price");
+                            double discount = row.getDouble("Discount");
+                            String photo = row.getString("photo");
+                            restaurant_item item = new restaurant_item(id,hot,fac,menuId,type,name,desc,price,discount,photo);
+                            dinnerList.add(item);
                         }
                     }
+                } catch (JSONException e) {
+                    Log.e("rrr" , e.getMessage());
+                    new messageDialog(e.getMessage(),"failed",act);
                 }
-            }, new Response.ErrorListener() {
-                @Override
-                public void onErrorResponse(VolleyError error) {
-                    l.stop();
-                    ToastMaker.MakeToast(error.getMessage() , act);
+                restaurant_adapter dadapter = new restaurant_adapter(dinnerList , act);
+                if (dinnerList.size() > 0) {
+                    dinner.setAdapter(dadapter);
+                    if (dinnerList.size()<4){
+                        ImageView previous , next ;
+                        previous = findViewById(R.id.leftSlide);
+                        next = findViewById(R.id.imageView18);
+                        previous.setVisibility(View.GONE);
+                        next.setVisibility(View.GONE);
+                    }
+                    else {
+                        ImageView previous , next ;
+                        previous = findViewById(R.id.leftSlide);
+                        next = findViewById(R.id.imageView18);
+                        previous.setVisibility(View.VISIBLE);
+                        next.setVisibility(View.VISIBLE);
+                    }
                 }
+            }, error -> {
+                l.stop();
+                ToastMaker.MakeToast(error.getMessage() , act);
             })
             {
                 @Override
-                protected Map<String, String> getParams() throws AuthFailureError {
+                protected Map<String, String> getParams() {
                     Map<String,String> params = new HashMap<>();
                     params.put("menue_id" , String.valueOf(menuId));
                     params.put("facility_id" , String.valueOf(Facility));
@@ -238,18 +223,15 @@ public class RestaurantActivity extends AppCompatActivity {
                 }
             };
         }
-        myRefDND = FullscreenActivity.myRefDND;
+        DatabaseReference myRefDND = FullscreenActivity.myRefDND;
         myRefDND.addValueEventListener(new ValueEventListener() {
             @SuppressLint("ResourceAsColor")
             @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot)
-            {
-                if (!snapshot.getValue().toString().equals("0") )
-                {
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (!Objects.requireNonNull(snapshot.getValue()).toString().equals("0") ) {
                     dndOn();
                 }
-                else
-                {
+                else {
                     dndOff();
                 }
             }
@@ -263,14 +245,11 @@ public class RestaurantActivity extends AppCompatActivity {
         myRefSos.addValueEventListener(new ValueEventListener() {
             @SuppressLint("ResourceAsColor")
             @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot)
-            {
-                if (!snapshot.getValue().toString().equals("0"))
-                {
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (!Objects.requireNonNull(snapshot.getValue()).toString().equals("0")) {
                     sosOn();
                 }
-                else
-                {
+                else {
                     sosOff();
                 }
             }
@@ -280,17 +259,14 @@ public class RestaurantActivity extends AppCompatActivity {
 
             }
         });
-        myRefLaundry = FullscreenActivity.myRefLaundry;
+        DatabaseReference myRefLaundry = FullscreenActivity.myRefLaundry;
         myRefLaundry.addValueEventListener(new ValueEventListener() {
             @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot)
-            {
-                if (!snapshot.getValue().toString().equals("0") )
-                {
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (!Objects.requireNonNull(snapshot.getValue()).toString().equals("0") ) {
                     laundryOn();
                 }
-                else
-                {
+                else {
                     laundryOff();
                 }
             }
@@ -300,17 +276,14 @@ public class RestaurantActivity extends AppCompatActivity {
 
             }
         });
-        myRefCleanup = FullscreenActivity.myRefCleanup;
+        DatabaseReference myRefCleanup = FullscreenActivity.myRefCleanup;
         myRefCleanup.addValueEventListener(new ValueEventListener() {
             @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot)
-            {
-                if (!snapshot.getValue().toString().equals("0"))
-                {
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (!Objects.requireNonNull(snapshot.getValue()).toString().equals("0")) {
                     cleanupOn();
                 }
-                else
-                {
+                else {
                     cleanupOff();
                 }
             }
@@ -319,17 +292,14 @@ public class RestaurantActivity extends AppCompatActivity {
 
             }
         });
-        myRefCheckout = FullscreenActivity.myRefCheckout;
+        DatabaseReference myRefCheckout = FullscreenActivity.myRefCheckout;
         myRefCheckout.addValueEventListener(new ValueEventListener() {
             @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot)
-            {
-                if (!snapshot.getValue().toString().equals("0"))
-                {
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (!Objects.requireNonNull(snapshot.getValue()).toString().equals("0")) {
                     checkoutOn();
                 }
-                else
-                {
+                else {
                     checkoutOff();
                 }
 
@@ -339,17 +309,14 @@ public class RestaurantActivity extends AppCompatActivity {
 
             }
         });
-        myRefRoomService = FullscreenActivity.myRefRoomService;
+        DatabaseReference myRefRoomService = FullscreenActivity.myRefRoomService;
         myRefRoomService.addValueEventListener(new ValueEventListener() {
             @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot)
-            {
-                if ( !snapshot.getValue().toString().equals("0") )
-                {
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if ( !Objects.requireNonNull(snapshot.getValue()).toString().equals("0") ) {
                     roomServiceOn();
                 }
-                else
-                {
+                else {
                     roomServiceOff();
                 }
             }
@@ -358,19 +325,17 @@ public class RestaurantActivity extends AppCompatActivity {
 
             }
         });
-        myRefdep = FullscreenActivity.myRefdep ;
         windowInsetsController = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
-        windowInsetsController.hide(WindowInsetsCompat.Type.systemBars());
-        windowInsetsController.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_BARS_BY_SWIPE);
+        if (windowInsetsController != null) {
+            windowInsetsController.hide(WindowInsetsCompat.Type.systemBars());
+        }
+        if (windowInsetsController != null) {
+            windowInsetsController.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_BARS_BY_SWIPE);
+        }
         getRestaurantItems();
         KeepScreenFull();
-        mainlayout = findViewById(R.id.rightSlide);
-        mainlayout.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                x=0;
-            }
-        });
+        LinearLayout mainLayout = findViewById(R.id.rightSlide);
+        mainLayout.setOnClickListener(v -> x=0);
         backHomeThread = new Runnable() {
             @Override
             public void run() {
@@ -380,13 +345,10 @@ public class RestaurantActivity extends AppCompatActivity {
                 H.postDelayed(this,1000);
                 if (x >= 60000){
                     LinearLayout v = (LinearLayout) findViewById(R.id.home_Btn);
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            backToMain(v);
-                            H.removeCallbacks(backHomeThread);
-                            x=0;
-                        }
+                    runOnUiThread(() -> {
+                        backToMain(v);
+                        H.removeCallbacks(backHomeThread);
+                        x=0;
                     });
                 }
 
@@ -411,7 +373,7 @@ public class RestaurantActivity extends AppCompatActivity {
         Volley.newRequestQueue(act).add(re);
     }
 
-    public void gToCarto(View view) {
+    public void gToCart(View view) {
         if (FullscreenActivity.order.isEmpty()) {
             ToastMaker.MakeToast("لم تقم باضافة شيء" , act);
         }
@@ -426,18 +388,16 @@ public class RestaurantActivity extends AppCompatActivity {
     }
 
     public void back(View view) {
-        if (FullscreenActivity.RestaurantActivities.size() > 0) {
-            FullscreenActivity.RestaurantActivities.get(FullscreenActivity.RestaurantActivities.size() - 1).finish();
-            FullscreenActivity.RestaurantActivities.remove(FullscreenActivity.RestaurantActivities.size() - 1);
+        if (MyApp.restaurantActivities.size() > 0) {
+            MyApp.restaurantActivities.get(MyApp.restaurantActivities.size() - 1).finish();
+            MyApp.restaurantActivities.remove(MyApp.restaurantActivities.size() - 1);
             H.removeCallbacks(backHomeThread);
         }
     }
 
     public void backToMain(View view) {
-        //Intent i = new Intent(act,FullscreenActivity.class);
-        //startActivity(i);
-        if (FullscreenActivity.RestaurantActivities.size() > 0 ){
-            for (Activity a:FullscreenActivity.RestaurantActivities){
+        if (MyApp.restaurantActivities.size() > 0 ){
+            for (Activity a:MyApp.restaurantActivities){
                 a.finish();
             }
         }
@@ -447,27 +407,21 @@ public class RestaurantActivity extends AppCompatActivity {
     private void blink() {
         final Calendar x = Calendar.getInstance(Locale.getDefault());
         final Handler hander = new Handler();
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                hander.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        Log.d("Time is : ",x.getTime().toString());
-                        String currentTime = x.get(Calendar.HOUR_OF_DAY)+":"+x.get(Calendar.MINUTE)+":"+x.get(Calendar.SECOND);
-                        time.setText(currentTime);
-                        String currentDate = x.get(Calendar.DAY_OF_MONTH)+ "-" + (x.get(Calendar.MONTH)+1)+"-" + x.get(Calendar.YEAR);
-                        date.setText(currentDate);
-                        //hideSystemUI();
-                        blink();
-                    }
-                });
+        new Thread(() -> {
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
+            hander.post(() -> {
+                Log.d("Time is : ",x.getTime().toString());
+                String currentTime = x.get(Calendar.HOUR_OF_DAY)+":"+x.get(Calendar.MINUTE)+":"+x.get(Calendar.SECOND);
+                time.setText(currentTime);
+                String currentDate = x.get(Calendar.DAY_OF_MONTH)+ "-" + (x.get(Calendar.MONTH)+1)+"-" + x.get(Calendar.YEAR);
+                date.setText(currentDate);
+                //hideSystemUI();
+                blink();
+            });
         }).start();
     }
 
@@ -487,159 +441,82 @@ public class RestaurantActivity extends AppCompatActivity {
     }
 
     private void roomServiceOn(){
-
-        ImageView roomserviceicon = (ImageView) findViewById(R.id.imageView7);
-        roomserviceicon.setVisibility(View.VISIBLE);
-
+        ImageView roomServiceIcon = (ImageView) findViewById(R.id.imageView7);
+        roomServiceIcon.setVisibility(View.VISIBLE);
     }
     private void roomServiceOff(){
-        ImageView roomserviceicon = (ImageView) findViewById(R.id.imageView7);
-        roomserviceicon.setVisibility(View.GONE);
+        ImageView roomServiceIcon = (ImageView) findViewById(R.id.imageView7);
+        roomServiceIcon.setVisibility(View.GONE);
     }
 
-    private void checkoutOn(){
-
-        ImageView checkouticon = (ImageView) findViewById(R.id.imageView20);
-        checkouticon.setVisibility(View.VISIBLE);
-
+    private void checkoutOn() {
+        ImageView checkoutIcon = (ImageView) findViewById(R.id.imageView20);
+        checkoutIcon.setVisibility(View.VISIBLE);
     }
-    private void checkoutOff(){
-
-        ImageView checkouticon = (ImageView) findViewById(R.id.imageView20);
-        checkouticon.setVisibility(View.GONE);
-
+    private void checkoutOff() {
+        ImageView i = (ImageView) findViewById(R.id.imageView20);
+        i.setVisibility(View.GONE);
     }
 
     private  void laundryOn(){
-
-        ImageView checkouticon = (ImageView) findViewById(R.id.imageView10);
-        checkouticon.setVisibility(View.VISIBLE);
+        ImageView i = (ImageView) findViewById(R.id.imageView10);
+        i.setVisibility(View.VISIBLE);
 
     }
     private  void laundryOff(){
-
-        ImageView checkouticon = (ImageView) findViewById(R.id.imageView10);
-        checkouticon.setVisibility(View.GONE);
-
+        ImageView i = (ImageView) findViewById(R.id.imageView10);
+        i.setVisibility(View.GONE);
     }
 
     private void cleanupOn(){
-        ImageView checkouticon = (ImageView) findViewById(R.id.imageView9);
-        checkouticon.setVisibility(View.VISIBLE);
+        ImageView i = (ImageView) findViewById(R.id.imageView9);
+        i.setVisibility(View.VISIBLE);
 
     }
     private void cleanupOff(){
-        ImageView checkouticon = (ImageView) findViewById(R.id.imageView9);
-        checkouticon.setVisibility(View.GONE);
-
+        ImageView i = (ImageView) findViewById(R.id.imageView9);
+        i.setVisibility(View.GONE);
     }
 
     private void dndOn(){
-        ImageView checkoutimage = (ImageView) findViewById(R.id.DND_Image);
-        checkoutimage.setImageResource(R.drawable.union_6);
-        ImageView checkouticon = (ImageView) findViewById(R.id.DND_Icon);
-        checkouticon.setVisibility(View.VISIBLE);
+        ImageView m = (ImageView) findViewById(R.id.DND_Image);
+        m.setImageResource(R.drawable.union_6);
+        ImageView i = (ImageView) findViewById(R.id.DND_Icon);
+        i.setVisibility(View.VISIBLE);
         TextView text = (TextView) findViewById(R.id.DND_Text);
-        text.setTextColor(getResources().getColor(R.color.red));
+        text.setTextColor(getResources().getColor(R.color.red,null));
     }
     private void dndOff(){
-        ImageView checkoutimage = (ImageView) findViewById(R.id.DND_Image);
-        checkoutimage.setImageResource(R.drawable.union_2);
-        ImageView checkouticon = (ImageView) findViewById(R.id.DND_Icon);
-        checkouticon.setVisibility(View.GONE);
+        ImageView m = (ImageView) findViewById(R.id.DND_Image);
+        m.setImageResource(R.drawable.union_2);
+        ImageView i = (ImageView) findViewById(R.id.DND_Icon);
+        i.setVisibility(View.GONE);
         TextView text = (TextView) findViewById(R.id.DND_Text);
-        text.setTextColor(getResources().getColor(R.color.light_blue_A200));
+        text.setTextColor(getResources().getColor(R.color.light_blue_A200,null));
     }
 
     private void sosOn(){
-        ImageView checkoutimage = (ImageView) findViewById(R.id.SOS_Image);
-        checkoutimage.setImageResource(R.drawable.group_54);
-        ImageView checkouticon = (ImageView) findViewById(R.id.SOS_Icon);
-        checkouticon.setVisibility(View.VISIBLE);
+        ImageView m = (ImageView) findViewById(R.id.SOS_Image);
+        m.setImageResource(R.drawable.group_54);
+        ImageView i = (ImageView) findViewById(R.id.SOS_Icon);
+        i.setVisibility(View.VISIBLE);
         TextView text = (TextView) findViewById(R.id.SOS_Text);
-        text.setTextColor(getResources().getColor(R.color.red));
+        text.setTextColor(getResources().getColor(R.color.red,null));
     }
     private void sosOff(){
-        ImageView checkoutimage = (ImageView) findViewById(R.id.SOS_Image);
-        checkoutimage.setImageResource(R.drawable.group_33);
-        ImageView checkouticon = (ImageView) findViewById(R.id.SOS_Icon);
-        checkouticon.setVisibility(View.GONE);
+        ImageView m = (ImageView) findViewById(R.id.SOS_Image);
+        m.setImageResource(R.drawable.group_33);
+        ImageView i = (ImageView) findViewById(R.id.SOS_Icon);
+        i.setVisibility(View.GONE);
         TextView text = (TextView) findViewById(R.id.SOS_Text);
-        text.setTextColor(getResources().getColor(R.color.light_blue_A200));
+        text.setTextColor(getResources().getColor(R.color.light_blue_A200,null));
     }
 
-    public  void removeLaundryOrderInDataBase()
-    {
-        try
-        {
-            LoadingDialog loading = new LoadingDialog(act);
-            final String dep = "Laundry";
-
-            StringRequest removOrder = new StringRequest(Request.Method.POST, removeServiceOrderUrl , new Response.Listener<String>() {
-                @Override
-                public void onResponse(String response)
-                {
-                    loading.stop();
-                    if (response.equals("1")  )
-                    {
-                        if (FullscreenActivity.THEROOM.getSERVICE1_B() != null){
-                            if (FullscreenActivity.THEROOM.getSERVICE1_B().dps.get("3").toString().equals("true"))
-                            {
-                                FullscreenActivity.THEROOM.getSERVICE1().publishDps("{\"3\":false}", new IResultCallback() {
-                                    @Override
-                                    public void onError(String code, String error) {
-
-                                    }
-
-                                    @Override
-                                    public void onSuccess() {
-
-                                    }
-                                });
-                            }
-
-                        }
-                        FullscreenActivity.LaundryStatus = false ;
-                        myRefLaundry.setValue(0);
-                        laundryOff();
-                        ToastMaker.MakeToast(dep+" Order Cancelled" , act);
-                    }
-                    else
-                    {
-                    }
-
-                }
-            }, new Response.ErrorListener() {
-                @Override
-                public void onErrorResponse(VolleyError error)
-                {
-                    loading.stop();
-                }
-            })
-            {
-                @Override
-                protected Map<String, String> getParams() throws AuthFailureError
-                {
-                    Map<String,String> params = new HashMap<String, String>();
-                    params.put("id" , "1");
-                    params.put("room" , String.valueOf(MyApp.Room.RoomNumber));
-                    params.put("dep" , dep);
-                    params.put("Hotel" ,"1");
-                    return params;
-                }
-            };
-            Volley.newRequestQueue(act).add(removOrder);
-        }
-        catch (Exception e)
-        {
-
-        }
-    }
 
     public void setDND(View view) {
         if (MyApp.Room.getSERVICE1_B() != null) {
             if (MyApp.Room.getSERVICE1_B().dps.get(String.valueOf(MyApp.ProjectVariables.dndButton)) != null) {
-                if (Boolean.parseBoolean(MyApp.Room.getSERVICE1_B().dps.get(String.valueOf(MyApp.ProjectVariables.dndButton)).toString())) {
+                if (Boolean.parseBoolean(Objects.requireNonNull(MyApp.Room.getSERVICE1_B().dps.get(String.valueOf(MyApp.ProjectVariables.dndButton))).toString())) {
                     MyApp.Room.getSERVICE1().publishDps("{\" "+MyApp.ProjectVariables.dndButton+"\":false}", new IResultCallback() {
                         @Override
                         public void onError(String code, String error) {
@@ -674,42 +551,35 @@ public class RestaurantActivity extends AppCompatActivity {
             doorImage.setVisibility(View.GONE);
             doorLoading.setVisibility(View.VISIBLE);
             String url = MyApp.ProjectURL + "roomsManagement/addClientDoorOpen";
-            StringRequest req = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
-                @Override
-                public void onResponse(String response) {
-                    try {
-                        JSONObject result = new JSONObject(response);
-                        if (result.getString("result") != null) {
-                            if (result.getString("result").equals("success")) {
-                                TTLockClient.getDefault().controlLock(ControlAction.UNLOCK, MyApp.BluetoothLock.getLockData(), MyApp.BluetoothLock.getLockMac(),new ControlLockCallback() {
-                                    @Override
-                                    public void onControlLockSuccess(ControlLockResult controlLockResult) {
-                                        ToastMaker.MakeToast("door opened",act);
-                                        doorImage.setVisibility(View.VISIBLE);
-                                        doorLoading.setVisibility(View.GONE);
-                                    }
-                                    @Override
-                                    public void onFail(LockError error) {
-                                        ToastMaker.MakeToast(error.getErrorMsg(),act);
-                                        doorImage.setVisibility(View.VISIBLE);
-                                        doorLoading.setVisibility(View.GONE);
-                                    }
-                                });
+            StringRequest req = new StringRequest(Request.Method.POST, url, response -> {
+                try {
+                    JSONObject result = new JSONObject(response);
+                    result.getString("result");
+                    if (result.getString("result").equals("success")) {
+                        TTLockClient.getDefault().controlLock(ControlAction.UNLOCK, MyApp.BluetoothLock.getLockData(), MyApp.BluetoothLock.getLockMac(),new ControlLockCallback() {
+                            @Override
+                            public void onControlLockSuccess(ControlLockResult controlLockResult) {
+                                ToastMaker.MakeToast("door opened",act);
+                                doorImage.setVisibility(View.VISIBLE);
+                                doorLoading.setVisibility(View.GONE);
                             }
-                        }
-                    } catch (JSONException e) {
-                        ToastMaker.MakeToast(e.getMessage(),act);
-                        doorImage.setVisibility(View.VISIBLE);
-                        doorLoading.setVisibility(View.GONE);
+                            @Override
+                            public void onFail(LockError error) {
+                                ToastMaker.MakeToast(error.getErrorMsg(),act);
+                                doorImage.setVisibility(View.VISIBLE);
+                                doorLoading.setVisibility(View.GONE);
+                            }
+                        });
                     }
-                }
-            }, new Response.ErrorListener() {
-                @Override
-                public void onErrorResponse(VolleyError error) {
-                    ToastMaker.MakeToast(error.toString(),act);
+                } catch (JSONException e) {
+                    ToastMaker.MakeToast(e.getMessage(),act);
                     doorImage.setVisibility(View.VISIBLE);
                     doorLoading.setVisibility(View.GONE);
                 }
+            }, error -> {
+                ToastMaker.MakeToast(error.toString(),act);
+                doorImage.setVisibility(View.VISIBLE);
+                doorLoading.setVisibility(View.GONE);
             });
             Volley.newRequestQueue(act).add(req);
         }
@@ -718,44 +588,32 @@ public class RestaurantActivity extends AppCompatActivity {
                 doorImage.setVisibility(View.GONE);
                 doorLoading.setVisibility(View.VISIBLE);
                 String url = MyApp.ProjectURL + "roomsManagement/addClientDoorOpen";
-                StringRequest req = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        Log.d("doorOpenResp" , response);
-                        try {
-                            JSONObject result = new JSONObject(response);
-                            if (result.getString("result") != null) {
-                                if (result.getString("result").equals("success")) {
-                                    ZigbeeLock.getTokenFromApi(MyApp.cloudClientId, MyApp.cloudSecret, act, new RequestOrder() {
+                StringRequest req = new StringRequest(Request.Method.POST, url, response -> {
+                    Log.d("doorOpenResp" , response);
+                    try {
+                        JSONObject result = new JSONObject(response);
+                        result.getString("result");
+                        if (result.getString("result").equals("success")) {
+                            ZigbeeLock.getTokenFromApi(MyApp.cloudClientId, MyApp.cloudSecret, act, new RequestOrder() {
+                                @Override
+                                public void onSuccess(String token) {
+                                    Log.d("doorOpenResp" , "token "+token);
+                                    ZigbeeLock.getTicketId(token, MyApp.cloudClientId, MyApp.cloudSecret, MyApp.Room.getLOCK_B().devId, act, new RequestOrder() {
                                         @Override
-                                        public void onSuccess(String token) {
-                                            Log.d("doorOpenResp" , "token "+token);
-                                            ZigbeeLock.getTicketId(token, MyApp.cloudClientId, MyApp.cloudSecret, MyApp.Room.getLOCK_B().devId, act, new RequestOrder() {
+                                        public void onSuccess(String ticket) {
+                                            Log.d("doorOpenResp" , "ticket "+ticket);
+                                            ZigbeeLock.unlockWithoutPassword(token, ticket, MyApp.cloudClientId, MyApp.cloudSecret, MyApp.Room.getLOCK_B().devId, act, new RequestOrder() {
                                                 @Override
-                                                public void onSuccess(String ticket) {
-                                                    Log.d("doorOpenResp" , "ticket "+ticket);
-                                                    ZigbeeLock.unlockWithoutPassword(token, ticket, MyApp.cloudClientId, MyApp.cloudSecret, MyApp.Room.getLOCK_B().devId, act, new RequestOrder() {
-                                                        @Override
-                                                        public void onSuccess(String res) {
-                                                            Log.d("doorOpenResp" , "res "+res);
-                                                            ToastMaker.MakeToast("door opened",act);
-                                                            doorImage.setVisibility(View.VISIBLE);
-                                                            doorLoading.setVisibility(View.GONE);
-                                                        }
-
-                                                        @Override
-                                                        public void onFailed(String error) {
-                                                            Log.d("openDoorResp" , "res "+error);
-                                                            ToastMaker.MakeToast(error,act);
-                                                            doorImage.setVisibility(View.VISIBLE);
-                                                            doorLoading.setVisibility(View.GONE);
-                                                        }
-                                                    });
+                                                public void onSuccess(String res) {
+                                                    Log.d("doorOpenResp" , "res "+res);
+                                                    ToastMaker.MakeToast("door opened",act);
+                                                    doorImage.setVisibility(View.VISIBLE);
+                                                    doorLoading.setVisibility(View.GONE);
                                                 }
 
                                                 @Override
                                                 public void onFailed(String error) {
-                                                    Log.d("doorOpenResp" , "ticket "+error);
+                                                    Log.d("openDoorResp" , "res "+error);
                                                     ToastMaker.MakeToast(error,act);
                                                     doorImage.setVisibility(View.VISIBLE);
                                                     doorLoading.setVisibility(View.GONE);
@@ -765,38 +623,43 @@ public class RestaurantActivity extends AppCompatActivity {
 
                                         @Override
                                         public void onFailed(String error) {
-                                            Log.d("doorOpenResp" , "token "+error);
+                                            Log.d("doorOpenResp" , "ticket "+error);
                                             ToastMaker.MakeToast(error,act);
                                             doorImage.setVisibility(View.VISIBLE);
                                             doorLoading.setVisibility(View.GONE);
                                         }
                                     });
                                 }
-                                else {
-                                    ToastMaker.MakeToast(result.getString("error"),act);
+
+                                @Override
+                                public void onFailed(String error) {
+                                    Log.d("doorOpenResp" , "token "+error);
+                                    ToastMaker.MakeToast(error,act);
                                     doorImage.setVisibility(View.VISIBLE);
                                     doorLoading.setVisibility(View.GONE);
                                 }
-                            }
-
-                        } catch (JSONException e) {
-                            Log.d("doorOpenResp" , e.getMessage());
-                            ToastMaker.MakeToast(e.getMessage(),act);
+                            });
+                        }
+                        else {
+                            ToastMaker.MakeToast(result.getString("error"),act);
                             doorImage.setVisibility(View.VISIBLE);
                             doorLoading.setVisibility(View.GONE);
                         }
-                    }
-                }, new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Log.d("doorOpenResp" , error.toString());
-                        ToastMaker.MakeToast(error.toString(),act);
+
+                    } catch (JSONException e) {
+                        Log.d("doorOpenResp" , e.getMessage());
+                        ToastMaker.MakeToast(e.getMessage(),act);
                         doorImage.setVisibility(View.VISIBLE);
                         doorLoading.setVisibility(View.GONE);
                     }
+                }, error -> {
+                    Log.d("doorOpenResp" , error.toString());
+                    ToastMaker.MakeToast(error.toString(),act);
+                    doorImage.setVisibility(View.VISIBLE);
+                    doorLoading.setVisibility(View.GONE);
                 }){
                     @Override
-                    protected Map<String, String> getParams() throws AuthFailureError {
+                    protected Map<String, String> getParams() {
                         Map<String,String> params = new HashMap<>();
                         params.put("room_id", String.valueOf(MyApp.Room.id));
                         return params;
@@ -816,45 +679,26 @@ public class RestaurantActivity extends AppCompatActivity {
                 final Dialog d = new Dialog(act);
                 d.setContentView(R.layout.confermation_dialog);
                 TextView message = (TextView) d.findViewById(R.id.confermationDialog_Text);
-                message.setText("Send Emergency Order .. ?");
+                message.setText(getResources().getString(R.string.sendSOSOrder));
                 Button cancel = (Button)d.findViewById(R.id.confermationDialog_cancel);
-                cancel.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v)
-                    {
-                        d.dismiss();
-                    }
-                });
+                cancel.setOnClickListener(v -> d.dismiss());
                 Button ok = (Button)d.findViewById(R.id.messageDialog_ok);
-                ok.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        FullscreenActivity.SosStatus = true ;
-                        sosOn();
-                        Calendar c = Calendar.getInstance(Locale.getDefault());
-                        myRefSos.setValue(c.getTimeInMillis());
-                        d.dismiss();
-                        String url = MyApp.ProjectURL + "reservations/addSOSOrder";
-                        StringRequest addOrder = new StringRequest(Request.Method.POST, url , new Response.Listener<String>() {
-                            @Override
-                            public void onResponse(String response) {
-                                Log.d("sosResp" , response);
-                            }
-                        }, new Response.ErrorListener() {
-                            @Override
-                            public void onErrorResponse(VolleyError error) {
-                                Log.d("sosResp" , error.toString());
-                            }
-                        }) {
-                            @Override
-                            protected Map<String, String> getParams() throws AuthFailureError {
-                                Map<String,String> params = new HashMap<>();
-                                params.put("room_id" ,String.valueOf(MyApp.Room.id));
-                                return params;
-                            }
-                        };
-                        Volley.newRequestQueue(act).add(addOrder);
-                    }
+                ok.setOnClickListener(v -> {
+                    FullscreenActivity.SosStatus = true ;
+                    sosOn();
+                    Calendar c = Calendar.getInstance(Locale.getDefault());
+                    myRefSos.setValue(c.getTimeInMillis());
+                    d.dismiss();
+                    String url = MyApp.ProjectURL + "reservations/addSOSOrder";
+                    StringRequest addOrder = new StringRequest(Request.Method.POST, url , response -> Log.d("sosResp" , response), error -> Log.d("sosResp" , error.toString())) {
+                        @Override
+                        protected Map<String, String> getParams() {
+                            Map<String,String> params = new HashMap<>();
+                            params.put("room_id" ,String.valueOf(MyApp.Room.id));
+                            return params;
+                        }
+                    };
+                    Volley.newRequestQueue(act).add(addOrder);
                 });
                 d.show();
             }
@@ -863,19 +707,11 @@ public class RestaurantActivity extends AppCompatActivity {
                 sosOff();
                 myRefSos.setValue(0);
                 String url = MyApp.ProjectURL + "reservations/cancelServiceOrderControlDevice"+FullscreenActivity.sosCounter;
-                StringRequest removOrder = new StringRequest(Request.Method.POST, url , new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        Log.d("sosResp" , response);
-                    }
-                }, new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                    }
+                StringRequest removOrder = new StringRequest(Request.Method.POST, url , response -> Log.d("sosResp" , response), error -> {
                 }) {
                     @Override
-                    protected Map<String, String> getParams() throws AuthFailureError {
-                        Map<String,String> params = new HashMap<String, String>();
+                    protected Map<String, String> getParams() {
+                        Map<String,String> params = new HashMap<>();
                         params.put("room_id" , String.valueOf(MyApp.Room.id));
                         params.put("order_type" , "SOS");
                         return params;

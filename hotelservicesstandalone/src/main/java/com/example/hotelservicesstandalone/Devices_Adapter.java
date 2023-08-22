@@ -56,11 +56,11 @@ public class Devices_Adapter extends BaseAdapter {
     public View getView(int position, View convertView, ViewGroup parent) {
         convertView = inflater.inflate(R.layout.device_unit , null);
 
-        TextView name = (TextView) convertView.findViewById(R.id.deviceUnit_deviceName);
-        TextView order = (TextView) convertView.findViewById(R.id.order);
-        ImageView local = (ImageView) convertView.findViewById(R.id.deviceUnit_local);
-        ImageView net = (ImageView) convertView.findViewById(R.id.deviceUnit_net);
-        ImageView cloud = (ImageView) convertView.findViewById(R.id.deviceUnit_cloud);
+        TextView name = convertView.findViewById(R.id.deviceUnit_deviceName);
+        TextView order = convertView.findViewById(R.id.order);
+        ImageView local = convertView.findViewById(R.id.deviceUnit_local);
+        ImageView net = convertView.findViewById(R.id.deviceUnit_net);
+        ImageView cloud = convertView.findViewById(R.id.deviceUnit_cloud);
         ITuyaDevice mDevice = TuyaHomeSdk.newDeviceInstance(list.get(position).devId);
         name.setText(list.get(position).getName());
 
@@ -79,8 +79,6 @@ public class Devices_Adapter extends BaseAdapter {
             STATUS = STATUS+ " ["+kkk.get(i)+" "+vvv.get(i)+"] " ;
         }
 
-        //order.setText(STATUS);
-
         mDevice.registerDevListener(new IDevListener() {
             @Override
             public void onDpUpdate(String devId, String dpStr) {
@@ -94,7 +92,6 @@ public class Devices_Adapter extends BaseAdapter {
 
             @Override
             public void onStatusChanged(String devId, boolean online) {
-                Log.d("onlineDevice"+list.get(position).name , String.valueOf(online));
                 if (online) {
                     net.setImageResource(android.R.drawable.presence_online);
                 }
@@ -121,8 +118,8 @@ public class Devices_Adapter extends BaseAdapter {
                 view.setBackgroundColor(Color.DKGRAY);
                 Dialog d = new Dialog(finalConvertView.getContext());
                 d.setContentView(R.layout.rename_device_dialog);
-                Spinner s = (Spinner) d.findViewById(R.id.devicerenamespinner);
-                Spinner rr = (Spinner) d.findViewById(R.id.roomsspinner);
+                Spinner s = d.findViewById(R.id.devicerenamespinner);
+                Spinner rr = d.findViewById(R.id.roomsspinner);
                 String[] Types = new String[]{"Power", "ZGatway", "AC", "DoorSensor", "MotionSensor", "Curtain", "ServiceSwitch", "Switch1", "Switch2", "Switch3", "Switch4","IR"};
                 String[] therooms = new String[Rooms.ROOMS.size()];
                 for (int i = 0; i < Rooms.ROOMS.size(); i++) {
@@ -134,9 +131,9 @@ public class Devices_Adapter extends BaseAdapter {
                 rr.setAdapter(r);
                 TextView title = (TextView) d.findViewById(R.id.RenameDialog_title);
                 title.setText("Modify " + list.get(position).getName() + " Device " + list.get(position).getIsOnline().toString());
-                Button cancel = (Button) d.findViewById(R.id.cancel_diallog);
-                Button rename = (Button) d.findViewById(R.id.DoTheRename);
-                Button delete = (Button) d.findViewById(R.id.deleteDevice);
+                Button cancel = d.findViewById(R.id.cancel_diallog);
+                Button rename = d.findViewById(R.id.DoTheRename);
+                Button delete = d.findViewById(R.id.deleteDevice);
                 cancel.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
@@ -146,7 +143,6 @@ public class Devices_Adapter extends BaseAdapter {
                 rename.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-
                         ITuyaDevice Device = TuyaHomeSdk.newDeviceInstance(list.get(position).getDevId());
                         Device.renameDevice(rr.getSelectedItem().toString() + s.getSelectedItem().toString(), new IResultCallback() {
                             @Override
@@ -156,7 +152,7 @@ public class Devices_Adapter extends BaseAdapter {
 
                             @Override
                             public void onSuccess() {
-                                Rooms.CHANGE_STATUS = true;
+                                Rooms.refreshSystem();
                                 Toast.makeText(finalConvertView.getContext(), "Device Renamed .", Toast.LENGTH_LONG).show();
                                 d.dismiss();
                             }
@@ -167,8 +163,6 @@ public class Devices_Adapter extends BaseAdapter {
                 delete.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-
-
                         ITuyaDevice Device = TuyaHomeSdk.newDeviceInstance(list.get(position).getDevId());
                         Device.removeDevice(new IResultCallback() {
                             @Override
@@ -178,7 +172,7 @@ public class Devices_Adapter extends BaseAdapter {
 
                             @Override
                             public void onSuccess() {
-                                Rooms.CHANGE_STATUS = true;
+                                Rooms.refreshSystem();
                                 Toast.makeText(finalConvertView.getContext(), "Device Deleted .", Toast.LENGTH_LONG).show();
                                 d.dismiss();
                             }
@@ -187,7 +181,6 @@ public class Devices_Adapter extends BaseAdapter {
 
                 });
                 d.show();
-
                 d.setOnDismissListener(new DialogInterface.OnDismissListener() {
                     @Override
                     public void onDismiss(DialogInterface dialog) {

@@ -12,6 +12,7 @@ import com.tuya.smart.home.sdk.bean.HomeBean;
 import com.tuya.smart.home.sdk.bean.scene.SceneBean;
 import com.tuya.smart.sdk.api.INeedLoginListener;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class MyApp extends Application {
@@ -30,6 +31,8 @@ public class MyApp extends Application {
     public static LockObj BluetoothLock ;
     public static String ProjectName , ProjectURL ,TuyaUser,TuyaPassword,LockUser,LockPassword ;
     static String cloudClientId = "d9hyvtdshnm3uvaun59d" , cloudSecret = "825f9def941f456099798ccdc19112e9";
+    public static List<Activity> restaurantActivities ;
+    public static List<Activity> mainActivity ;
 
     public MyApp() {
         App = this ;
@@ -39,6 +42,8 @@ public class MyApp extends Application {
     public void onCreate() {
         super.onCreate();
         App = this ;
+        restaurantActivities = new ArrayList<>();
+        mainActivity = new ArrayList<>();
         setTuyaApplication();
     }
 

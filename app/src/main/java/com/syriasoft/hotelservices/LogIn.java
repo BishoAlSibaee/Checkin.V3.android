@@ -1,10 +1,8 @@
 package com.syriasoft.hotelservices;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.net.ConnectivityManager;
 import android.os.Handler;
 import android.widget.Spinner;
 import android.os.Bundle;
@@ -16,6 +14,8 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -58,15 +58,9 @@ public class LogIn extends AppCompatActivity {
     public static String URL = "https://ratco-solutions.com/Checkin/P0001/php/";
     private EditText password ;
     Activity act ;
-    private String projectsUrl = "https://ratco-solutions.com/Checkin/getProjects.php";
-    private String buildingsUrl= "roomsManagement/getbuildings";
-    private String floorsUrl = "roomsManagement/getfloors";
-    private String roomsUrl = "roomsManagement/getRooms";
-    private String typesUrl = "roomsManagement/getRoomTypes";
     private String projectLoginUrl = "users/loginProject" ;
     private FirebaseDatabase database ;
     Spinner PROJECTS_SPINNER, buildings , floors , types , rooms;
-    ArrayAdapter<String> hotelsadapter , buildingsadapter , floorsadapter , roomsAdapter, typesadapter ;
     static List<BUILDING> Buildings ;
     static List<FLOOR> Floors ;
     static List<ROOM_TYPE> Types ;
@@ -124,7 +118,7 @@ public class LogIn extends AppCompatActivity {
         MyApp.LockPassword = LockPassword ;
         if (ProjectName == null) {
             loading.setVisibility(View.VISIBLE);
-            CurrentOperation.setText("getting projects");
+            CurrentOperation.setText(getResources().getString(R.string.gettingProjects));
             getProjects(new loginCallback() {
                 @Override
                 public void onSuccess() {
@@ -142,7 +136,7 @@ public class LogIn extends AppCompatActivity {
         else {
             loading.setVisibility(View.VISIBLE);
             projectsLayout.setVisibility(View.GONE);
-            CurrentOperation.setText("getting project variables");
+            CurrentOperation.setText(getResources().getString(R.string.gettingProjectVariables));
             getProjectVariables(new loginCallback() {
                 @Override
                 public void onSuccess() {
@@ -205,19 +199,19 @@ public class LogIn extends AppCompatActivity {
 
                         }
                     });
-                    CurrentOperation.setText("getting buildings ");
+                    CurrentOperation.setText(getResources().getString(R.string.gettingBuildings));
                     getBuildings(new RequestCallback() {
                         @Override
                         public void onSuccess() {
-                            CurrentOperation.setText("getting floors ");
+                            CurrentOperation.setText(getResources().getString(R.string.gettingFloors));
                             getFloors(new RequestCallback() {
                                 @Override
                                 public void onSuccess() {
-                                    CurrentOperation.setText("getting room types ");
+                                    CurrentOperation.setText(getResources().getString(R.string.gettingRoomTypes));
                                     getRoomTypes(new RequestCallback() {
                                         @Override
                                         public void onSuccess() {
-                                            CurrentOperation.setText("getting rooms ");
+                                            CurrentOperation.setText(getResources().getString(R.string.gettingRooms));
                                             getRooms(new RequestCallback() {
                                                 @Override
                                                 public void onSuccess() {
@@ -236,7 +230,7 @@ public class LogIn extends AppCompatActivity {
                                                                 break;
                                                             }
                                                         }
-                                                        CurrentOperation.setText("getting room devices");
+                                                        CurrentOperation.setText(getResources().getString(R.string.gettingRoomDevices));
                                                         onlyLogInToTuya(new RequestCallback() {
                                                             @Override
                                                             public void onSuccess() {
@@ -299,7 +293,8 @@ public class LogIn extends AppCompatActivity {
     }
 
     void getBuildings(RequestCallback callback){
-        StringRequest buildingsReq = new StringRequest(Request.Method.GET, ProjectURL+buildingsUrl, new Response.Listener<String>() {
+        String buildingsUrl = "roomsManagement/getbuildings";
+        StringRequest buildingsReq = new StringRequest(Request.Method.GET, ProjectURL+ buildingsUrl, new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
                 Log.e("buildings" , response);
@@ -333,7 +328,8 @@ public class LogIn extends AppCompatActivity {
     }
 
     void getFloors(RequestCallback callback) {
-        StringRequest floorsReq = new StringRequest(Request.Method.GET, ProjectURL+floorsUrl, new Response.Listener<String>() {
+        String floorsUrl = "roomsManagement/getfloors";
+        StringRequest floorsReq = new StringRequest(Request.Method.GET, ProjectURL+ floorsUrl, new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
                 Log.e("floors" , response);
@@ -363,7 +359,8 @@ public class LogIn extends AppCompatActivity {
     }
 
     void getRoomTypes(RequestCallback callback) {
-        StringRequest typesReq = new StringRequest(Request.Method.GET, ProjectURL+typesUrl, new Response.Listener<String>() {
+        String typesUrl = "roomsManagement/getRoomTypes";
+        StringRequest typesReq = new StringRequest(Request.Method.GET, ProjectURL+ typesUrl, new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
                 Log.e("types" , response);
@@ -397,7 +394,8 @@ public class LogIn extends AppCompatActivity {
     }
 
     void getRooms(RequestCallback callback) {
-        StringRequest roomsReq = new StringRequest(Request.Method.GET, ProjectURL+roomsUrl, new Response.Listener<String>() {
+        String roomsUrl = "roomsManagement/getRooms";
+        StringRequest roomsReq = new StringRequest(Request.Method.GET, ProjectURL+ roomsUrl, new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
                 Log.e("roomRes" , response);
@@ -507,17 +505,21 @@ public class LogIn extends AppCompatActivity {
         CurrentOperation = findViewById(R.id.operations);
         ActList = new ArrayList<>();
         Projects = new ArrayList<>();
-        vertion.setText("Welcome To Checkin Version"+BuildConfig.VERSION_NAME);
+        vertion.setText(String.format("Welcome To Checkin Version%s", BuildConfig.VERSION_NAME));
         database = FirebaseDatabase.getInstance("https://hotelservices-ebe66.firebaseio.com/");
         windowInsetsController = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
-        windowInsetsController.hide(WindowInsetsCompat.Type.systemBars());
-        windowInsetsController.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_BARS_BY_SWIPE);
+        if (windowInsetsController != null) {
+            windowInsetsController.hide(WindowInsetsCompat.Type.systemBars());
+        }
+        if (windowInsetsController != null) {
+            windowInsetsController.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_BARS_BY_SWIPE);
+        }
         KeepScreenFull();
     }
 
-    public void goRegist(View view) {
+    public void goRegister(View view) {
         loading.setVisibility(View.VISIBLE);
-        CurrentOperation.setText("logging in project");
+        CurrentOperation.setText(getResources().getString(R.string.loggingInProject));
         if (THE_PROJECT != null ) {
             getProjectVariables(new loginCallback() {
                 @Override
@@ -607,19 +609,19 @@ public class LogIn extends AppCompatActivity {
 
                                                 }
                                             });
-                                            CurrentOperation.setText("getting buildings devices");
+                                            CurrentOperation.setText(getResources().getString(R.string.gettingBuildings));
                                             getBuildings(new RequestCallback() {
                                                 @Override
                                                 public void onSuccess() {
-                                                    CurrentOperation.setText("getting floors devices");
+                                                    CurrentOperation.setText(getResources().getString(R.string.gettingFloors));
                                                     getFloors(new RequestCallback() {
                                                         @Override
                                                         public void onSuccess() {
-                                                            CurrentOperation.setText("getting room types devices");
+                                                            CurrentOperation.setText(getResources().getString(R.string.gettingRoomTypes));
                                                             getRoomTypes(new RequestCallback() {
                                                                 @Override
                                                                 public void onSuccess() {
-                                                                    CurrentOperation.setText("getting rooms devices");
+                                                                    CurrentOperation.setText(getResources().getString(R.string.gettingRooms));
                                                                     getRooms(new RequestCallback() {
                                                                         @Override
                                                                         public void onSuccess() {
@@ -805,18 +807,13 @@ public class LogIn extends AppCompatActivity {
 //        }
     }
 
-//    private boolean isNetworkConnected() {
-//        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-//        //return cm.getActiveNetworkInfo() != null && cm.getActiveNetworkInfo().isConnected();
-//    }
-
     private void getTheLock(RequestCallback callback) {
         ApiService apiService = RetrofitAPIManager.provideClientApi();
         pass = DigitUtil.getMD5(LockPassword);
         Call<String> call = apiService.auth(ApiService.CLIENT_ID, ApiService.CLIENT_SECRET, "password",LockUser, pass, ApiService.REDIRECT_URI);
         call.enqueue(new Callback<String>() {
             @Override
-            public void onResponse(Call<String> call, retrofit2.Response<String> response) {
+            public void onResponse(@NonNull Call<String> call, @NonNull retrofit2.Response<String> response) {
                 Log.d("loginLock" , response.toString());
                 String json = response.body();
                 accountInfo = GsonUtil.toObject(json, AccountInfo.class);
@@ -827,34 +824,36 @@ public class LogIn extends AppCompatActivity {
                         Call<String> call1 = apiService.getLockList(ApiService.CLIENT_ID, acc.getAccess_token(), pageNo, pageSize, System.currentTimeMillis());
                         call1.enqueue(new Callback<String>() {
                             @Override
-                            public void onResponse(Call<String> call, retrofit2.Response<String> response) {
+                            public void onResponse(@NonNull Call<String> call, @NonNull retrofit2.Response<String> response) {
                                 Log.d("loginLock" , response.toString());
                                 String json = response.body();
-                                if (json.contains("list")) {
-                                    try {
-                                        JSONObject jsonObject = new JSONObject(json);
-                                        JSONArray array = jsonObject.getJSONArray("list");
-                                        lockObjs = GsonUtil.toObject(array.toString(), new TypeToken<ArrayList<LockObj>>(){});
-                                        Log.d("loginLock" , lockObjs.size()+"" );
-                                        for (int i=0; i<lockObjs.size(); i++) {
-                                            Log.d("loginLock" , lockObjs.get(i).getLockName());
-                                            if (lockObjs.get(i).getLockName().equals(MyApp.Room.RoomNumber+"Lock")) {
-                                                MyApp.BluetoothLock = lockObjs.get(i);
-                                                MyApp.Room.setLock(lockObjs.get(i));
+                                if (json != null) {
+                                    if (json.contains("list")) {
+                                        try {
+                                            JSONObject jsonObject = new JSONObject(json);
+                                            JSONArray array = jsonObject.getJSONArray("list");
+                                            lockObjs = GsonUtil.toObject(array.toString(), new TypeToken<ArrayList<LockObj>>(){});
+                                            Log.d("loginLock" , lockObjs.size()+"" );
+                                            for (int i=0; i<lockObjs.size(); i++) {
+                                                Log.d("loginLock" , lockObjs.get(i).getLockName());
+                                                if (lockObjs.get(i).getLockName().equals(MyApp.Room.RoomNumber+"Lock")) {
+                                                    MyApp.BluetoothLock = lockObjs.get(i);
+                                                    MyApp.Room.setLock(lockObjs.get(i));
+                                                }
                                             }
+                                            callback.onSuccess();
                                         }
-                                        callback.onSuccess();
+                                        catch (JSONException e) {
+                                            callback.onFail("Lock list Failed "+e.getMessage());
+                                        }
                                     }
-                                    catch (JSONException e) {
-                                        callback.onFail("Lock list Failed "+e.getMessage());
+                                    else {
+                                        callback.onFail("Lock list Failed ");
                                     }
-                                }
-                                else {
-                                    callback.onFail("Lock list Failed ");
                                 }
                             }
                             @Override
-                            public void onFailure(Call<String> call, Throwable t) {
+                            public void onFailure(@NonNull Call<String> call, @NonNull Throwable t) {
                                 Log.d("loginLock" , response.toString());
                                 callback.onFail("Lock list Failed "+t.getMessage());
                             }
@@ -871,7 +870,7 @@ public class LogIn extends AppCompatActivity {
             }
 
             @Override
-            public void onFailure(Call<String> call, Throwable t) {
+            public void onFailure(@NonNull Call<String> call, @NonNull Throwable t) {
                 new messageDialog("Lock Login Failed "+t.getMessage(),"Failed",act);
             }
         });
@@ -923,7 +922,8 @@ public class LogIn extends AppCompatActivity {
     }
 
     private void getProjects(loginCallback callback) {
-        StringRequest re = new StringRequest(Request.Method.POST, projectsUrl , new Response.Listener<String>() {
+        String projectsUrl = "https://ratco-solutions.com/Checkin/getProjects.php";
+        StringRequest re = new StringRequest(Request.Method.POST, projectsUrl, new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
                 Log.d("getProjectsResp" , response);
@@ -1000,7 +1000,7 @@ public class LogIn extends AppCompatActivity {
 
     public void Continue(View view) {
         loading.setVisibility(View.VISIBLE);
-        CurrentOperation.setText("getting room "+MyApp.Room.RoomNumber+" devices");
+        CurrentOperation.setText(getResources().getString(R.string.gettingRoomDevices));
         onlyLogInToTuya(new RequestCallback() {
             @Override
             public void onSuccess() {

@@ -31,8 +31,8 @@ public class RESTAURANT_MENUS_ADAPTER extends RecyclerView.Adapter<RESTAURANT_ME
         holder.text.setText(list.get(position).name);
         holder.arabic.setText(list.get(position).arabic);
         holder.itemView.setOnClickListener(v -> {
-            RestaurantMenues.H.removeCallbacks(RestaurantMenues.backHomeThread);
-            RestaurantMenues.x=0;
+            RestaurantMenus.H.removeCallbacks(RestaurantMenus.backHomeThread);
+            RestaurantMenus.x=0;
             Intent i = new Intent(holder.itemView.getContext() , RestaurantActivity.class);
             i.putExtra("id" , list.get(position).id);
             i.putExtra("photo" , list.get(position).photo);
@@ -40,7 +40,7 @@ public class RESTAURANT_MENUS_ADAPTER extends RecyclerView.Adapter<RESTAURANT_ME
             i.putExtra("arabic" , list.get(position).arabic);
             i.putExtra("Hotel" , list.get(position).Hotel);
             i.putExtra("Facility" , list.get(position).Facility);
-            i.putExtra("Type" , RestaurantMenues.Type);
+            i.putExtra("Type" , RestaurantMenus.Type);
             holder.itemView.getContext().startActivity(i);
         });
 

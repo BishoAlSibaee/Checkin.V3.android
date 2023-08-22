@@ -129,8 +129,8 @@
             android:layout_marginEnd="2dp"
             android:layout_weight="1"
             android:gravity="center"
-            android:onClick="resetAllDevices"
-            android:text="Reset All Devices"
+            android:onClick="refresh"
+            android:text="Refresh"
             android:textAllCaps="false"
             android:textSize="12sp" />
 

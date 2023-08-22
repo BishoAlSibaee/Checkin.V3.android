@@ -35,3 +35,9 @@ dependencies {
     implementation 'com.google.android.material:material:1.0.0'
     implementation 'com.google.firebase:firebase-database:19.7.0'
 }
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}

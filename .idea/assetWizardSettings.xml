@@ -24,7 +24,7 @@
                                             <option name="values">
                                               <map>
                                                 <entry key="color" value="000000" />
-                                                <entry key="imagePath" value="/private/var/folders/d0/l8j7mkr578bd51l1kbsb9kd00000gp/T/ic_android_black_24dp.xml" />
+                                                <entry key="imagePath" value="C:\Users\USER\AppData\Local\Temp\ic_android_black_24dp.xml" />
                                               </map>
                                             </option>
                                           </PersistentState>
@@ -67,7 +67,7 @@
                                           <PersistentState>
                                             <option name="values">
                                               <map>
-                                                <entry key="imagePath" value="$USER_HOME$/Desktop/LOGO Designs/web_intro_logo.png" />
+                                                <entry key="imagePath" value="C:\Users\USER\Desktop" />
                                                 <entry key="scalingPercent" value="54" />
                                               </map>
                                             </option>
@@ -79,7 +79,7 @@
                                           <PersistentState>
                                             <option name="values">
                                               <map>
-                                                <entry key="imagePath" value="/private/var/folders/d0/l8j7mkr578bd51l1kbsb9kd00000gp/T/ic_android_black_24dp.xml" />
+                                                <entry key="imagePath" value="C:\Users\USER\AppData\Local\Temp\ic_android_black_24dp.xml" />
                                               </map>
                                             </option>
                                           </PersistentState>
@@ -91,7 +91,7 @@
                                             <option name="values">
                                               <map>
                                                 <entry key="color" value="000000" />
-                                                <entry key="imagePath" value="$USER_HOME$/Desktop/LOGO Designs/web_intro_logo.png" />
+                                                <entry key="imagePath" value="C:\Users\USER\Desktop\web_page_icon.png" />
                                                 <entry key="scalingPercent" value="60" />
                                               </map>
                                             </option>
@@ -122,11 +122,6 @@
                                       </entry>
                                     </map>
                                   </option>
-                                  <option name="values">
-                                    <map>
-                                      <entry key="legacyIconShape" value="CIRCLE" />
-                                    </map>
-                                  </option>
                                 </PersistentState>
                               </value>
                             </entry>
@@ -141,7 +136,7 @@
                                             <option name="values">
                                               <map>
                                                 <entry key="color" value="000000" />
-                                                <entry key="imagePath" value="/private/var/folders/d0/l8j7mkr578bd51l1kbsb9kd00000gp/T/ic_android_black_24dp.xml" />
+                                                <entry key="imagePath" value="C:\Users\USER\AppData\Local\Temp\ic_android_black_24dp.xml" />
                                               </map>
                                             </option>
                                           </PersistentState>
@@ -185,7 +180,7 @@
                                             <option name="values">
                                               <map>
                                                 <entry key="color" value="000000" />
-                                                <entry key="imagePath" value="/private/var/folders/d0/l8j7mkr578bd51l1kbsb9kd00000gp/T/ic_android_black_24dp.xml" />
+                                                <entry key="imagePath" value="C:\Users\USER\AppData\Local\Temp\ic_android_black_24dp.xml" />
                                               </map>
                                             </option>
                                           </PersistentState>
@@ -249,7 +244,7 @@
                                           <PersistentState>
                                             <option name="values">
                                               <map>
-                                                <entry key="imagePath" value="/private/var/folders/d0/l8j7mkr578bd51l1kbsb9kd00000gp/T/ic_android_black_24dp.xml" />
+                                                <entry key="imagePath" value="C:\Users\USER\AppData\Local\Temp\ic_android_black_24dp.xml" />
                                               </map>
                                             </option>
                                           </PersistentState>

@@ -27,6 +27,7 @@ import com.google.firebase.messaging.RemoteMessage;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Random;
 
 public class messagingService extends FirebaseMessagingService {
@@ -60,7 +61,7 @@ public class messagingService extends FirebaseMessagingService {
             Log.d("IncomingMessage", remoteMessage.getData().get("title") + remoteMessage.getData().get("message"));
             boolean roomExists = false;
             if (remoteMessage.getData().get("RoomNumber") != null) {
-                int roomNumber = Integer.parseInt(remoteMessage.getData().get("RoomNumber"));
+                int roomNumber = Integer.parseInt(Objects.requireNonNull(remoteMessage.getData().get("RoomNumber")));
                 if (arrRoom != null) {
                     for (int i = 0; i < arrRoom.length; i++) {
                         if (Integer.parseInt(arrRoom[i]) == (roomNumber)) {
@@ -112,7 +113,7 @@ public class messagingService extends FirebaseMessagingService {
         }) {
             @Override
             protected Map<String, String> getParams() throws AuthFailureError {
-                Map<String, String> params = new HashMap<String, String>();
+                Map<String, String> params = new HashMap<>();
                 params.put("token", token);
                 params.put("jnum", String.valueOf(db.getUser().jobNumber));
                 return params;
@@ -125,8 +126,7 @@ public class messagingService extends FirebaseMessagingService {
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(getApplicationContext());
         stackBuilder.addParentStack(MainActivity.class);
         stackBuilder.addNextIntent(intent);
-        PendingIntent p = stackBuilder.getPendingIntent(reqCode, PendingIntent.FLAG_UPDATE_CURRENT);
-        PendingIntent pendingIntent = PendingIntent.getActivity(context, reqCode, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent p = stackBuilder.getPendingIntent(reqCode, PendingIntent.FLAG_IMMUTABLE);
         Intent i = new Intent(this, MainActivity.class);
         i.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
         String CHANNEL_ID = "channel_name";// The id of the channel.

@@ -368,8 +368,8 @@ public class MainActivity extends AppCompatActivity {
                     Rooms.clear();
                     list.clear();
                 }
-                if (ROOMS.adapter != null) {
-                    ROOMS.adapter.notifyDataSetChanged();
+                if (ROOMS.act != null) {
+                    ROOMS.setTheRooms();
                 }
                 auth(LockU, LockP); // lock
                 goLogIn(TuyaU, TuyaP); // tuya

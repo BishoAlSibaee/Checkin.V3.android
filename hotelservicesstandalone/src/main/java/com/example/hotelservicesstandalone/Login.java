@@ -1,6 +1,7 @@
 package com.example.hotelservicesstandalone;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -22,12 +23,14 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.example.hotelservicesstandalone.TUYA.Tuya_Login;
 import com.tuya.smart.android.user.api.ILoginCallback;
 import com.tuya.smart.android.user.bean.User;
 import com.tuya.smart.home.sdk.TuyaHomeSdk;
 import com.tuya.smart.home.sdk.bean.HomeBean;
 import com.tuya.smart.home.sdk.callback.ITuyaGetHomeListCallback;
 import com.tuya.smart.home.sdk.callback.ITuyaHomeResultCallback;
+import com.tuya.smart.sdk.api.INeedLoginListener;
 import com.tuya.smart.sdk.api.IResultCallback;
 
 import org.json.JSONArray;
@@ -61,6 +64,7 @@ public class Login extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.login);
+        setTuyaApplication();
         PROJECTS_SPINNER = findViewById(R.id.spinner);
         homes = findViewById(R.id.spinner2);
         pref = getSharedPreferences("MyProject", MODE_PRIVATE);
@@ -78,6 +82,7 @@ public class Login extends AppCompatActivity
                 Toast.makeText(act,"get projects failed",Toast.LENGTH_LONG).show();
             }
         });
+
     }
 
     private void getProjects(loginCallback callback) {
@@ -219,6 +224,7 @@ public class Login extends AppCompatActivity
                 Log.d("projects" , projects.get(i).projectName + " " +projectName);
                 if (projectName.equals(projects.get(i).projectName)) {
                     THE_PROJECT = projects.get(i);
+                    Log.d("projects" , THE_PROJECT.projectName +" here");
                     Device_ID = pref.getString("Device_Id", null);
                     MyApp.Device_Id = Device_ID;
                     Device_Name = pref.getString("Device_Name", null);
@@ -244,11 +250,11 @@ public class Login extends AppCompatActivity
         }
     }
 
-    void logInFunction(PROJECT p) {
-        TuyaHomeSdk.getUserInstance().loginWithEmail(COUNTRY_CODE,p.TuyaUser ,p.TuyaPassword , new ILoginCallback() {
+    void logInFunction(PROJECT project) {
+        TuyaHomeSdk.getUserInstance().loginWithEmail(COUNTRY_CODE,project.TuyaUser ,project.TuyaPassword , new ILoginCallback() {
             @Override
             public void onSuccess (User user) {
-                Log.d("tuyaLoginResp",user.getNickName());
+                Log.d("tuyaLoginResp",project.projectName);
                 MyApp.TuyaUser = user ;
                 TuyaHomeSdk.getHomeManagerInstance().queryHomeList(new ITuyaGetHomeListCallback() {
                     @Override
@@ -260,10 +266,25 @@ public class Login extends AppCompatActivity
                         MyApp.homeBeans = homeBeans ;
                         Homs = homeBeans ;
                         for(int i=0;i<Homs.size();i++) {
+                            Log.d("tuyaLoginResp",Homs.get(i).getName());
                             if (MyApp.THE_PROJECT.projectName.contains(Homs.get(i).getName())) {
                                 THEHOME = Homs.get(i) ;
                                 MyApp.HOME = Homs.get(i);
                             }
+//                            if (Homs.get(i).getName().equals("JedSample")) {
+//                                Log.d("tuyaLoginResp","found");
+//                                TuyaHomeSdk.newHomeInstance(Homs.get(i).getHomeId()).updateHome("P0003", 0, 0, "ksa", new IResultCallback() {
+//                                    @Override
+//                                    public void onError(String code, String error) {
+//                                        Log.d("tuyaLoginResp",error);
+//                                    }
+//
+//                                    @Override
+//                                    public void onSuccess() {
+//                                        Log.d("tuyaLoginResp","renamed");
+//                                    }
+//                                });
+//                            }
                         }
                         if (THEHOME != null ) {
                             Log.d("homeFind" , "found");
@@ -272,7 +293,7 @@ public class Login extends AppCompatActivity
                             act.finish();
                         }
                         else {
-                            TuyaHomeSdk.getHomeManagerInstance().createHome(p.projectName, 0, 0,"ksa",null, new ITuyaHomeResultCallback() {
+                            TuyaHomeSdk.getHomeManagerInstance().createHome(project.projectName, 0, 0,"ksa",null, new ITuyaHomeResultCallback() {
                                 @Override
                                 public void onSuccess(HomeBean bean) {
                                     // do something
@@ -346,6 +367,28 @@ public class Login extends AppCompatActivity
             }
         });
         Volley.newRequestQueue(act).add(re);
+    }
+
+    void setTuyaApplication() {
+        TuyaHomeSdk.setDebugMode(true);
+        try {
+            TuyaHomeSdk.init(MyApp.app);
+            TuyaHomeSdk.setOnNeedLoginListener(new INeedLoginListener() {
+                @Override
+                public void onNeedLogin(Context context) {
+                    Intent intent = new Intent(context, Tuya_Login.class);
+                    if (!(context instanceof Activity)) {
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    }
+                    startActivity(intent);
+                }
+            });
+        }
+        catch (Exception e ) {
+            Log.d("TuyaError" , e.getMessage());
+        }
+
+
     }
 }
 

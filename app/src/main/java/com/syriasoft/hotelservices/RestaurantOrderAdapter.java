@@ -1,6 +1,7 @@
 package com.syriasoft.hotelservices;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
 import android.text.Editable;
@@ -59,8 +60,8 @@ public class RestaurantOrderAdapter extends RecyclerView.Adapter<RestaurantOrder
                     Cart.adapter = new RestaurantOrderAdapter(list , c);
                     Cart.itemsGridView.setAdapter(Cart.adapter);
                     ToastMaker.MakeToast("Deleted", c);
-                    Cart.setTotal();
-                    Cart.refreshItems();
+                    Cart.setTotal((Activity)c);
+                    Cart.refreshItems((Activity)c);
                     if (FullscreenActivity.order.getItems().size() == 0 ) {
                         RestaurantActivity.items.setText("");
                     }
@@ -147,8 +148,8 @@ public class RestaurantOrderAdapter extends RecyclerView.Adapter<RestaurantOrder
                             {
                                 holder.quantity.setText(NEWQ.getText().toString());
                                 holder.total.setText(TOTAL.getText().toString());
-                                Cart.setTotal();
-                                Cart.refreshItems();
+                                Cart.setTotal((Activity)c);
+                                Cart.refreshItems((Activity)c);
                                 d.dismiss();
                             }
                         }

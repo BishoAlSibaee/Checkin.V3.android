@@ -34,6 +34,7 @@
 
         <activity
             android:name=".Login"
+            android:screenOrientation="landscape"
             android:theme="@style/Theme.AppCompat.NoActionBar"
             android:exported="true">
             <intent-filter>
@@ -54,11 +55,13 @@
         <activity
             android:name=".RoomManager"
             android:exported="true"
+            android:screenOrientation="landscape"
             android:theme="@style/Theme.AppCompat.NoActionBar" />
 
         <activity
             android:name=".Rooms"
             android:exported="true"
+            android:screenOrientation="landscape"
             android:theme="@style/Theme.AppCompat.NoActionBar" />
 
         <service

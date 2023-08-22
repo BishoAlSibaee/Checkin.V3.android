@@ -6,7 +6,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.widget.LinearLayout;
 
 import com.tuya.smart.sdk.bean.DeviceBean;
 
@@ -53,17 +52,17 @@ public class ScreenButtons extends AppCompatActivity {
         SwitchesRecycler.setNestedScrollingEnabled(false);
         CurrentAdapter = new ScreenButtons_Adapter(FullscreenActivity.lightsDB.getScreenButtons());
         CurrentButtonsRecycler.setAdapter(CurrentAdapter);
-        if (FullscreenActivity.THEROOM.getSWITCH1_B() != null ) {
-            Switches.add(FullscreenActivity.THEROOM.getSWITCH1_B());
+        if (FullscreenActivity.THE_ROOM.getSWITCH1_B() != null ) {
+            Switches.add(FullscreenActivity.THE_ROOM.getSWITCH1_B());
         }
-        if (FullscreenActivity.THEROOM.getSWITCH2_B() != null ) {
-            Switches.add(FullscreenActivity.THEROOM.getSWITCH2_B());
+        if (FullscreenActivity.THE_ROOM.getSWITCH2_B() != null ) {
+            Switches.add(FullscreenActivity.THE_ROOM.getSWITCH2_B());
         }
-        if (FullscreenActivity.THEROOM.getSWITCH3_B() != null ) {
-            Switches.add(FullscreenActivity.THEROOM.getSWITCH3_B());
+        if (FullscreenActivity.THE_ROOM.getSWITCH3_B() != null ) {
+            Switches.add(FullscreenActivity.THE_ROOM.getSWITCH3_B());
         }
-        if (FullscreenActivity.THEROOM.getSWITCH4_B() != null ) {
-            Switches.add(FullscreenActivity.THEROOM.getSWITCH4_B());
+        if (FullscreenActivity.THE_ROOM.getSWITCH4_B() != null ) {
+            Switches.add(FullscreenActivity.THE_ROOM.getSWITCH4_B());
         }
         SwitchesAdapter = new ScreenButtonsSwitches_Adapter(Switches);
         SwitchesRecycler.setAdapter(SwitchesAdapter);

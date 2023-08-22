@@ -47,8 +47,15 @@
     <string name="backHome">Home</string>
     <string name="back">Back</string>
 
-    <string name="gettingProjectVariables">جلب اعدادات النظام</string>
-
+    <string name="loggingInProject">Logging In Project</string>
+    <string name="gettingProjectVariables">Getting Project Settings</string>
+    <string name="sendSOSOrder">Send Emergency Order ..?</string>
+    <string name="gettingProjects">Getting Projects</string>
+    <string name="gettingBuildings">Getting Buildings</string>
+    <string name="gettingFloors">Getting Floors</string>
+    <string name="gettingRoomTypes">Getting Room Types</string>
+    <string name="gettingRooms">Getting Rooms</string>
+    <string name="gettingRoomDevices">Getting Room Devices</string>
 
 
     <string name="admin_receiver_label">Tesk Kiosk label</string>

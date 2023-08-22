@@ -203,7 +203,7 @@
             android:layout_gravity="center"
             android:background="@drawable/cart"
             android:gravity="center"
-            android:onClick="gToCarto" />
+            android:onClick="gToCart" />
 
         <TextView
             android:id="@+id/items_quantity_incart"

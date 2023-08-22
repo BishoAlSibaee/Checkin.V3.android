@@ -122,6 +122,7 @@ public class Login extends AppCompatActivity {
     }
 
     public void LogIn(View view) {
+
         if (THE_PROJECT != null ) {
             Log.d("projectIs" ,THE_PROJECT.projectName+" "+THE_PROJECT.TuyaUser+" "+THE_PROJECT.TuyaPassword);
             final lodingDialog loading = new lodingDialog(act);
@@ -148,6 +149,9 @@ public class Login extends AppCompatActivity {
                                 Device_Name = pref.getString("Device_Name", null);
                                 MyApp.Device_Name = Device_Name ;
                                 MyApp.my_token = resp.getString("token");
+                                THE_PROJECT = projects.get(PROJECTS_SPINNER.getSelectedItemPosition());
+                                MyApp.THE_PROJECT = projects.get(PROJECTS_SPINNER.getSelectedItemPosition());
+                                Log.d("GettingRooms","start "+MyApp.THE_PROJECT.url);
                                 logInFunction(THE_PROJECT);
                             }
                             else {

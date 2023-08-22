@@ -368,8 +368,9 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="WIFI DEVICES"
+                    android:textAlignment="center"
                     android:textColor="@color/lightGray"
-                    android:textSize="16sp"
+                    android:textSize="20sp"
                     android:textStyle="bold" />
 
                 <LinearLayout
@@ -393,7 +394,7 @@
                     style="@android:style/Widget.DeviceDefault.Button.Borderless"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:background="@color/dark_gray"
+                    android:background="@drawable/button_background"
                     android:drawableEnd="@android:drawable/ic_search_category_default"
                     android:paddingStart="5dp"
                     android:paddingEnd="5dp"
@@ -409,6 +410,7 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
+                    android:background="@color/trans"
                     android:orientation="horizontal">
 
                     <EditText
@@ -441,7 +443,7 @@
                         android:layout_height="wrap_content"
                         android:layout_gravity="center"
                         android:layout_weight="1"
-                        android:background="@color/dark_gray"
+                        android:background="@drawable/button_background"
                         android:drawableEnd="@android:drawable/ic_search_category_default"
                         android:onClick="searchWifiDevice"
                         android:text="Search Wifi Devices" />
@@ -451,13 +453,13 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:layout_marginTop="2dp"
+                    android:background="@color/trans"
                     android:orientation="horizontal">
 
                     <TextView
                         android:id="@+id/theFoundDevice"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                        android:layout_height="match_parent"
                         android:layout_gravity="center"
                         android:layout_weight="1"
                         android:gravity="center"
@@ -468,7 +470,7 @@
                     <Spinner
                         android:id="@+id/deviceNames_spinner"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                        android:layout_height="match_parent"
                         android:layout_gravity="center"
                         android:layout_weight="1" />
 
@@ -479,7 +481,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginEnd="2dp"
                         android:layout_weight="1"
-                        android:background="@color/dark_gray"
+                        android:background="@drawable/button_background"
                         android:onClick="renameDevice"
                         android:text="Rename Device" />
 
@@ -489,7 +491,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:background="@color/dark_gray"
+                        android:background="@drawable/button_background"
                         android:onClick="saveDevice"
                         android:text="Save Device" />
 
@@ -503,7 +505,6 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="10dp"
                 android:layout_marginEnd="10dp"
-                android:layout_marginBottom="10dp"
                 android:background="@color/teal_700"
                 android:orientation="vertical"
                 android:padding="10dp">
@@ -513,14 +514,18 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="ZIGBEE DEVICES"
+                    android:textAlignment="center"
                     android:textColor="@color/lightGray"
-                    android:textSize="16sp"
+                    android:textSize="20sp"
                     android:textStyle="bold" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal">
+                    android:layout_marginTop="5dp"
+                    android:background="@color/trans"
+                    android:orientation="horizontal"
+                    android:padding="5dp">
 
                     <Button
                         android:id="@+id/button8"
@@ -528,15 +533,16 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:background="@color/dark_gray"
+                        android:background="@drawable/button_background"
                         android:drawableEnd="@android:drawable/ic_search_category_default"
                         android:onClick="searchWireZBGateway"
-                        android:text="Scan Wired ZBGateway" />
+                        android:text="Scan Wired ZBGateway"
+                        android:textSize="16sp" />
 
                     <TextView
                         android:id="@+id/wire_zbgate_found"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                        android:layout_height="match_parent"
                         android:layout_gravity="center"
                         android:layout_weight="1"
                         android:gravity="center"
@@ -547,7 +553,7 @@
                     <TextView
                         android:id="@+id/wire_zbgateway_newstaticName"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                        android:layout_height="match_parent"
                         android:layout_gravity="center"
                         android:layout_weight="1"
                         android:gravity="center"
@@ -562,7 +568,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginEnd="2dp"
                         android:layout_weight="1"
-                        android:background="@color/dark_gray"
+                        android:background="@drawable/button_background"
                         android:onClick="renameWiredGateway"
                         android:text="Rename Gateway" />
 
@@ -572,7 +578,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:background="@color/dark_gray"
+                        android:background="@drawable/button_background"
                         android:onClick="saveWiredGateway"
                         android:text="Save Gateway" />
                 </LinearLayout>
@@ -580,23 +586,27 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:orientation="horizontal">
+                    android:layout_marginTop="5dp"
+                    android:background="@color/trans"
+                    android:orientation="horizontal"
+                    android:padding="5dp">
 
                     <Button
                         android:id="@+id/button7"
                         style="@android:style/Widget.Holo.Button.Borderless"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:background="@color/dark_gray"
+                        android:layout_weight="1"
+                        android:background="@drawable/button_background"
                         android:drawableEnd="@android:drawable/ic_search_category_default"
                         android:onClick="searchZbeeDevice"
-                        android:text="Search ZigBee Device" />
+                        android:text="Search ZigBee Device"
+                        android:textSize="16sp" />
 
                     <TextView
                         android:id="@+id/theFoundDeviceZbee"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                        android:layout_height="match_parent"
                         android:layout_gravity="center"
                         android:layout_weight="1"
                         android:gravity="center"
@@ -607,7 +617,7 @@
                     <Spinner
                         android:id="@+id/deviceNames_spinnerZbee"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                        android:layout_height="match_parent"
                         android:layout_gravity="center"
                         android:layout_weight="1" />
 
@@ -618,7 +628,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginEnd="2dp"
                         android:layout_weight="1"
-                        android:background="@color/dark_gray"
+                        android:background="@drawable/button_background"
                         android:onClick="renameDeviceZ"
                         android:text="Rename Device" />
 
@@ -628,7 +638,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:background="@color/dark_gray"
+                        android:background="@drawable/button_background"
                         android:onClick="saveDeviceZ"
                         android:text="Save Device" />
 
@@ -651,9 +661,11 @@
                     android:id="@+id/textView2"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Locks"
+                    android:text="LOCKS"
+                    android:textAlignment="center"
                     android:textColor="@color/lightGray"
-                    android:textSize="24sp" />
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -666,6 +678,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
+                        android:background="@drawable/button_background"
                         android:drawableEnd="@android:drawable/ic_search_category_default"
                         android:onClick="scanLocks"
                         android:text="Scan Lock " />
@@ -673,7 +686,7 @@
                     <TextView
                         android:id="@+id/foundlock"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                        android:layout_height="match_parent"
                         android:layout_gravity="center"
                         android:layout_weight="1"
                         android:gravity="center"
@@ -684,7 +697,7 @@
                     <TextView
                         android:id="@+id/foundLockNewName"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                        android:layout_height="match_parent"
                         android:layout_gravity="center"
                         android:layout_weight="1"
                         android:gravity="center"
@@ -698,6 +711,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
+                        android:background="@drawable/button_background"
                         android:onClick="renameLock"
                         android:text="Rename Lock" />
 
@@ -707,6 +721,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
+                        android:background="@drawable/button_background"
                         android:onClick="saveLock"
                         android:text="Save Lock" />
                 </LinearLayout>

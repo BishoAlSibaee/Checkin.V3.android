@@ -1,7 +1,6 @@
 package com.syriasoft.hotelservices;
 
 import android.annotation.SuppressLint;
-import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -51,7 +50,7 @@ public class RESTAURANTS_ADAPTER extends RecyclerView.Adapter<RESTAURANTS_ADAPTE
                 Log.d("restaurantsAre", list.get(position).Name+" " );
                 RESTAURANTS.H.removeCallbacks(RESTAURANTS.backHomeThread);
                 RESTAURANTS.x=0;
-                Intent i = new Intent(holder.itemView.getContext() , RestaurantMenues.class ) ;
+                Intent i = new Intent(holder.itemView.getContext() , RestaurantMenus.class ) ;
                 i.putExtra("id",list.get(position).id);
                 i.putExtra( "Hotel" ,list.get(position).Hotel);
                 i.putExtra( "TypeId",list.get(position).TypeId);

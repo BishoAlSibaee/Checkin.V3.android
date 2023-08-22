@@ -61,17 +61,17 @@ public class MasterOff extends AppCompatActivity {
             CurrentAdapter = new Masteroff_Adapter(FullscreenActivity.lightsDB.getMasterOffButtons());
             CurrentMasteroff.setAdapter(CurrentAdapter);
         }
-        if (FullscreenActivity.THEROOM.getSWITCH1_B() != null ) {
-            Switches.add(FullscreenActivity.THEROOM.getSWITCH1_B());
+        if (FullscreenActivity.THE_ROOM.getSWITCH1_B() != null ) {
+            Switches.add(FullscreenActivity.THE_ROOM.getSWITCH1_B());
         }
-        if (FullscreenActivity.THEROOM.getSWITCH2_B() != null) {
-            Switches.add(FullscreenActivity.THEROOM.getSWITCH2_B());
+        if (FullscreenActivity.THE_ROOM.getSWITCH2_B() != null) {
+            Switches.add(FullscreenActivity.THE_ROOM.getSWITCH2_B());
         }
-        if (FullscreenActivity.THEROOM.getSWITCH3_B() != null) {
-            Switches.add(FullscreenActivity.THEROOM.getSWITCH3_B());
+        if (FullscreenActivity.THE_ROOM.getSWITCH3_B() != null) {
+            Switches.add(FullscreenActivity.THE_ROOM.getSWITCH3_B());
         }
-        if (FullscreenActivity.THEROOM.getSWITCH4_B() != null) {
-            Switches.add(FullscreenActivity.THEROOM.getSWITCH4_B());
+        if (FullscreenActivity.THE_ROOM.getSWITCH4_B() != null) {
+            Switches.add(FullscreenActivity.THE_ROOM.getSWITCH4_B());
         }
         Fadapter = new MasterOffSwitch_Adapter(Switches);
         SwitchesRecycler.setAdapter(Fadapter);

@@ -10,8 +10,6 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.LinearLayout;
 
-import com.tuya.smart.android.device.api.ITuyaDeviceMultiControl;
-import com.tuya.smart.home.sdk.TuyaHomeSdk;
 import com.tuya.smart.sdk.bean.DeviceBean;
 
 import java.util.ArrayList;
@@ -55,21 +53,21 @@ public class LightingDoubleControl extends AppCompatActivity {
     }
 
     void setDevicesButtons() {
-        if (FullscreenActivity.THEROOM.getSWITCH1_B() != null ) {
-            FirstDeviceList.add(FullscreenActivity.THEROOM.getSWITCH1_B());
-            SecondDeviceList.add(FullscreenActivity.THEROOM.getSWITCH1_B());
+        if (FullscreenActivity.THE_ROOM.getSWITCH1_B() != null ) {
+            FirstDeviceList.add(FullscreenActivity.THE_ROOM.getSWITCH1_B());
+            SecondDeviceList.add(FullscreenActivity.THE_ROOM.getSWITCH1_B());
         }
-        if (FullscreenActivity.THEROOM.getSWITCH2_B() != null) {
-            FirstDeviceList.add(FullscreenActivity.THEROOM.getSWITCH2_B());
-            SecondDeviceList.add(FullscreenActivity.THEROOM.getSWITCH2_B());
+        if (FullscreenActivity.THE_ROOM.getSWITCH2_B() != null) {
+            FirstDeviceList.add(FullscreenActivity.THE_ROOM.getSWITCH2_B());
+            SecondDeviceList.add(FullscreenActivity.THE_ROOM.getSWITCH2_B());
         }
-        if (FullscreenActivity.THEROOM.getSWITCH3_B() != null) {
-            FirstDeviceList.add(FullscreenActivity.THEROOM.getSWITCH3_B());
-            SecondDeviceList.add(FullscreenActivity.THEROOM.getSWITCH3_B());
+        if (FullscreenActivity.THE_ROOM.getSWITCH3_B() != null) {
+            FirstDeviceList.add(FullscreenActivity.THE_ROOM.getSWITCH3_B());
+            SecondDeviceList.add(FullscreenActivity.THE_ROOM.getSWITCH3_B());
         }
-        if (FullscreenActivity.THEROOM.getSWITCH4_B() != null) {
-            FirstDeviceList.add(FullscreenActivity.THEROOM.getSWITCH4_B());
-            SecondDeviceList.add(FullscreenActivity.THEROOM.getSWITCH4_B());
+        if (FullscreenActivity.THE_ROOM.getSWITCH4_B() != null) {
+            FirstDeviceList.add(FullscreenActivity.THE_ROOM.getSWITCH4_B());
+            SecondDeviceList.add(FullscreenActivity.THE_ROOM.getSWITCH4_B());
         }
         Fadapter = new DoubleControlFirst_Adapter(FirstDeviceList);
         FirstDevicesRec.setAdapter(Fadapter);

@@ -99,23 +99,22 @@ public class Rooms extends AppCompatActivity
     public static final String FCM_MESSAGE_URL = "https://fcm.googleapis.com/fcm/send";
     final static private String serverKey = "key=" + "AAAAQmygXvw:APA91bFt5CiONiZPDDj4_kz9hmKXlL1cjfTa_ZNGfobMPmt0gamhzEoN2NHiOxypCDr_r5yfpLvJy-bQSgrykXvaqKkThAniTr-0hpXPBrXm7qWThMmkiaN9o6qaUqfIUwStMMuNedTw";
     final static private String contentType = "application/json";
-    private TextView hotelName ;
-    private ListView devicesListView , roomsListView ;
+    static ListView devicesListView , roomsListView ;
     static List<ROOM> ROOMS;
-    private final String getRoomsUrl = MyApp.THE_PROJECT.url + "roomsManagement/getRooms" ;
+    static String getRoomsUrl ;
     static Activity act ;
     static ArrayList<LockObj> Locks ;
-    public AccountInfo accountInfo;
+    static AccountInfo accountInfo;
     public static AccountInfo acc;
-    private List<DeviceBean> Devices ;
-    private FirebaseDatabase database ;
+    static List<DeviceBean> Devices ;
+    static FirebaseDatabase database ;
     private boolean[] CLEANUP , LAUNDRY , DND , CHECKOUT ;
     private Runnable[] TempRunnableList, DoorRunnable ;
     private Handler[] DoorsHandlers,AcHandlers;
     private boolean[] AC_SENARIO_Status , DOOR_STATUS;
     private long[] AC_Start, AC_Period, Door_Start, Door_Period;
     private String[] Client_Temp, TempSetPoint ;
-    private Rooms_Adapter_Base adapter ;
+    static Rooms_Adapter_Base adapter ;
     ITuyaDeviceMultiControl iTuyaDeviceMultiControl ;
     static int checkInModeTime = 0 ;
     static int checkOutModeTime = 0 ;
@@ -126,8 +125,8 @@ public class Rooms extends AppCompatActivity
     private DatabaseReference ServiceUsers ;
     static RequestQueue MessagesQueue;
     static boolean CHANGE_STATUS = false ;
-    lodingDialog loading;
-    RequestQueue REQ , REQ1 , CLEANUP_QUEUE , LAUNDRY_QUEUE , CHECKOUT_QUEUE ,DND_Queue ;
+    static lodingDialog loading;
+    static RequestQueue REQ , REQ1 , CLEANUP_QUEUE , LAUNDRY_QUEUE , CHECKOUT_QUEUE ,DND_Queue,FirebaseTokenRegister ;
     EditText searchText ;
     Button searchBtn ;
     ListView gatewaysListView ;
@@ -135,10 +134,9 @@ public class Rooms extends AppCompatActivity
     private ConfigureGatewayInfo configureGatewayInfo;
     static List<SceneBean> SCENES ;
     List<String> IMAGES ;
-    DatabaseReference ServerDevice , ProjectVariablesRef , DevicesControls , ProjectDevices  ;
+    static DatabaseReference ServerDevice , ProjectVariablesRef , DevicesControls , ProjectDevices  ;
     int addCleanupCounter=1,cancelOrderCounter=1,addLaundryCounter =1,addCheckoutCounter=1,addDNDCounter=1,cancelDNDCounter = 1 ;
-    String PowerUnInstalled,PowerInstalled,GatewayUnInstalled,GatewayInstalled,MotionUnInstalled,MotionInstalled,DoorUnInstalled,DoorInstalled,ServiceUnInstalled,ServiceInstalled,S1UnInstalled,S1Installed,S2UnInstalled,S2Installed,S3UnInstalled,S3Installed,S4UnInstalled,S4Installed,ACUnInstalled,ACInstalled,CurtainUnInstalled,CurtainInstalled,LockUnInstalled,LockInstalled;
-    private RequestQueue FirebaseTokenRegister ;
+    static String PowerUnInstalled,PowerInstalled,GatewayUnInstalled,GatewayInstalled,MotionUnInstalled,MotionInstalled,DoorUnInstalled,DoorInstalled,ServiceUnInstalled,ServiceInstalled,S1UnInstalled,S1Installed,S2UnInstalled,S2Installed,S3UnInstalled,S3Installed,S4UnInstalled,S4Installed,ACUnInstalled,ACInstalled,CurtainUnInstalled,CurtainInstalled,LockUnInstalled,LockInstalled;
 
 
 
@@ -148,33 +146,8 @@ public class Rooms extends AppCompatActivity
         setContentView(R.layout.rooms);
         setActivity();
         getProjectVariables();
-        getServiceUsersFromFirebase();
         hideSystemUI();
-        FirebaseMessaging.getInstance().getToken().addOnCompleteListener(new OnCompleteListener<String>() {
-            @Override
-            public void onComplete(@NonNull Task<String> task) {
-                if (!task.isSuccessful()) {
-                    return;
-                }
-                String token = task.getResult();
-                Log.e("tokeneee" , token);
-                sendRegistrationToServer(token);
-            }
-        });
-        Timer t = new Timer() ;
-        t.scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {FirebaseMessaging.getInstance().getToken().addOnCompleteListener(new OnCompleteListener<String>() {
-                    @Override
-                    public void onComplete(@NonNull Task<String> task) {
-                        if (!task.isSuccessful()) {
-                            return;
-                        }
-                        String token = task.getResult();
-                        sendRegistrationToServer(token);
-                    }
-                });
-            }},1000*60*15,1000*60*15);
+        Log.d("GettingRooms",getRoomsUrl);
     }
 
     @Override
@@ -202,6 +175,7 @@ public class Rooms extends AppCompatActivity
             lockDB.insertLock("off");
         }
         SCENES = new ArrayList<>();
+        getRoomsUrl = MyApp.THE_PROJECT.url + "roomsManagement/getRooms" ;
         configureGatewayInfo = new ConfigureGatewayInfo();
         gatewaysListView = findViewById(R.id.scanLockGatewayList);
         searchText = findViewById(R.id.search_text);
@@ -257,7 +231,7 @@ public class Rooms extends AppCompatActivity
         mainLogo = findViewById(R.id.logoLyout) ;
         resetDevices = findViewById(R.id.button2);
         btnsLayout = findViewById(R.id.btnsLayout);
-        hotelName = findViewById(R.id.hotelName);
+        TextView hotelName = findViewById(R.id.hotelName);
         hotelName.setText(MyApp.THE_PROJECT.projectName);
         ROOMS = new ArrayList<>();
         Locks = new ArrayList<>();
@@ -366,7 +340,6 @@ public class Rooms extends AppCompatActivity
             btnsLayout.setVisibility(View.GONE);
             mainLogo.setVisibility(View.VISIBLE);
         }
-        login();
     }
 
     private void getProjectVariables() {
@@ -375,6 +348,7 @@ public class Rooms extends AppCompatActivity
         StringRequest re = new StringRequest(Request.Method.GET, url, new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
+                Log.d("projectvariables" , response);
                 try {
                     JSONObject row = new JSONObject(response);
                     JSONObject ServiceSwitchButtons = new JSONObject(row.getString("ServiceSwitchButtons"));
@@ -402,11 +376,12 @@ public class Rooms extends AppCompatActivity
         Volley.newRequestQueue(act).add(re);
     }
 
-    private void getRooms() {
+    public static void getRooms() {
+        Log.d("GettingRooms","start "+getRoomsUrl);
         StringRequest re = new StringRequest(Request.Method.GET, getRoomsUrl, new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
-                Log.d("roomsAre" ,  getRoomsUrl+" "+MyApp.Device_Id+" "+response);
+                Log.d("GettingRooms",response);
                 if (response.equals("0")) {
                     loading.stop();
                     new MessageDialog("no rooms detected ","No Rooms",act);
@@ -478,6 +453,7 @@ public class Rooms extends AppCompatActivity
                             room.setFireRoom(database.getReference(MyApp.THE_PROJECT.projectName+"/B"+room.Building+"/F"+room.Floor+"/R"+room.RoomNumber));
                             ROOMS.add(room);
                         }
+                    Log.d("GettingRooms",ROOMS.size()+"");
                         loading.stop();
                 }
                 catch (JSONException e) {
@@ -486,8 +462,10 @@ public class Rooms extends AppCompatActivity
                 }
                 ROOM.sortRoomsByNumber(ROOMS);
                 MyApp.ROOMS = ROOMS ;
+                TextView hotelName = act.findViewById(R.id.hotelName);
                 hotelName.setText(MyApp.THE_PROJECT.projectName+" "+ROOMS.size() + " room");
-                defineVariables();
+                getTuyaDevices() ;
+                loginTTLock();
             }
         }, new Response.ErrorListener() {
             @Override
@@ -497,6 +475,24 @@ public class Rooms extends AppCompatActivity
             }
         });
         Volley.newRequestQueue(act).add(re);
+    }
+
+    public static void refreshSystem() {
+        getRooms();
+        ProjectVariablesRef.child("RefreshSystemTime").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (snapshot.getValue() != null) {
+                    ProjectVariablesRef.child("RefreshSystemTime").setValue(10);
+                    ProjectVariablesRef.child("RefreshSystemTime").setValue(snapshot.getValue());
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
     }
 
     void defineVariables() {
@@ -586,7 +582,7 @@ public class Rooms extends AppCompatActivity
         loginTTLock();
     }
 
-    private void loginTTLock() {
+    private static void loginTTLock() {
         ApiService apiService = RetrofitAPIManager.provideClientApi();
         String pass = MyApp.THE_PROJECT.LockPassword;
         pass = DigitUtil.getMD5(pass);
@@ -620,8 +616,8 @@ public class Rooms extends AppCompatActivity
         });
     }
 
-    private void getLocks() {
-        final Dialog d = new Dialog(this);
+    private static void getLocks() {
+        final Dialog d = new Dialog(act);
         d.setContentView(R.layout.loading_layout);
         d.setCancelable(false);
         d.show();
@@ -652,7 +648,7 @@ public class Rooms extends AppCompatActivity
         });
     }
 
-    void getTuyaDevices() {
+    static void getTuyaDevices() {
         TuyaHomeSdk.newHomeInstance(MyApp.HOME.getHomeId()).getHomeDetail(new ITuyaHomeResultCallback() {
             @Override
             public void onSuccess(HomeBean homeBean) {
@@ -673,17 +669,17 @@ public class Rooms extends AppCompatActivity
                             ROOMS.get(i).setPOWER_B(power);
                             ROOMS.get(i).setPOWER(TuyaHomeSdk.newDeviceInstance(ROOMS.get(i).getPOWER_B().devId));
                             ROOMS.get(i).PowerSwitch = 1 ;
-                            if (power.dps.get("1") != null && power.dps.get("2") != null) {
-                                if (!Boolean.parseBoolean(power.dps.get("1").toString()) && !Boolean.parseBoolean(power.dps.get("2").toString())) {
-                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getPOWER_B().name).child("1").setValue(0);
-                                }
-                                else if (Boolean.parseBoolean(power.dps.get("1").toString()) && !Boolean.parseBoolean(power.dps.get("2").toString())) {
-                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getPOWER_B().name).child("1").setValue(1);
-                                }
-                                else if (Boolean.parseBoolean(power.dps.get("1").toString()) && Boolean.parseBoolean(power.dps.get("2").toString())) {
-                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getPOWER_B().name).child("1").setValue(2);
-                                }
-                            }
+//                            if (power.dps.get("1") != null && power.dps.get("2") != null) {
+//                                if (!Boolean.parseBoolean(power.dps.get("1").toString()) && !Boolean.parseBoolean(power.dps.get("2").toString())) {
+//                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getPOWER_B().name).child("1").setValue(0);
+//                                }
+//                                else if (Boolean.parseBoolean(power.dps.get("1").toString()) && !Boolean.parseBoolean(power.dps.get("2").toString())) {
+//                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getPOWER_B().name).child("1").setValue(1);
+//                                }
+//                                else if (Boolean.parseBoolean(power.dps.get("1").toString()) && Boolean.parseBoolean(power.dps.get("2").toString())) {
+//                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getPOWER_B().name).child("1").setValue(2);
+//                                }
+//                            }
                         }
                         DeviceBean ac = searchRoomDevice(Devices,ROOMS.get(i),"AC") ;
                         if (ac == null) {
@@ -694,56 +690,56 @@ public class Rooms extends AppCompatActivity
                             ROOMS.get(i).setAC(TuyaHomeSdk.newDeviceInstance(ROOMS.get(i).getAC_B().devId));
                             ROOMS.get(i).Thermostat = 1 ;
                             int finalI = i;
-                            TuyaHomeSdk.getSceneManagerInstance().getDeviceConditionOperationList(ac.devId, new ITuyaResultCallback<List<TaskListBean>>() {
-                                @Override
-                                public void onSuccess(List<TaskListBean> result) {
-                                    long SetId = 0 ;
-                                    TaskListBean SetTask = null ;
-                                    long PowerId = 0 ;
-                                    TaskListBean PowerTask ;
-                                    long CurrentId = 0 ;
-                                    TaskListBean CurrentTask ;
-                                    long FanId = 0; ;
-                                    TaskListBean FanTask ;
-                                    for (int i=0 ; i<result.size();i++) {
-                                        if (result.get(i).getName().contains("Set temp")) {
-                                            SetId = result.get(i).getDpId() ;
-                                            SetTask = result.get(i) ;
-                                        }
-                                        if (result.get(i).getName().contains("Power")) {
-                                            PowerId = result.get(i).getDpId() ;
-                                            PowerTask = result.get(i) ;
-                                        }
-                                        if (result.get(i).getName().contains("Current temp")) {
-                                            CurrentId = result.get(i).getDpId() ;
-                                            CurrentTask = result.get(i) ;
-                                        }
-                                        if (result.get(i).getName().contains("Fan")) {
-                                            FanId = result.get(i).getDpId() ;
-                                            FanTask = result.get(i) ;
-                                        }
-                                    }
-                                    if (PowerId != 0) {
-                                        if (Boolean.parseBoolean(ac.dps.get(String.valueOf(PowerId)).toString())) {
-                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getAC_B().name).child(String.valueOf(PowerId)).setValue(3);
-                                        }
-                                        else {
-                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getAC_B().name).child(String.valueOf(PowerId)).setValue(0);
-                                        }
-                                    }
-                                    if (SetId != 0) {
-                                        ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getAC_B().name).child(String.valueOf(SetId)).setValue(Integer.parseInt(ac.dps.get(String.valueOf(SetId)).toString()));
-                                    }
-                                    if (FanId != 0) {
-                                        ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getAC_B().name).child(String.valueOf(FanId)).setValue(ac.dps.get(String.valueOf(FanId)).toString());
-                                    }
-                                }
-
-                                @Override
-                                public void onError(String errorCode, String errorMessage) {
-
-                                }
-                            });
+//                            TuyaHomeSdk.getSceneManagerInstance().getDeviceConditionOperationList(ac.devId, new ITuyaResultCallback<List<TaskListBean>>() {
+//                                @Override
+//                                public void onSuccess(List<TaskListBean> result) {
+//                                    long SetId = 0 ;
+//                                    TaskListBean SetTask = null ;
+//                                    long PowerId = 0 ;
+//                                    TaskListBean PowerTask ;
+//                                    long CurrentId = 0 ;
+//                                    TaskListBean CurrentTask ;
+//                                    long FanId = 0; ;
+//                                    TaskListBean FanTask ;
+//                                    for (int i=0 ; i<result.size();i++) {
+//                                        if (result.get(i).getName().contains("Set temp")) {
+//                                            SetId = result.get(i).getDpId() ;
+//                                            SetTask = result.get(i) ;
+//                                        }
+//                                        if (result.get(i).getName().contains("Power")) {
+//                                            PowerId = result.get(i).getDpId() ;
+//                                            PowerTask = result.get(i) ;
+//                                        }
+//                                        if (result.get(i).getName().contains("Current temp")) {
+//                                            CurrentId = result.get(i).getDpId() ;
+//                                            CurrentTask = result.get(i) ;
+//                                        }
+//                                        if (result.get(i).getName().contains("Fan")) {
+//                                            FanId = result.get(i).getDpId() ;
+//                                            FanTask = result.get(i) ;
+//                                        }
+//                                    }
+//                                    if (PowerId != 0) {
+//                                        if (Boolean.parseBoolean(ac.dps.get(String.valueOf(PowerId)).toString())) {
+//                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getAC_B().name).child(String.valueOf(PowerId)).setValue(3);
+//                                        }
+//                                        else {
+//                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getAC_B().name).child(String.valueOf(PowerId)).setValue(0);
+//                                        }
+//                                    }
+//                                    if (SetId != 0) {
+//                                        ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getAC_B().name).child(String.valueOf(SetId)).setValue(Integer.parseInt(ac.dps.get(String.valueOf(SetId)).toString()));
+//                                    }
+//                                    if (FanId != 0) {
+//                                        ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getAC_B().name).child(String.valueOf(FanId)).setValue(ac.dps.get(String.valueOf(FanId)).toString());
+//                                    }
+//                                }
+//
+//                                @Override
+//                                public void onError(String errorCode, String errorMessage) {
+//
+//                                }
+//                            });
                         }
                         DeviceBean ZGatway = searchRoomDevice(Devices,ROOMS.get(i),"ZGatway") ;
                         if (ZGatway == null) {
@@ -804,38 +800,38 @@ public class Rooms extends AppCompatActivity
                             ROOMS.get(i).setSWITCH1_B(Switch1);
                             ROOMS.get(i).setSWITCH1(TuyaHomeSdk.newDeviceInstance(ROOMS.get(i).getSWITCH1_B().devId));
                             ROOMS.get(i).Switch1 = 1 ;
-                            if (Switch1.dps.get("1") != null) {
-                                if (Boolean.parseBoolean(Switch1.dps.get("1").toString())) {
-                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH1_B().name).child("1").setValue(3);
-                                }
-                                else {
-                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH1_B().name).child("1").setValue(0);
-                                }
-                            }
-                            if (Switch1.dps.get("2") != null) {
-                                if (Boolean.parseBoolean(Switch1.dps.get("2").toString())) {
-                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH1_B().name).child("2").setValue(3);
-                                }
-                                else {
-                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH1_B().name).child("2").setValue(0);
-                                }
-                            }
-                            if (Switch1.dps.get("3") != null) {
-                                if (Boolean.parseBoolean(Switch1.dps.get("3").toString())) {
-                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH1_B().name).child("3").setValue(3);
-                                }
-                                else {
-                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH1_B().name).child("3").setValue(0);
-                                }
-                            }
-                            if (Switch1.dps.get("4") != null) {
-                                if (Boolean.parseBoolean(Switch1.dps.get("3").toString())) {
-                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH1_B().name).child("4").setValue(3);
-                                }
-                                else {
-                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH1_B().name).child("4").setValue(0);
-                                }
-                            }
+//                            if (Switch1.dps.get("1") != null) {
+//                                if (Boolean.parseBoolean(Switch1.dps.get("1").toString())) {
+//                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH1_B().name).child("1").setValue(3);
+//                                }
+//                                else {
+//                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH1_B().name).child("1").setValue(0);
+//                                }
+//                            }
+//                            if (Switch1.dps.get("2") != null) {
+//                                if (Boolean.parseBoolean(Switch1.dps.get("2").toString())) {
+//                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH1_B().name).child("2").setValue(3);
+//                                }
+//                                else {
+//                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH1_B().name).child("2").setValue(0);
+//                                }
+//                            }
+//                            if (Switch1.dps.get("3") != null) {
+//                                if (Boolean.parseBoolean(Switch1.dps.get("3").toString())) {
+//                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH1_B().name).child("3").setValue(3);
+//                                }
+//                                else {
+//                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH1_B().name).child("3").setValue(0);
+//                                }
+//                            }
+//                            if (Switch1.dps.get("4") != null) {
+//                                if (Boolean.parseBoolean(Switch1.dps.get("3").toString())) {
+//                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH1_B().name).child("4").setValue(3);
+//                                }
+//                                else {
+//                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH1_B().name).child("4").setValue(0);
+//                                }
+//                            }
                         }
                         DeviceBean Switch2 = searchRoomDevice(Devices,ROOMS.get(i),"Switch2") ;
                         if (Switch2 == null) {
@@ -845,38 +841,38 @@ public class Rooms extends AppCompatActivity
                             ROOMS.get(i).setSWITCH2_B(Switch2);
                             ROOMS.get(i).setSWITCH2(TuyaHomeSdk.newDeviceInstance(ROOMS.get(i).getSWITCH2_B().devId));
                             ROOMS.get(i).Switch2 = 1 ;
-                            if (Switch2.dps.get("1") != null) {
-                                if (Boolean.parseBoolean(Switch2.dps.get("1").toString())) {
-                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch2.name).child("1").setValue(3);
-                                }
-                                else {
-                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch2.name).child("1").setValue(0);
-                                }
-                            }
-                            if (Switch2.dps.get("2") != null) {
-                                if (Boolean.parseBoolean(Switch2.dps.get("2").toString())) {
-                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch2.name).child("2").setValue(3);
-                                }
-                                else {
-                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch2.name).child("2").setValue(0);
-                                }
-                            }
-                            if (Switch2.dps.get("3") != null) {
-                                if (Boolean.parseBoolean(Switch2.dps.get("3").toString())) {
-                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch2.name).child("3").setValue(3);
-                                }
-                                else {
-                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch2.name).child("3").setValue(0);
-                                }
-                            }
-                            if (Switch2.dps.get("4") != null) {
-                                if (Boolean.parseBoolean(Switch2.dps.get("3").toString())) {
-                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch2.name).child("4").setValue(3);
-                                }
-                                else {
-                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch2.name).child("4").setValue(0);
-                                }
-                            }
+//                            if (Switch2.dps.get("1") != null) {
+//                                if (Boolean.parseBoolean(Switch2.dps.get("1").toString())) {
+//                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch2.name).child("1").setValue(3);
+//                                }
+//                                else {
+//                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch2.name).child("1").setValue(0);
+//                                }
+//                            }
+//                            if (Switch2.dps.get("2") != null) {
+//                                if (Boolean.parseBoolean(Switch2.dps.get("2").toString())) {
+//                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch2.name).child("2").setValue(3);
+//                                }
+//                                else {
+//                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch2.name).child("2").setValue(0);
+//                                }
+//                            }
+//                            if (Switch2.dps.get("3") != null) {
+//                                if (Boolean.parseBoolean(Switch2.dps.get("3").toString())) {
+//                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch2.name).child("3").setValue(3);
+//                                }
+//                                else {
+//                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch2.name).child("3").setValue(0);
+//                                }
+//                            }
+//                            if (Switch2.dps.get("4") != null) {
+//                                if (Boolean.parseBoolean(Switch2.dps.get("3").toString())) {
+//                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch2.name).child("4").setValue(3);
+//                                }
+//                                else {
+//                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch2.name).child("4").setValue(0);
+//                                }
+//                            }
                         }
                         DeviceBean Switch3 = searchRoomDevice(Devices,ROOMS.get(i),"Switch3") ;
                         if (Switch3 == null) {
@@ -886,38 +882,38 @@ public class Rooms extends AppCompatActivity
                             ROOMS.get(i).setSWITCH3_B(Switch3);
                             ROOMS.get(i).setSWITCH3(TuyaHomeSdk.newDeviceInstance(ROOMS.get(i).getSWITCH3_B().devId));
                             ROOMS.get(i).Switch3 = 1 ;
-                            if (Switch3.dps.get("1") != null) {
-                                if (Boolean.parseBoolean(Switch3.dps.get("1").toString())) {
-                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch3.name).child("1").setValue(3);
-                                }
-                                else {
-                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch3.name).child("1").setValue(0);
-                                }
-                            }
-                            if (Switch3.dps.get("2") != null) {
-                                if (Boolean.parseBoolean(Switch3.dps.get("2").toString())) {
-                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch3.name).child("2").setValue(3);
-                                }
-                                else {
-                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch3.name).child("2").setValue(0);
-                                }
-                            }
-                            if (Switch3.dps.get("3") != null) {
-                                if (Boolean.parseBoolean(Switch3.dps.get("3").toString())) {
-                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch3.name).child("3").setValue(3);
-                                }
-                                else {
-                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch3.name).child("3").setValue(0);
-                                }
-                            }
-                            if (Switch3.dps.get("4") != null) {
-                                if (Boolean.parseBoolean(Switch3.dps.get("3").toString())) {
-                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch3.name).child("4").setValue(3);
-                                }
-                                else {
-                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch3.name).child("4").setValue(0);
-                                }
-                            }
+//                            if (Switch3.dps.get("1") != null) {
+//                                if (Boolean.parseBoolean(Switch3.dps.get("1").toString())) {
+//                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch3.name).child("1").setValue(3);
+//                                }
+//                                else {
+//                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch3.name).child("1").setValue(0);
+//                                }
+//                            }
+//                            if (Switch3.dps.get("2") != null) {
+//                                if (Boolean.parseBoolean(Switch3.dps.get("2").toString())) {
+//                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch3.name).child("2").setValue(3);
+//                                }
+//                                else {
+//                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch3.name).child("2").setValue(0);
+//                                }
+//                            }
+//                            if (Switch3.dps.get("3") != null) {
+//                                if (Boolean.parseBoolean(Switch3.dps.get("3").toString())) {
+//                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch3.name).child("3").setValue(3);
+//                                }
+//                                else {
+//                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch3.name).child("3").setValue(0);
+//                                }
+//                            }
+//                            if (Switch3.dps.get("4") != null) {
+//                                if (Boolean.parseBoolean(Switch3.dps.get("3").toString())) {
+//                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch3.name).child("4").setValue(3);
+//                                }
+//                                else {
+//                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch3.name).child("4").setValue(0);
+//                                }
+//                            }
                         }
                         DeviceBean Switch4 = searchRoomDevice(Devices,ROOMS.get(i),"Switch4") ;
                         if (Switch4 == null) {
@@ -927,38 +923,38 @@ public class Rooms extends AppCompatActivity
                             ROOMS.get(i).setSWITCH4_B(Switch4);
                             ROOMS.get(i).setSWITCH4(TuyaHomeSdk.newDeviceInstance(ROOMS.get(i).getSWITCH4_B().devId));
                             ROOMS.get(i).Switch4 = 1 ;
-                            if (Switch4.dps.get("1") != null) {
-                                if (Boolean.parseBoolean(Switch4.dps.get("1").toString())) {
-                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch4.name).child("1").setValue(3);
-                                }
-                                else {
-                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch4.name).child("1").setValue(0);
-                                }
-                            }
-                            if (Switch4.dps.get("2") != null) {
-                                if (Boolean.parseBoolean(Switch4.dps.get("2").toString())) {
-                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch4.name).child("2").setValue(3);
-                                }
-                                else {
-                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch4.name).child("2").setValue(0);
-                                }
-                            }
-                            if (Switch4.dps.get("3") != null) {
-                                if (Boolean.parseBoolean(Switch4.dps.get("3").toString())) {
-                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch4.name).child("3").setValue(3);
-                                }
-                                else {
-                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch4.name).child("3").setValue(0);
-                                }
-                            }
-                            if (Switch4.dps.get("4") != null) {
-                                if (Boolean.parseBoolean(Switch4.dps.get("3").toString())) {
-                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch4.name).child("4").setValue(3);
-                                }
-                                else {
-                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch4.name).child("4").setValue(0);
-                                }
-                            }
+//                            if (Switch4.dps.get("1") != null) {
+//                                if (Boolean.parseBoolean(Switch4.dps.get("1").toString())) {
+//                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch4.name).child("1").setValue(3);
+//                                }
+//                                else {
+//                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch4.name).child("1").setValue(0);
+//                                }
+//                            }
+//                            if (Switch4.dps.get("2") != null) {
+//                                if (Boolean.parseBoolean(Switch4.dps.get("2").toString())) {
+//                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch4.name).child("2").setValue(3);
+//                                }
+//                                else {
+//                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch4.name).child("2").setValue(0);
+//                                }
+//                            }
+//                            if (Switch4.dps.get("3") != null) {
+//                                if (Boolean.parseBoolean(Switch4.dps.get("3").toString())) {
+//                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch4.name).child("3").setValue(3);
+//                                }
+//                                else {
+//                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch4.name).child("3").setValue(0);
+//                                }
+//                            }
+//                            if (Switch4.dps.get("4") != null) {
+//                                if (Boolean.parseBoolean(Switch4.dps.get("3").toString())) {
+//                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch4.name).child("4").setValue(3);
+//                                }
+//                                else {
+//                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch4.name).child("4").setValue(0);
+//                                }
+//                            }
                         }
                         DeviceBean lock = searchRoomDevice(Devices,ROOMS.get(i),"Lock") ;
                         if (lock == null) {
@@ -969,7 +965,7 @@ public class Rooms extends AppCompatActivity
                             ROOMS.get(i).setLOCK(TuyaHomeSdk.newDeviceInstance(ROOMS.get(i).getLOCK_B().devId));
                             ROOMS.get(i).lock = 1 ;
                             setRoomLockId(lock.devId, String.valueOf(ROOMS.get(i).id));
-                            ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(lock.name).child("1").setValue(0);
+//                            ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(lock.name).child("1").setValue(0);
                         }
                     }
                     for (int i=0;i<ROOMS.size();i++) {
@@ -1184,7 +1180,7 @@ public class Rooms extends AppCompatActivity
         });
     }
 
-    void setLocks(ArrayList<LockObj> Locks) {
+    static void setLocks(ArrayList<LockObj> Locks) {
         for (int j=0;j<Locks.size();j++) {
             Log.d("locks" , Locks.get(j).getLockName());
             for (int i = 0; i< ROOMS.size(); i++) {
@@ -1197,124 +1193,8 @@ public class Rooms extends AppCompatActivity
 
     }
 
-    public void resetAllDevices(View view) {
-        Dialog  dd = new Dialog(act);
-        dd.setContentView(R.layout.lock_unlock_dialog);
-        Button cancel = (Button) dd.findViewById(R.id.confermationDialog_cancel);
-        Button lock = (Button) dd.findViewById(R.id.messageDialog_ok);
-        TextView title = (TextView) dd.findViewById(R.id.textView2);
-        TextView message = (TextView) dd.findViewById(R.id.confermationDialog_Text);
-        title.setText("Remove All Devices ?");
-        message.setText("Are You Sure You want to remove all devices ??");
-        EditText password = (EditText) dd.findViewById(R.id.editTextTextPassword);
-        cancel.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dd.dismiss();
-            }
-        });
-        lock.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                final lodingDialog loading = new lodingDialog(act);
-                final String pass = password.getText().toString() ;
-                StringRequest re = new StringRequest(Request.Method.POST, "", new Response.Listener<String>()
-                {
-                    @Override
-                    public void onResponse(String response)
-                    {
-                        Log.d("LoginResult" , response +" "+ "" );
-                        loading.stop();
-                        if (response.equals("1"))
-                        {
-                            dd.dismiss();
-                            lodingDialog loading = new lodingDialog(act);
-                            //removeParameter=0;
-                            for (int i=0;i<Devices.size();i++)
-                            {
-                                int finalI = i;
-                                TuyaHomeSdk.newDeviceInstance(Devices.get(i).getDevId()).removeDevice(new IResultCallback()
-                                {
-
-                                    @Override
-                                    public void onError(String code, String error)
-                                    {
-                                        Toast.makeText(act,error,Toast.LENGTH_LONG).show();
-                                    }
-                                    @Override
-                                    public void onSuccess()
-                                    {
-                                        //Devices.remove(finalI);
-                                    }
-                                });
-
-                            }
-
-                            String url = "";//Login.SelectedHotel.URL+"removeAllDevices.php";
-                            StringRequest re = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
-                                @Override
-                                public void onResponse(String response)
-                                {
-                                    loading.stop();
-                                    Toast.makeText(act,response,Toast.LENGTH_LONG).show();
-                                    if (response.equals("1"))
-                                    {
-                                        Toast.makeText(act,"Devices Removed",Toast.LENGTH_LONG).show();
-                                        getRooms();
-                                    }
-
-                                }
-                            }, new Response.ErrorListener() {
-                                @Override
-                                public void onErrorResponse(VolleyError error)
-                                {
-                                    loading.stop();
-                                    Toast.makeText(act,error.getMessage(),Toast.LENGTH_LONG).show();
-                                }
-                            })
-                            {
-                                @Override
-                                protected Map<String, String> getParams() throws AuthFailureError
-                                {
-                                    Map<String,String> Param = new HashMap<String, String>();
-                                    Param.put("hotel","1");
-                                    return Param;
-                                }
-                            };
-                            Volley.newRequestQueue(act).add(re);
-
-                        }
-                        else if (response.equals("0"))
-                        {
-                            Toast.makeText(act,"Lock Failed",Toast.LENGTH_LONG).show();
-                        }
-                        else
-                        {
-                            Toast.makeText(act,"No Params",Toast.LENGTH_LONG).show();
-                        }
-
-                    }
-                }, new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error)
-                    {
-                        loading.stop();
-                    }
-                })
-                {
-                    @Override
-                    protected Map<String, String> getParams() throws AuthFailureError
-                    {
-                        Map<String,String> par = new HashMap<String, String>();
-                        par.put( "password" , pass ) ;
-                        par.put( "hotel" , "1" ) ;
-                        return par;
-                    }
-                };
-                Volley.newRequestQueue(act).add(re);
-            }
-        });
-        dd.show();
+    public void refresh(View view) {
+        refreshSystem();
     }
 
     // set Listeners _______________________________________________
@@ -3609,7 +3489,7 @@ public class Rooms extends AppCompatActivity
 
     }
 
-    void setDoorSensorStatus(String ids, String status) {
+    static void setDoorSensorStatus(String ids, String status) {
             String url = MyApp.THE_PROJECT.url + "roomsManagement/modifyRoomsDoorSensorInstalled";
             StringRequest tabR = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
                 @Override
@@ -3646,7 +3526,7 @@ public class Rooms extends AppCompatActivity
             REQ.add(tabR);
     }
 
-    void setServiceSwitchStatus(String ids, String status) {
+    static void setServiceSwitchStatus(String ids, String status) {
             String url = MyApp.THE_PROJECT.url + "roomsManagement/modifyRoomsServiceSwitchInstalled";
             StringRequest tabR = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
                 @Override
@@ -3682,7 +3562,7 @@ public class Rooms extends AppCompatActivity
             REQ.add(tabR);
     }
 
-    void setThermostatStatus(String ids, String status) {
+    static void setThermostatStatus(String ids, String status) {
             String url = MyApp.THE_PROJECT.url + "roomsManagement/modifyRoomsThermostatInstalled";
             StringRequest tabR = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
                 @Override
@@ -3718,7 +3598,7 @@ public class Rooms extends AppCompatActivity
             REQ.add(tabR);
     }
 
-    void setPowerSwitchStatus(String ids, String status) {
+    static void setPowerSwitchStatus(String ids, String status) {
             String url = MyApp.THE_PROJECT.url + "roomsManagement/modifyRoomsPowerSwitchInstalled";
             StringRequest tabR = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
                 @Override
@@ -3755,7 +3635,7 @@ public class Rooms extends AppCompatActivity
             REQ.add(tabR);
     }
 
-    void setCurtainSwitchStatus(String ids, String status) {
+    static void setCurtainSwitchStatus(String ids, String status) {
             String url = MyApp.THE_PROJECT.url + "roomsManagement/modifyRoomsCurtainInstalled";
             StringRequest tabR = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
                 @Override
@@ -3791,7 +3671,7 @@ public class Rooms extends AppCompatActivity
             REQ.add(tabR);
     }
 
-    void setMotionSensorStatus(String ids, String status) {
+    static void setMotionSensorStatus(String ids, String status) {
         String url = MyApp.THE_PROJECT.url + "roomsManagement/modifyRoomsMotionSensorInstalled";
         StringRequest tabR = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
             @Override
@@ -3827,7 +3707,7 @@ public class Rooms extends AppCompatActivity
         REQ.add(tabR);
     }
 
-    void setSwitch1Status(String ids, String status) {
+    static void setSwitch1Status(String ids, String status) {
             String url = MyApp.THE_PROJECT.url + "roomsManagement/modifyRoomsSwitch1Installed";
             StringRequest tabR = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
                 @Override
@@ -3863,7 +3743,7 @@ public class Rooms extends AppCompatActivity
             REQ1.add(tabR);
     }
 
-    void setSwitch2Status(String ids, String status) {
+    static void setSwitch2Status(String ids, String status) {
             String url = MyApp.THE_PROJECT.url + "roomsManagement/modifyRoomsSwitch2Installed";
             StringRequest tabR = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
                 @Override
@@ -3899,7 +3779,7 @@ public class Rooms extends AppCompatActivity
             REQ1.add(tabR);
     }
 
-    void setSwitch3Status(String ids, String status) {
+    static void setSwitch3Status(String ids, String status) {
             String url = MyApp.THE_PROJECT.url + "roomsManagement/modifyRoomsSwitch3Installed";
             StringRequest tabR = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
                 @Override
@@ -3935,7 +3815,7 @@ public class Rooms extends AppCompatActivity
             REQ1.add(tabR);
     }
 
-    void setSwitch4Status(String ids, String status) {
+    static void setSwitch4Status(String ids, String status) {
         String url = MyApp.THE_PROJECT.url + "roomsManagement/modifyRoomsSwitch4Installed";
             StringRequest tabR = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
                 @Override
@@ -3971,7 +3851,7 @@ public class Rooms extends AppCompatActivity
             REQ1.add(tabR);
     }
 
-    void setZBGatewayStatus(String ids , String status) {
+    static  void setZBGatewayStatus(String ids , String status) {
             String url = MyApp.THE_PROJECT.url + "roomsManagement/modifyRoomsGatewayInstalled";
             StringRequest tabR = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
                 @Override
@@ -4007,7 +3887,7 @@ public class Rooms extends AppCompatActivity
             REQ.add(tabR);
     }
 
-    void setLockStatus(String ids , String status) {
+    static void setLockStatus(String ids , String status) {
         String url = MyApp.THE_PROJECT.url + "roomsManagement/modifyRoomsLockInstalled";
         StringRequest tabR = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
             @Override
@@ -4043,7 +3923,7 @@ public class Rooms extends AppCompatActivity
         REQ.add(tabR);
     }
 
-    void setRoomsDevicesInstalledInDB() {
+    static void setRoomsDevicesInstalledInDB() {
         if (PowerUnInstalled != null) {
             setPowerSwitchStatus(PowerUnInstalled,"0");
         }
@@ -4195,7 +4075,7 @@ public class Rooms extends AppCompatActivity
         FirebaseTokenRegister.add(re);
     }
 
-    void setRoomLockId(String ID,String roomId) {
+    static void setRoomLockId(String ID,String roomId) {
         Log.d("lockIdRegister" , ID+" "+roomId) ;
         String url = MyApp.THE_PROJECT.url + "roomsManagement/setRoomLockId" ;
         StringRequest re  = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
@@ -6095,7 +5975,7 @@ public class Rooms extends AppCompatActivity
         startActivity(i);
     }
 
-    DeviceBean searchRoomDevice(List<DeviceBean> devices,ROOM room,String deviceType) {
+    static DeviceBean searchRoomDevice(List<DeviceBean> devices,ROOM room,String deviceType) {
         DeviceBean d = null ;
         for (int i=0; i<devices.size();i++) {
             if (devices.get(i).name.equals(room.RoomNumber+deviceType)) {
@@ -6113,42 +5993,53 @@ public class Rooms extends AppCompatActivity
                 .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
-                loading = new lodingDialog(act);
-                String url = MyApp.THE_PROJECT.url + "roomsManagement/modifyServerDeviceFirebaseStatus";
-                StringRequest req = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        Log.d("changeDeviceStatus" , response);
-                        dialogInterface.dismiss();
-                        loading.stop();
-                        SharedPreferences.Editor editor = getSharedPreferences("MyProject", MODE_PRIVATE).edit();
-                        editor.putString("projectName" , null);
-                        editor.putString("tuyaUser" , null);
-                        editor.putString("tuyaPassword" , null);
-                        editor.putString("lockUser" , null);
-                        editor.putString("lockPassword" , null);
-                        editor.apply();
-                        Intent i = new Intent(act,Login.class);
-                        act.startActivity(i);
-                        act.finish();
-                    }
-                }, new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Log.d("changeDeviceStatus" , error.toString());
-                        loading.stop();
-                        new MessageDialog(error.toString(),"error",act);
-                    }
-                }){
-                    @Override
-                    protected Map<String, String> getParams() throws AuthFailureError {
-                        Map<String, String> params = new HashMap<>();
-                        params.put("device_id",MyApp.Device_Id);
-                        params.put("status","0");
-                        return params;
-                    }
-                };
-                Volley.newRequestQueue(act).add(req);
+                dialogInterface.dismiss();
+                SharedPreferences.Editor editor = getSharedPreferences("MyProject", MODE_PRIVATE).edit();
+                editor.putString("projectName" , null);
+                editor.putString("tuyaUser" , null);
+                editor.putString("tuyaPassword" , null);
+                editor.putString("lockUser" , null);
+                editor.putString("lockPassword" , null);
+                editor.apply();
+                Intent x = new Intent(act,Login.class);
+                act.startActivity(x);
+                act.finish();
+//                loading = new lodingDialog(act);
+//                String url = MyApp.THE_PROJECT.url + "roomsManagement/modifyServerDeviceFirebaseStatus";
+//                StringRequest req = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
+//                    @Override
+//                    public void onResponse(String response) {
+//                        Log.d("changeDeviceStatus" , response);
+//                        dialogInterface.dismiss();
+//                        loading.stop();
+//                        SharedPreferences.Editor editor = getSharedPreferences("MyProject", MODE_PRIVATE).edit();
+//                        editor.putString("projectName" , null);
+//                        editor.putString("tuyaUser" , null);
+//                        editor.putString("tuyaPassword" , null);
+//                        editor.putString("lockUser" , null);
+//                        editor.putString("lockPassword" , null);
+//                        editor.apply();
+//                        Intent i = new Intent(act,Login.class);
+//                        act.startActivity(i);
+//                        act.finish();
+//                    }
+//                }, new Response.ErrorListener() {
+//                    @Override
+//                    public void onErrorResponse(VolleyError error) {
+//                        Log.d("changeDeviceStatus" , error.toString());
+//                        loading.stop();
+//                        new MessageDialog(error.toString(),"error",act);
+//                    }
+//                }){
+//                    @Override
+//                    protected Map<String, String> getParams() throws AuthFailureError {
+//                        Map<String, String> params = new HashMap<>();
+//                        params.put("device_id",MyApp.Device_Id);
+//                        params.put("status","0");
+//                        return params;
+//                    }
+//                };
+//                Volley.newRequestQueue(act).add(req);
             }
         })
                 .setNegativeButton("No", new DialogInterface.OnClickListener() {
@@ -6157,63 +6048,6 @@ public class Rooms extends AppCompatActivity
                 dialogInterface.dismiss();
             }
         })
-//                .setNeutralButton("Delete Device", new DialogInterface.OnClickListener() {
-//                            @Override
-//                            public void onClick(DialogInterface dialogInterface, int i) {
-//                                loading = new lodingDialog(act);
-//                                String url = MyApp.THE_PROJECT.url + "roomsManagement/deleteControlDevice";
-//                                StringRequest req = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
-//                                    @Override
-//                                    public void onResponse(String response) {
-//                                        Log.d("deleteDeviceStatus" , response);
-//                                        try {
-//                                            JSONObject res = new JSONObject(response);
-//                                            if (res.getString("result").equals("success")) {
-//                                                dialogInterface.dismiss();
-//                                                loading.stop();
-//                                                SharedPreferences.Editor editor = getSharedPreferences("MyProject", MODE_PRIVATE).edit();
-//                                                editor.putString("projectName" , null);
-//                                                editor.putString("tuyaUser" , null);
-//                                                editor.putString("tuyaPassword" , null);
-//                                                editor.putString("lockUser" , null);
-//                                                editor.putString("lockPassword" , null);
-//                                                editor.putString("Device_Id" , null);
-//                                                editor.putString("Device_Name" , null);
-//                                                editor.apply();
-//                                                Intent i = new Intent(act,Login.class);
-//                                                act.startActivity(i);
-//                                                act.finish();
-//                                            }
-//                                            else {
-//                                                new MessageDialog("delete device failed" , "failed",act);
-//                                                loading.stop();
-//                                            }
-//                                        } catch (JSONException e) {
-//                                            e.printStackTrace();
-//                                            new MessageDialog(e.toString() , "failed",act);
-//                                            loading.stop();
-//                                        }
-//
-//
-//                                    }
-//                                }, new Response.ErrorListener() {
-//                                    @Override
-//                                    public void onErrorResponse(VolleyError error) {
-//                                        Log.d("changeDeviceStatus" , error.toString());
-//                                        loading.stop();
-//                                        new MessageDialog(error.toString(),"error",act);
-//                                    }
-//                                }){
-//                                    @Override
-//                                    protected Map<String, String> getParams() throws AuthFailureError {
-//                                        Map<String, String> params = new HashMap<>();
-//                                        params.put("device_id",MyApp.Device_Id);
-//                                        return params;
-//                                    }
-//                                };
-//                                Volley.newRequestQueue(act).add(req);
-//                            }
-//                        })
                 .create().show();
     }
 

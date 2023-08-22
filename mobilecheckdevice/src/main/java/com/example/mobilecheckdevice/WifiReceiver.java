@@ -38,8 +38,7 @@ public class WifiReceiver extends BroadcastReceiver
             sb = new StringBuilder();
             List<ScanResult> wifiList = wifiManager.getScanResults();
             ArrayList<String> deviceList = new ArrayList<>();
-            for (ScanResult scanResult : wifiList)
-            {
+            for (ScanResult scanResult : wifiList) {
                 sb.append("\n").append(scanResult.SSID).append(" - ").append(scanResult.capabilities);
                 deviceList.add(scanResult.SSID);
             }

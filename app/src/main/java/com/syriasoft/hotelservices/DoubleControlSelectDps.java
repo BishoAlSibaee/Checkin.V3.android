@@ -127,11 +127,11 @@ public class DoubleControlSelectDps extends AppCompatActivity {
 
             }
 
-            iTuyaDeviceMultiControl.saveDeviceMultiControl(LogIn.selectedHome.getHomeId(), multiControlBean.toString(), new ITuyaResultCallback<MultiControlBean>() {
+            iTuyaDeviceMultiControl.saveDeviceMultiControl(MyApp.HOME.getHomeId(), multiControlBean.toString(), new ITuyaResultCallback<MultiControlBean>() {
                 @Override
                 public void onSuccess(MultiControlBean result) {
                     //ToastUtil.shortToast(mContext,"success");
-                    Toast.makeText(act,"double control created",Toast.LENGTH_SHORT);
+                    Toast.makeText(act,"double control created",Toast.LENGTH_SHORT).show();
                     Log.d("switch1Dp1", result.getGroupName());
                     iTuyaDeviceMultiControl.enableMultiControl(x, new ITuyaResultCallback<Boolean>() {
                         @Override
@@ -153,7 +153,7 @@ public class DoubleControlSelectDps extends AppCompatActivity {
                 @Override
                 public void onError(String errorCode, String errorMessage) {
                     //ToastUtil.shortToast(mContext,errorMessage);
-                    Toast.makeText(act,"failed "+errorMessage,Toast.LENGTH_SHORT);
+                    Toast.makeText(act,"failed "+errorMessage,Toast.LENGTH_SHORT).show();
                     Log.d("switch1Dp1", errorMessage + "here "+x);
                 }
             });

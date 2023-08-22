@@ -2,32 +2,35 @@ apply plugin: 'com.android.application'
 apply plugin: 'com.google.gms.google-services'
 
 android {
-    compileSdkVersion 33
+    compileSdkVersion 30
+    buildToolsVersion "30.0.2"
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
     defaultConfig {
         applicationId "com.syriasoft.hotelservices"
-        minSdkVersion 22
-        targetSdkVersion 33
+        minSdkVersion 23
+        targetSdkVersion 30
         versionCode 2
         versionName "2.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         ndk {
             abiFilters "armeabi-v7a", "arm64-v8a"
         }
-
-        buildFeatures {
-            viewBinding = true ;
-        }
+//
+//        buildFeatures {
+//            viewBinding = true ;
+//        }
         packagingOptions {
             pickFirst 'lib/*/libc++_shared.so' // multi aar has such so, should pick first.
             exclude("META-INF/NOTICE.md")
             exclude("META-INF/LICENSE.md")
         }
-        compileOptions {
-            sourceCompatibility JavaVersion.VERSION_1_8
-            targetCompatibility JavaVersion.VERSION_1_8
-        }
 
-        ndkVersion "21.0.6113669" // e.g.,  ndkVersion "21.3.6528147"
+        //ndkVersion "21.0.6113669" // e.g.,  ndkVersion "21.3.6528147"
     }
     buildTypes {
         release {
@@ -39,7 +42,7 @@ android {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'androidx.appcompat:appcompat:1.2.0'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'com.google.firebase:firebase-messaging:21.0.1'
     implementation 'com.squareup.picasso:picasso:2.71828'
