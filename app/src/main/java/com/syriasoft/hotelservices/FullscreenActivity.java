@@ -16,7 +16,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -99,7 +98,6 @@ public class FullscreenActivity extends AppCompatActivity {
     static RESERVATION THE_RESERVATION;
     static OrderDB order ;
     RecyclerView LAUNDRY_MENU, MINIBAR_MENU;
-    static DisplayMetrics displayMetrics ;
     private List<FACILITY> Facilities;
     private List<LAUNDRY> Laundries ;
     private List<MINIBAR> Minibar ;
@@ -238,8 +236,6 @@ public class FullscreenActivity extends AppCompatActivity {
         act = this ;
         MyApp.mainActivity.add(act);
         THE_ROOM = MyApp.Room ;
-        displayMetrics = new DisplayMetrics();
-        getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
         pref = getSharedPreferences("MyProject", MODE_PRIVATE);
         editor = getSharedPreferences("MyProject", MODE_PRIVATE).edit();
         Facilities = new ArrayList<>();
@@ -330,13 +326,11 @@ public class FullscreenActivity extends AppCompatActivity {
         myRefCheckOutDuration = Room.child("CheckOutModeTime");
         myRefLogo = Room.child("Logo");
         myRefToken = Room.child("token");
-        Log.d("btnPressed" , MyApp.ProjectName+"Devices");
         RoomDevicesRef = database.getReference(MyApp.ProjectName+"Devices").child(String.valueOf(THE_ROOM.RoomNumber));
         TextView RoomNumber = findViewById(R.id.RoomNumber_MainScreen);
         RoomNumber.setText(String.valueOf(MyApp.Room.RoomNumber));
         iTuyaDeviceMultiControl = TuyaHomeSdk.getDeviceMultiControlInstance();
         lightsDB = new LightingDB(act) ;
-        blink();
         backHomeThread = new Runnable() {
             @Override
             public void run() {
@@ -354,10 +348,6 @@ public class FullscreenActivity extends AppCompatActivity {
                 }
             }
         };
-        getServiceUsersFromFirebase();
-        getFacilities();
-        setActivityActions();
-        setFireRoomListeners();
         windowInsetsController = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
         if (windowInsetsController != null) {
             windowInsetsController.hide(WindowInsetsCompat.Type.systemBars());
@@ -365,9 +355,15 @@ public class FullscreenActivity extends AppCompatActivity {
         if (windowInsetsController != null) {
             windowInsetsController.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_BARS_BY_SWIPE);
         }
+        getServiceUsersFromFirebase();
+        getFacilities();
+        setActivityActions();
+        setFireRoomListeners();
+        blink();
         KeepScreenFull();
         getSceneBGs();
         setTheAcLayout();
+        setLockButton();
     }
 
     void setActivityActions() {
@@ -1302,6 +1298,9 @@ public class FullscreenActivity extends AppCompatActivity {
                 }
             });
         }
+        else {
+            showAc.setVisibility(View.GONE);
+        }
     }
 
     View.OnClickListener setTempButtonClick(String temp,DatabaseReference ref) {
@@ -1509,17 +1508,6 @@ public class FullscreenActivity extends AppCompatActivity {
         }).start();
     }
 
-    private void KeepScreenFull() {
-        final Handler handler = new Handler();
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                handler.postDelayed(this,100);
-                hideSystemUI();
-            }
-        }).start();
-    }
-
     public void logout() {
         String url = MyApp.ProjectURL + "roomsManagement/logoutRoom" ;
         StringRequest logoutRequest = new StringRequest(Request.Method.POST, url, response -> {
@@ -1563,7 +1551,6 @@ public class FullscreenActivity extends AppCompatActivity {
 
     public void getFacilities() {
         String url = MyApp.ProjectURL + "facilitys/getfacilitys" ;
-        Log.d("facilitiesResp" , url);
         StringRequest facilityRequest = new StringRequest(Request.Method.GET, url, response -> {
             Log.d("facilitiesResp" , response);
             if (response != null) {
@@ -1581,7 +1568,10 @@ public class FullscreenActivity extends AppCompatActivity {
                 }
             }
         }, error -> Log.d("facilitiesResp" , error.toString()));
-        Volley.newRequestQueue(act).add(facilityRequest);
+        if (FirebaseTokenRegister == null) {
+            FirebaseTokenRegister = Volley.newRequestQueue(act) ;
+        }
+        FirebaseTokenRegister.add(facilityRequest);
     }
 
     private void getLaundries() {
@@ -1655,7 +1645,6 @@ public class FullscreenActivity extends AppCompatActivity {
         else {
             RestaurantBtn.setVisibility(View.GONE);
         }
-        Log.d("restaurantsAre", Restaurants.size()+" " );
     }
 
     private void getMiniBar() {
@@ -3077,6 +3066,17 @@ public class FullscreenActivity extends AppCompatActivity {
             Volley.newRequestQueue(act).add(laundryRequest);
     }
 
+    private void KeepScreenFull() {
+        final Handler handler = new Handler();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                handler.postDelayed(this,100);
+                hideSystemUI();
+            }
+        }).start();
+    }
+
     private void hideSystemUI() {
         windowInsetsController.hide(WindowInsetsCompat.Type.systemBars());
     }
@@ -3429,6 +3429,7 @@ public class FullscreenActivity extends AppCompatActivity {
                         else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"Lock")) {
                             MyApp.Room.setLOCK_B(TheDevicesList.get(i));
                             MyApp.Room.setLOCK(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getLOCK_B().getDevId()));
+                            setLockButton();
                         }
                     }
                     THE_ROOM = MyApp.Room ;
@@ -3490,5 +3491,15 @@ public class FullscreenActivity extends AppCompatActivity {
                 Log.d("refreshDevices" , error+" "+code);
             }
         });
+    }
+
+    void setLockButton() {
+        LinearLayout doorLayout = findViewById(R.id.Door_Button);
+        if (MyApp.BluetoothLock == null && MyApp.Room.getLOCK_B() == null) {
+            doorLayout.setVisibility(View.GONE);
+        }
+        else {
+            doorLayout.setVisibility(View.VISIBLE);
+        }
     }
 }
