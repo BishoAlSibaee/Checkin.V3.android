@@ -33,6 +33,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import com.*;
+import com.tuya.smart.sdk.api.IResultCallback;
 
 public class Login extends AppCompatActivity {
     private Spinner PROJECTS_SPINNER, homes;
@@ -246,7 +247,8 @@ public class Login extends AppCompatActivity {
                         MyApp.homeBeans = homeBeans ;
                         Homs = homeBeans ;
                         for(int i=0;i<Homs.size();i++) {
-                            if (MyApp.THE_PROJECT.projectName.contains(Homs.get(i).getName())) {
+                            Log.d("tuyaLoginResp",Homs.get(i).getName());
+                            if (Homs.get(i).getName().contains(MyApp.THE_PROJECT.projectName)) {
                                 THEHOME = Homs.get(i) ;
                                 MyApp.HOME = Homs.get(i);
                             }
@@ -258,10 +260,9 @@ public class Login extends AppCompatActivity {
                             act.finish();
                         }
                         else {
-                            TuyaHomeSdk.getHomeManagerInstance().createHome(MyApp.THE_PROJECT.projectName, 0, 0,"ksa",null, new ITuyaHomeResultCallback() {
+                            TuyaHomeSdk.getHomeManagerInstance().createHome(MyApp.THE_PROJECT.projectName, 0, 0,"ksa",new ArrayList<>(), new ITuyaHomeResultCallback() {
                                 @Override
                                 public void onSuccess(HomeBean bean) {
-                                    // do something
                                     THEHOME = bean ;
                                     MyApp.HOME = bean;
                                     Intent i = new Intent(act , Rooms.class);

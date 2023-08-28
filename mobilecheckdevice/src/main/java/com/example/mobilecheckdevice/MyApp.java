@@ -54,11 +54,6 @@ public class MyApp  extends Application {
             TuyaHomeSdk.setOnNeedLoginListener(new INeedLoginListener() {
                 @Override
                 public void onNeedLogin(Context context) {
-                    Intent intent = new Intent(context, Tuya_Login.class);
-                    if (!(context instanceof Activity)) {
-                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    }
-                    startActivity(intent);
                 }
             });
         }

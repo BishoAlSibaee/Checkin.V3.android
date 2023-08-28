@@ -1243,12 +1243,12 @@ public class Rooms extends AppCompatActivity
                             }
                         }
                     }
-                    Rooms_Adapter_Base adapter = new Rooms_Adapter_Base(ROOMS,act);
-                    roomsListView.setAdapter(adapter);
                     setRoomsDevicesInstalledInDB();
                 }
-                Devices_Adapter adapter = new Devices_Adapter(Devices,act);
-                devicesListView.setAdapter(adapter);
+                Rooms_Adapter_Base adapterRooms = new Rooms_Adapter_Base(ROOMS,act);
+                roomsListView.setAdapter(adapterRooms);
+                Devices_Adapter adapterDevices = new Devices_Adapter(Devices,act);
+                devicesListView.setAdapter(adapterDevices);
                 setDevicesListeners();
                 setFireRoomsListener();
                 getSceneBGs();
