@@ -26,6 +26,8 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.android.material.textfield.TextInputLayout;
+import com.squareup.picasso.BuildConfig;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -268,7 +270,7 @@ public class LogIn extends AppCompatActivity {
         projectName = findViewById(R.id.projectName);
         versionTV = findViewById(R.id.textView10);
         Version = BuildConfig.VERSION_CODE;
-        versionTV.setText("Version " + Version);
+        versionTV.setText(String.format("Version %d", Version));
         imageView5 = findViewById(R.id.imageView5);
         logoLayout = findViewById(R.id.logo_layout);
         logoLayout.setVisibility(View.VISIBLE);

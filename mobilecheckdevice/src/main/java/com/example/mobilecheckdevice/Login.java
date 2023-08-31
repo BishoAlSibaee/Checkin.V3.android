@@ -123,7 +123,6 @@ public class Login extends AppCompatActivity {
     }
 
     public void LogIn(View view) {
-
         if (THE_PROJECT != null ) {
             Log.d("projectIs" ,THE_PROJECT.projectName+" "+THE_PROJECT.TuyaUser+" "+THE_PROJECT.TuyaPassword);
             final lodingDialog loading = new lodingDialog(act);
@@ -248,13 +247,21 @@ public class Login extends AppCompatActivity {
                         Homs = homeBeans ;
                         for(int i=0;i<Homs.size();i++) {
                             Log.d("tuyaLoginResp",Homs.get(i).getName());
-                            if (Homs.get(i).getName().contains(MyApp.THE_PROJECT.projectName)) {
+                            if (MyApp.THE_PROJECT.projectName.equals("apiTest")) {
+                                if (Homs.get(i).getName().equals("Test")) {
+                                    THEHOME = Homs.get(i) ;
+                                    MyApp.HOME = Homs.get(i);
+                                    break;
+                                }
+                            }
+                            else if (MyApp.THE_PROJECT.projectName.contains(Homs.get(i).getName())) {
                                 THEHOME = Homs.get(i) ;
                                 MyApp.HOME = Homs.get(i);
+                                break;
                             }
                         }
                         if (THEHOME != null ) {
-                            Log.d("homeFind" , "found");
+                            Log.d("homeFind" , "found "+THEHOME.getName());
                             Intent i = new Intent(act , Rooms.class);
                             act.startActivity(i);
                             act.finish();

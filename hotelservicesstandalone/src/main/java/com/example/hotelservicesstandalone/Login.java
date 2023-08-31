@@ -267,9 +267,17 @@ public class Login extends AppCompatActivity
                         Homs = homeBeans ;
                         for(int i=0;i<Homs.size();i++) {
                             Log.d("tuyaLoginResp",Homs.get(i).getName());
-                            if (MyApp.THE_PROJECT.projectName.contains(Homs.get(i).getName())) {
+                            if (MyApp.THE_PROJECT.projectName.equals("apiTest")) {
+                                if (Homs.get(i).getName().equals("Test")) {
+                                    THEHOME = Homs.get(i) ;
+                                    MyApp.HOME = Homs.get(i);
+                                    break;
+                                }
+                            }
+                            else if (MyApp.THE_PROJECT.projectName.contains(Homs.get(i).getName())) {
                                 THEHOME = Homs.get(i) ;
                                 MyApp.HOME = Homs.get(i);
+                                break;
                             }
 //                            if (Homs.get(i).getName().equals("JedSample")) {
 //                                Log.d("tuyaLoginResp","found");

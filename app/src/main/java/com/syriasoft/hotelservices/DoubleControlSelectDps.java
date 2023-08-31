@@ -32,7 +32,7 @@ public class DoubleControlSelectDps extends AppCompatActivity {
     LinearLayout FirstLayout , SecondLayout ;
     int FirstDP=0 , SecondDP=0 ;
     ITuyaDeviceMultiControl iTuyaDeviceMultiControl ;
-    TextView fname , sname , fbutton , sbutton ;
+    TextView fName, sName, fButton, sButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,46 +45,40 @@ public class DoubleControlSelectDps extends AppCompatActivity {
 
     void setActivity() {
         act = this ;
-        FirstLayout = (LinearLayout) findViewById(R.id.firestDeviceLayout);
-        SecondLayout = (LinearLayout) findViewById(R.id.secondDeviceLayout);
-        fname = (TextView) findViewById(R.id.device1_name);
-        sname = (TextView) findViewById(R.id.device2_name);
-        fbutton = (TextView) findViewById(R.id.device1_button);
-        sbutton = (TextView) findViewById(R.id.device2_button);
+        FirstLayout = findViewById(R.id.firestDeviceLayout);
+        SecondLayout = findViewById(R.id.secondDeviceLayout);
+        fName = findViewById(R.id.device1_name);
+        sName = findViewById(R.id.device2_name);
+        fButton = findViewById(R.id.device1_button);
+        sButton = findViewById(R.id.device2_button);
         iTuyaDeviceMultiControl = TuyaHomeSdk.getDeviceMultiControlInstance();
         if(First != null ) {
-            fname.setText(First.getName());
+            fName.setText(First.getName());
             List keys = new ArrayList(First.getDps().keySet());
             for( int i=0; i< keys.size();i++) {
                 if (Integer.parseInt(keys.get(i).toString()) < 5) {
                     Button  f = new Button(act);
                     f.setText(keys.get(i).toString());
                     int finalI = i;
-                    f.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            FirstDP = Integer.parseInt(keys.get(finalI).toString());
-                            fbutton.setText(keys.get(finalI).toString());
-                        }
+                    f.setOnClickListener(v -> {
+                        FirstDP = Integer.parseInt(keys.get(finalI).toString());
+                        fButton.setText(keys.get(finalI).toString());
                     });
                     FirstLayout.addView(f);
                 }
             }
         }
         if(Second != null ) {
-            sname.setText(Second.getName());
+            sName.setText(Second.getName());
             List keys = new ArrayList(Second.getDps().keySet());
             for( int i=0; i< keys.size();i++) {
                 if (Integer.parseInt(keys.get(i).toString()) < 5) {
                     Button  f = new Button(act);
                     f.setText(keys.get(i).toString());
                     int finalI = i;
-                    f.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            SecondDP = Integer.parseInt(keys.get(finalI).toString());
-                            sbutton.setText(keys.get(finalI).toString());
-                        }
+                    f.setOnClickListener(v -> {
+                        SecondDP = Integer.parseInt(keys.get(finalI).toString());
+                        sButton.setText(keys.get(finalI).toString());
                     });
                     SecondLayout.addView(f);
                 }
@@ -105,6 +99,7 @@ public class DoubleControlSelectDps extends AppCompatActivity {
                 groupdetailes1.put("enable", true);
 
             } catch (JSONException e) {
+                Toast.makeText(act,"failed "+e.getMessage(),Toast.LENGTH_SHORT).show();
             }
             try {
                 groupdetailes2.put("devId", Second.devId);
@@ -113,6 +108,7 @@ public class DoubleControlSelectDps extends AppCompatActivity {
                 groupdetailes2.put("enable", true);
 
             } catch (JSONException e) {
+                Toast.makeText(act,"failed "+e.getMessage(),Toast.LENGTH_SHORT).show();
             }
             JSONArray arr = new JSONArray();
             arr.put(groupdetailes2);
@@ -124,37 +120,33 @@ public class DoubleControlSelectDps extends AppCompatActivity {
                 multiControlBean.put("groupDetail", arr);
                 multiControlBean.put("id", x);
             } catch (JSONException e) {
-
+                Toast.makeText(act,"failed "+e.getMessage(),Toast.LENGTH_SHORT).show();
             }
 
             iTuyaDeviceMultiControl.saveDeviceMultiControl(MyApp.HOME.getHomeId(), multiControlBean.toString(), new ITuyaResultCallback<MultiControlBean>() {
                 @Override
                 public void onSuccess(MultiControlBean result) {
-                    //ToastUtil.shortToast(mContext,"success");
                     Toast.makeText(act,"double control created",Toast.LENGTH_SHORT).show();
                     Log.d("switch1Dp1", result.getGroupName());
                     iTuyaDeviceMultiControl.enableMultiControl(x, new ITuyaResultCallback<Boolean>() {
                         @Override
                         public void onSuccess(Boolean result) {
-                            //ToastUtil.shortToast(mContext,"success");
                             Log.d("switch1Dp1", result.toString());
-                            //Toast.makeText(act,"double control enabled",Toast.LENGTH_SHORT);
+                            Toast.makeText(act,"double control enabled",Toast.LENGTH_SHORT).show();
                         }
 
                         @Override
                         public void onError(String errorCode, String errorMessage) {
-                            //ToastUtil.shortToast(mContext,errorMessage);
                             Log.d("switch1Dp1", errorMessage);
-                            //Toast.makeText(act,"failed "+errorMessage,Toast.LENGTH_SHORT);
+                            Toast.makeText(act,"failed "+errorMessage,Toast.LENGTH_SHORT).show();
                         }
                     });
                 }
 
                 @Override
                 public void onError(String errorCode, String errorMessage) {
-                    //ToastUtil.shortToast(mContext,errorMessage);
-                    Toast.makeText(act,"failed "+errorMessage,Toast.LENGTH_SHORT).show();
-                    Log.d("switch1Dp1", errorMessage + "here "+x);
+                    Toast.makeText(act,"failed "+errorMessage + " " +errorCode,Toast.LENGTH_SHORT).show();
+                    Log.d("switch1Dp1", errorMessage + "here "+errorCode+" "+x);
                 }
             });
         }

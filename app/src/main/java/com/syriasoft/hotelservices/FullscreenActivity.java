@@ -475,6 +475,14 @@ public class FullscreenActivity extends AppCompatActivity {
                         });
                     }
                 }
+                else {
+                    if (LaundryStatus) {
+                        myRefLaundry.setValue(0);
+                    }
+                    else {
+                        myRefLaundry.setValue(Calendar.getInstance(Locale.getDefault()).getTimeInMillis());
+                    }
+                }
             }
             x=0;
         });

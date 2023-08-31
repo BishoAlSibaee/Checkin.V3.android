@@ -20,7 +20,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.StringRequest;
@@ -57,7 +56,6 @@ import com.ttlock.bl.sdk.util.LogUtil;
 import com.tuya.smart.android.device.api.ITuyaDeviceMultiControl;
 import com.tuya.smart.home.sdk.TuyaHomeSdk;
 import com.tuya.smart.home.sdk.bean.HomeBean;
-import com.tuya.smart.home.sdk.bean.scene.PreCondition;
 import com.tuya.smart.home.sdk.bean.scene.SceneBean;
 import com.tuya.smart.home.sdk.bean.scene.SceneCondition;
 import com.tuya.smart.home.sdk.bean.scene.SceneTask;
@@ -81,7 +79,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
-
 import retrofit2.Call;
 import retrofit2.Callback;
 
@@ -126,6 +123,7 @@ public class Rooms extends AppCompatActivity
     long refreshSystemTime = 12 ;
     Timer refreshTimer;
     private final String projectLoginUrl = "users/loginProject" ;
+    static TextView actionsNow ;
 
 
 
@@ -233,6 +231,7 @@ public class Rooms extends AppCompatActivity
         mainLogo = findViewById(R.id.logoLyout) ;
         resetDevices = findViewById(R.id.button2);
         btnSLayout = findViewById(R.id.btnsLayout);
+        actionsNow = findViewById(R.id.textView26);
         TextView hotelName = findViewById(R.id.hotelName);
         hotelName.setText(MyApp.THE_PROJECT.projectName);
         ROOMS = new ArrayList<>();
@@ -1302,6 +1301,7 @@ public class Rooms extends AppCompatActivity
                                     TempRunnableList[finalI].run();
                                 }
                                 DoorRunnable[finalI].run();
+                                actionsNow.setText("Room "+ROOMS.get(finalI).RoomNumber+" door open");
                             }
                             else {
                                 ROOMS.get(finalI).getFireRoom().child("doorStatus").setValue(0);
@@ -1309,6 +1309,7 @@ public class Rooms extends AppCompatActivity
                                     DoorsHandlers[finalI].removeCallbacks(DoorRunnable[finalI]);
                                 }
                                 DOOR_STATUS[finalI] = false ;
+                                actionsNow.setText("Room "+ROOMS.get(finalI).RoomNumber+" door closed");
                             }
                         }
                         else {
@@ -1327,6 +1328,7 @@ public class Rooms extends AppCompatActivity
                                         Log.d("acSenario" ,"start");
                                     }
                                     DoorRunnable[finalI].run();
+                                    actionsNow.setText("Room "+ROOMS.get(finalI).RoomNumber+" door open");
                                 }
                                 else {
                                     ROOMS.get(finalI).getFireRoom().child("doorStatus").setValue(0);
@@ -1334,6 +1336,7 @@ public class Rooms extends AppCompatActivity
                                         DoorsHandlers[finalI].removeCallbacks(DoorRunnable[finalI]);
                                     }
                                     DOOR_STATUS[finalI] = false ;
+                                    actionsNow.setText("Room "+ROOMS.get(finalI).RoomNumber+" door closed");
                                 }
                             }
                             if (ROOMS.get(finalI).getDOORSENSOR_B().dps.get("103") != null) {
@@ -1386,12 +1389,14 @@ public class Rooms extends AppCompatActivity
                                     ROOMS.get(finalI).Cleanup = 1 ;
                                     ROOMS.get(finalI).dep = "Cleanup" ;
                                     ROOMS.get(finalI).getFireRoom().child("Cleanup").setValue(time);
+                                    actionsNow.setText("Room "+ROOMS.get(finalI).RoomNumber+" cleanup order");
                                 }
                                 else if (!Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_" + MyApp.ProjectVariables.cleanupButton)).toString()) && CLEANUP[finalI]) {
                                     CLEANUP[finalI] = false ;
                                     cancelServiceOrder(ROOMS.get(finalI),"Cleanup");
                                     ROOMS.get(finalI).Cleanup = 0 ;
                                     ROOMS.get(finalI).getFireRoom().child("Cleanup").setValue(0);
+                                    actionsNow.setText("Room "+ROOMS.get(finalI).RoomNumber+" cleanup order finished");
                                 }
                             }
                             if (dpStr.get("switch_"+MyApp.ProjectVariables.laundryButton) != null) {
@@ -1401,12 +1406,14 @@ public class Rooms extends AppCompatActivity
                                     ROOMS.get(finalI).Laundry = 1 ;
                                     ROOMS.get(finalI).dep = "Laundry" ;
                                     ROOMS.get(finalI).getFireRoom().child("Laundry").setValue(time);
+                                    actionsNow.setText("Room "+ROOMS.get(finalI).RoomNumber+" laundry order");
                                 }
                                 else if (!Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_" + MyApp.ProjectVariables.laundryButton)).toString()) && LAUNDRY[finalI]) {
                                     LAUNDRY[finalI] = false ;
                                     cancelServiceOrder(ROOMS.get(finalI),"Laundry");
                                     ROOMS.get(finalI).Laundry = 0 ;
                                     ROOMS.get(finalI).getFireRoom().child("Laundry").setValue(0);
+                                    actionsNow.setText("Room "+ROOMS.get(finalI).RoomNumber+" laundry order finished");
                                 }
                             }
                             if (dpStr.get("switch_"+MyApp.ProjectVariables.checkoutButton) != null) {
@@ -1416,12 +1423,14 @@ public class Rooms extends AppCompatActivity
                                     ROOMS.get(finalI).Checkout = 1 ;
                                     ROOMS.get(finalI).dep = "Checkout" ;
                                     ROOMS.get(finalI).getFireRoom().child("Checkout").setValue(time);
+                                    actionsNow.setText("Room "+ROOMS.get(finalI).RoomNumber+" checkout order");
                                 }
                                 else if (!Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_" + MyApp.ProjectVariables.checkoutButton)).toString()) && CHECKOUT[finalI]) {
                                     CHECKOUT[finalI] = false ;
                                     cancelServiceOrder(ROOMS.get(finalI),"Checkout");
                                     ROOMS.get(finalI).Checkout = 0 ;
                                     ROOMS.get(finalI).getFireRoom().child("Checkout").setValue(0);
+                                    actionsNow.setText("Room "+ROOMS.get(finalI).RoomNumber+" checkout order finished");
                                 }
                             }
                             if (dpStr.get("switch_"+MyApp.ProjectVariables.dndButton) != null) {
@@ -1431,12 +1440,14 @@ public class Rooms extends AppCompatActivity
                                     ROOMS.get(finalI).DND = 1 ;
                                     ROOMS.get(finalI).dep = "DND" ;
                                     ROOMS.get(finalI).getFireRoom().child("DND").setValue(time);
+                                    actionsNow.setText("Room "+ROOMS.get(finalI).RoomNumber+" dnd order");
                                 }
                                 else if (!Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_" + MyApp.ProjectVariables.dndButton)).toString()) && DND[finalI]) {
                                     DND[finalI] = false ;
                                     cancelDNDOrder(ROOMS.get(finalI));
                                     ROOMS.get(finalI).DND = 0 ;
                                     ROOMS.get(finalI).getFireRoom().child("DND").setValue(0);
+                                    actionsNow.setText("Room "+ROOMS.get(finalI).RoomNumber+" dnd order finished");
                                 }
                             }
                         }
@@ -1470,6 +1481,7 @@ public class Rooms extends AppCompatActivity
                     @Override
                     public void onDpUpdate(String devId, Map<String, Object> dpStr) {
                         Log.d("acAction" , dpStr.toString());
+                        actionsNow.setText("Room " + ROOMS.get(finalI).RoomNumber + " AC pressed");
                         if (dpStr.get("temp_current") != null) {
                             double temp = (Integer.parseInt(Objects.requireNonNull(dpStr.get("temp_current")).toString())*0.1);
                             ROOMS.get(finalI).getFireRoom().child("temp").setValue(temp) ;
@@ -1559,12 +1571,18 @@ public class Rooms extends AppCompatActivity
                         if (dpStr.get("switch_2") != null) {
                             v2[0] = Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_2")).toString()) ;
                         }
-                        if (v1[0] && v2[0])
+                        if (v1[0] && v2[0]) {
                             ROOMS.get(finalI).getFireRoom().child("powerStatus").setValue(2);
-                        else if (v1[0])
+                            actionsNow.setText("Room " + ROOMS.get(finalI).RoomNumber + " power on");
+                        }
+                        else if (v1[0]) {
                             ROOMS.get(finalI).getFireRoom().child("powerStatus").setValue(1);
-                        else if (!v2[0])
+                            actionsNow.setText("Room " + ROOMS.get(finalI).RoomNumber + " power bycard");
+                        }
+                        else if (!v2[0]) {
                             ROOMS.get(finalI).getFireRoom().child("powerStatus").setValue(0);
+                            actionsNow.setText("Room " + ROOMS.get(finalI).RoomNumber + " power off");
+                        }
                     }
                     @Override
                     public void onRemoved(String devId) {
@@ -1615,6 +1633,7 @@ public class Rooms extends AppCompatActivity
                     @Override
                     public void onDpUpdate(String devId, Map<String, Object> dpStr) {
                         Log.d("motion" , dpStr.toString());
+                        actionsNow.setText("Room " + ROOMS.get(finalI).RoomNumber + " motion detected");
                         if (AC_SENARIO_Status[finalI]) {
                             AC_SENARIO_Status[finalI] = false ;
                             Log.d("acSenario" ,"stop");
@@ -1675,6 +1694,7 @@ public class Rooms extends AppCompatActivity
                 ROOMS.get(i).getSWITCH1().registerDeviceListener(new IDeviceListener() {
                     @Override
                     public void onDpUpdate(String devId, Map<String, Object> dpStr) {
+                        actionsNow.setText("Room " + ROOMS.get(finalI).RoomNumber + " switch 1 pressed");
                         if (dpStr.get("switch_1") != null) {
                             if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_1")).toString())) {
                                 ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH1_B().name).child("1").setValue(3);
@@ -1730,6 +1750,7 @@ public class Rooms extends AppCompatActivity
                 ROOMS.get(i).getSWITCH2().registerDeviceListener(new IDeviceListener() {
                     @Override
                     public void onDpUpdate(String devId, Map<String, Object> dpStr) {
+                        actionsNow.setText("Room " + ROOMS.get(finalI).RoomNumber + " switch 2 pressed");
                         if (dpStr.get("switch_1") != null) {
                             if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_1")).toString())) {
                                 ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH2_B().name).child("1").setValue(3);
@@ -1785,6 +1806,7 @@ public class Rooms extends AppCompatActivity
                 ROOMS.get(i).getSWITCH3().registerDeviceListener(new IDeviceListener() {
                     @Override
                     public void onDpUpdate(String devId, Map<String, Object> dpStr) {
+                        actionsNow.setText("Room " + ROOMS.get(finalI).RoomNumber + " switch 3 pressed");
                         if (dpStr.get("switch_1") != null) {
                             if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_1")).toString())) {
                                 ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH3_B().name).child("1").setValue(3);
@@ -1840,6 +1862,7 @@ public class Rooms extends AppCompatActivity
                 ROOMS.get(i).getSWITCH4().registerDeviceListener(new IDeviceListener() {
                     @Override
                     public void onDpUpdate(String devId, Map<String, Object> dpStr) {
+                        actionsNow.setText("Room " + ROOMS.get(finalI).RoomNumber + " switch 4 pressed");
                         if (dpStr.get("switch_1") != null) {
                             if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_1")).toString())) {
                                 ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("1").setValue(3);
@@ -1925,9 +1948,12 @@ public class Rooms extends AppCompatActivity
                 ROOMS.get(i).getLOCK().registerDeviceListener(new IDeviceListener() {
                     @Override
                     public void onDpUpdate(String devId, Map<String, Object> dpStr) {
-                        Log.d("lockBattery",dpStr.toString());
-                        if (dpStr.get("residual_electricity") != null) {
-                            ROOMS.get(finalI).getFireRoom().child("lockBattery").setValue(Objects.requireNonNull(dpStr.get("residual_electricity")).toString());
+                        if (dpStr != null) {
+                            Log.d("lockBattery",dpStr.toString());
+                            actionsNow.setText("Room " + ROOMS.get(finalI).RoomNumber + " lock "+dpStr.toString());
+                            if (dpStr.get("residual_electricity") != null) {
+                                ROOMS.get(finalI).getFireRoom().child("lockBattery").setValue(Objects.requireNonNull(dpStr.get("residual_electricity")).toString());
+                            }
                         }
                     }
 
@@ -2285,22 +2311,6 @@ public class Rooms extends AppCompatActivity
 
                                             }
                                         });
-//                                        ROOMS.get(finalI).getPOWER().publishDps("{\" 1\":false}", new IResultCallback() {
-//                                                @Override
-//                                                public void onError(String code, String error) {
-//                                                }
-//                                                @Override
-//                                                public void onSuccess() {
-//                                                }
-//                                            });
-//                                        ROOMS.get(finalI).getPOWER().publishDps("{\" 2\":false}", new IResultCallback() {
-//                                                @Override
-//                                                public void onError(String code, String error) {
-//                                                }
-//                                                @Override
-//                                                public void onSuccess() {
-//                                                }
-//                                            });
                                     }
                                 }
                                 else if (Integer.parseInt(snapshot.getValue().toString()) == 1) {
@@ -2327,22 +2337,6 @@ public class Rooms extends AppCompatActivity
 
                                             }
                                         });
-//                                        ROOMS.get(finalI).getPOWER().publishDps("{\" 1\":true}", new IResultCallback() {
-//                                                @Override
-//                                                public void onError(String code, String error) {
-//                                                }
-//                                                @Override
-//                                                public void onSuccess() {
-//                                                }
-//                                            });
-//                                        ROOMS.get(finalI).getPOWER().publishDps("{\" 2\":false}", new IResultCallback() {
-//                                                @Override
-//                                                public void onError(String code, String error) {
-//                                                }
-//                                                @Override
-//                                                public void onSuccess() {
-//                                                }
-//                                            });
                                     }
                                 }
                                 else if (Integer.parseInt(snapshot.getValue().toString()) == 2) {
@@ -2369,22 +2363,6 @@ public class Rooms extends AppCompatActivity
 
                                             }
                                         });
-//                                        ROOMS.get(finalI).getPOWER().publishDps("{\" 1\":true}", new IResultCallback() {
-//                                                @Override
-//                                                public void onError(String code, String error) {
-//                                                }
-//                                                @Override
-//                                                public void onSuccess() {
-//                                                }
-//                                            });
-//                                        ROOMS.get(finalI).getPOWER().publishDps("{\" 2\":true}", new IResultCallback() {
-//                                                @Override
-//                                                public void onError(String code, String error) {
-//                                                }
-//                                                @Override
-//                                                public void onSuccess() {
-//                                                }
-//                                            });
                                     }
                                 }
                             }
@@ -3868,7 +3846,9 @@ public class Rooms extends AppCompatActivity
     }
 
     public void setProjectVariablesListener() {
+        Log.d("projectV","setListeners");
         final int[] refreshCounter = {0};
+        ProjectVariablesRef.child("CheckinModeActive").setValue(MyApp.ProjectVariables.CheckinModeActive);
         ProjectVariablesRef.child("CheckinModeActive").addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -3881,6 +3861,7 @@ public class Rooms extends AppCompatActivity
 
             }
         });
+        ProjectVariablesRef.child("CheckoutModeActive").setValue(MyApp.ProjectVariables.CheckoutModeActive);
         ProjectVariablesRef.child("CheckoutModeActive").addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -3893,6 +3874,7 @@ public class Rooms extends AppCompatActivity
 
             }
         });
+        ProjectVariablesRef.child("ACSenarioActive").setValue(MyApp.ProjectVariables.ACSenarioActive);
         ProjectVariablesRef.child("ACSenarioActive").addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -3905,6 +3887,7 @@ public class Rooms extends AppCompatActivity
 
             }
         });
+        ProjectVariablesRef.child("CheckInModeTime").setValue(MyApp.ProjectVariables.CheckinModeTime);
         ProjectVariablesRef.child("CheckInModeTime").addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -3918,6 +3901,7 @@ public class Rooms extends AppCompatActivity
 
             }
         });
+        ProjectVariablesRef.child("CheckOutModeTime").setValue(MyApp.ProjectVariables.CheckoutModeTime);
         ProjectVariablesRef.child("CheckOutModeTime").addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -3931,6 +3915,7 @@ public class Rooms extends AppCompatActivity
 
             }
         });
+        ProjectVariablesRef.child("CheckinActions").setValue(MyApp.ProjectVariables.CheckinActions);
         ProjectVariablesRef.child("CheckinActions").addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -3944,6 +3929,7 @@ public class Rooms extends AppCompatActivity
 
             }
         });
+        ProjectVariablesRef.child("CheckoutActions").setValue(MyApp.ProjectVariables.CheckoutActions);
         ProjectVariablesRef.child("CheckoutActions").addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -3957,6 +3943,7 @@ public class Rooms extends AppCompatActivity
 
             }
         });
+        ProjectVariablesRef.child("DoorWarning").setValue(MyApp.ProjectVariables.DoorWarning);
         ProjectVariablesRef.child("DoorWarning").addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -3969,6 +3956,7 @@ public class Rooms extends AppCompatActivity
 
             }
         });
+        ProjectVariablesRef.child("HKCleanupTime").setValue(MyApp.ProjectVariables.HKCleanTime);
         ProjectVariablesRef.child("HKCleanupTime").addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -3981,6 +3969,7 @@ public class Rooms extends AppCompatActivity
 
             }
         });
+        ProjectVariablesRef.child("Interval").setValue(MyApp.ProjectVariables.Interval);
         ProjectVariablesRef.child("Interval").addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -3994,6 +3983,7 @@ public class Rooms extends AppCompatActivity
 
             }
         });
+        ProjectVariablesRef.child("PoweroffAfterHK").setValue(MyApp.ProjectVariables.PoweroffAfterHK);
         ProjectVariablesRef.child("PoweroffAfterHK").addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -4006,6 +3996,7 @@ public class Rooms extends AppCompatActivity
 
             }
         });
+        ProjectVariablesRef.child("OnClientBack").setValue(MyApp.ProjectVariables.OnClientBack);
         ProjectVariablesRef.child("OnClientBack").addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -4019,6 +4010,7 @@ public class Rooms extends AppCompatActivity
 
             }
         });
+        ProjectVariablesRef.child("Temp").setValue(MyApp.ProjectVariables.Temp);
         ProjectVariablesRef.child("Temp").addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -4405,39 +4397,6 @@ public class Rooms extends AppCompatActivity
     }
 
     //__________________________________________________________
-
-    public  void OpenTheDoor(LockObj lock) {
-        if(lock == null)
-        {
-            Toast.makeText(act," you should get your key list first " , Toast.LENGTH_LONG).show();
-            return;
-        }
-        final Dialog d = new Dialog(act);
-        d.setContentView(R.layout.loading_layout);
-        TextView t = (TextView) d.findViewById(R.id.textViewdfsdf);
-        t.setText("Door Opening");
-        d.setCancelable(false);
-        d.show();
-        //ensureBluetoothIsEnabled();
-        //showConnectLockToast();
-        TTLockClient.getDefault().controlLock(ControlAction.UNLOCK, lock.getLockData(), lock.getLockMac(),new ControlLockCallback()
-        {
-            @Override
-            public void onControlLockSuccess(ControlLockResult controlLockResult)
-            {
-                //Toast.makeText(act,"lock is unlock  success!",Toast.LENGTH_LONG).show();
-                d.dismiss();
-                //ToastMaker.MakeToast("Door Opened",act);
-            }
-            @Override
-            public void onFail(LockError error) {
-                // Toast.makeText(UnlockActivity.this,"unLock fail!--" + error.getDescription(),Toast.LENGTH_LONG).show();
-                d.dismiss();
-                //ToastMaker.MakeToast("Open Fail!  "+error,act);
-            }
-        });
-
-    }
 
     static void setDoorSensorStatus(String ids, String status) {
             String url = MyApp.THE_PROJECT.url + "roomsManagement/modifyRoomsDoorSensorInstalled";
@@ -4854,6 +4813,7 @@ public class Rooms extends AppCompatActivity
 
     static void setRoomOnlineOffline(ROOM room, String status) {
         room.getFireRoom().child("online").setValue(status);
+        room.online = Integer.parseInt(status);
 //        String url = MyApp.THE_PROJECT.url + "reservations/setRoomOnlineOrOffline";
 //        StringRequest tabR = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
 //            @Override
@@ -5998,7 +5958,7 @@ public class Rooms extends AppCompatActivity
                 callBack.onFailed(error.toString());
             }){
                 @Override
-                protected Map<String, String> getParams() throws AuthFailureError {
+                protected Map<String, String> getParams() {
                     Map<String,String> params = new HashMap<>();
                     params.put("room_id", String.valueOf(THE_ROOM.id));
                     return params;
@@ -6148,8 +6108,8 @@ public class Rooms extends AppCompatActivity
                     @Override
                     public void onConnectSuccess(ExtendedBluetoothDevice device) {
                         Toast.makeText(act,"gateway connected",Toast.LENGTH_LONG).show();
-                        EditText wifiName = (EditText) findViewById(R.id.wifiName);
-                        EditText wifiPassword = (EditText) findViewById(R.id.wifiPassword);
+                        EditText wifiName = findViewById(R.id.wifiName);
+                        EditText wifiPassword = findViewById(R.id.wifiPassword);
                         configureGatewayInfo.uid = acc.getUid();
                         configureGatewayInfo.userPwd = acc.getMd5Pwd();
                         configureGatewayInfo.ssid = wifiName.getText().toString().trim();
@@ -6210,7 +6170,7 @@ public class Rooms extends AppCompatActivity
 
     private void uploadGatewayDetail(DeviceInfo deviceInfo, int gatewayId) {
         ApiService apiService = RetrofitAPIManager.provideClientApi();
-        EditText wifiName = (EditText) findViewById(R.id.wifiName);
+        EditText wifiName = findViewById(R.id.wifiName);
         Call<String> call = apiService.uploadGatewayDetail(ApiService.CLIENT_ID, MyApplication.getmInstance().getAccountInfo().getAccess_token(), gatewayId, deviceInfo.getModelNum(), deviceInfo.hardwareRevision, deviceInfo.getFirmwareRevision(), wifiName.getText().toString(), System.currentTimeMillis());
         LogUtil.d("call server isSuccess api");
         call.enqueue(new Callback<String>() {
@@ -6266,278 +6226,291 @@ public class Rooms extends AppCompatActivity
 
     static void setSCENES(List<SceneBean> SCENES) {
         for (int i = 0; i< ROOMS.size(); i++) {
-            if (ROOMS.get(i).RoomNumber == 104) {
-                if (!searchScene(SCENES, ROOMS.get(i).RoomNumber + "ServiceSwitchDNDScene2")) {
-                    PreCondition pr = new PreCondition();
-                    List<PreCondition> lpr = new ArrayList<>();
-                    List<SceneCondition> condS = new ArrayList<>();
-                    List<SceneTask> tasks = new ArrayList<>();
-                    lpr.add(pr);
-                    if (ROOMS.get(i).getSERVICE1_B() != null) {
-                        BoolRule rule = BoolRule.newInstance("dp"+MyApp.ProjectVariables.dndButton, true);
-                        SceneCondition cond = SceneCondition.createDevCondition(ROOMS.get(i).getSERVICE1_B(), String.valueOf(MyApp.ProjectVariables.dndButton), rule);
-                        condS.add(cond);
-                        HashMap<String, Object> taskMap = new HashMap<>();
-                        taskMap.put(String.valueOf(MyApp.ProjectVariables.cleanupButton), false); // Starts a device.
-                        SceneTask task = TuyaHomeSdk.getSceneManagerInstance().createDpTask(ROOMS.get(i).getSERVICE1_B().devId, taskMap);
-                        tasks.add(task);
-                        TuyaHomeSdk.getSceneManagerInstance().createScene(
-                                Login.THEHOME.getHomeId(),
-                                ROOMS.get(i).RoomNumber + "ServiceSwitchDNDScene2", // The name of the scene.
-                                false,
-                                IMAGES.get(0),  // Indicates whether the scene is displayed on the homepage.
-                                condS, // The effective period. This parameter is optional.
-                                tasks, // The conditions.
-                                null,     // The tasks.
-                                SceneBean.MATCH_TYPE_AND, // The type of trigger conditions to match.
-                                new ITuyaResultCallback<SceneBean>() {
-                                    @Override
-                                    public void onSuccess(SceneBean sceneBean) {
-                                        Log.d("SCENE_DND1", "createScene Success");
-                                        TuyaHomeSdk.newSceneInstance(sceneBean.getId()).enableScene(sceneBean.getId(), new
-                                                IResultCallback() {
-                                                    @Override
-                                                    public void onSuccess() {
-                                                        Log.d("SCENE_DND1", "enable Scene Success");
-                                                    }
+            if (MyApp.ProjectVariables.cleanupButton != 0 && MyApp.ProjectVariables.dndButton != 0) {
+                if (ROOMS.get(i).getSERVICE1() != null) {
+                    if (ROOMS.get(i).getSERVICE1_B().dps.get(String.valueOf(MyApp.ProjectVariables.cleanupButton)) != null && ROOMS.get(i).getSERVICE1_B().dps.get(String.valueOf(MyApp.ProjectVariables.dndButton)) != null) {
+                    if (!searchScene(SCENES, ROOMS.get(i).RoomNumber + "ServiceSwitchDNDScene2")) {
+                        List<SceneCondition> condS = new ArrayList<>();
+                        List<SceneTask> tasks = new ArrayList<>();
+                        if (ROOMS.get(i).getSERVICE1_B() != null) {
+                            BoolRule rule = BoolRule.newInstance("dp"+MyApp.ProjectVariables.dndButton, true);
+                            SceneCondition cond = SceneCondition.createDevCondition(ROOMS.get(i).getSERVICE1_B(), String.valueOf(MyApp.ProjectVariables.dndButton), rule);
+                            condS.add(cond);
+                            HashMap<String, Object> taskMap = new HashMap<>();
+                            taskMap.put(String.valueOf(MyApp.ProjectVariables.cleanupButton), false); // Starts a device.
+                            SceneTask task = TuyaHomeSdk.getSceneManagerInstance().createDpTask(ROOMS.get(i).getSERVICE1_B().devId, taskMap);
+                            tasks.add(task);
+                            TuyaHomeSdk.getSceneManagerInstance().createScene(
+                                    Login.THEHOME.getHomeId(),
+                                    ROOMS.get(i).RoomNumber + "ServiceSwitchDNDScene2", // The name of the scene.
+                                    false,
+                                    IMAGES.get(0),  // Indicates whether the scene is displayed on the homepage.
+                                    condS, // The effective period. This parameter is optional.
+                                    tasks, // The conditions.
+                                    null,     // The tasks.
+                                    SceneBean.MATCH_TYPE_AND, // The type of trigger conditions to match.
+                                    new ITuyaResultCallback<SceneBean>() {
+                                        @Override
+                                        public void onSuccess(SceneBean sceneBean) {
+                                            Log.d("SCENE_DND1", "createScene Success");
+                                            TuyaHomeSdk.newSceneInstance(sceneBean.getId()).enableScene(sceneBean.getId(), new
+                                                    IResultCallback() {
+                                                        @Override
+                                                        public void onSuccess() {
+                                                            Log.d("SCENE_DND1", "enable Scene Success");
+                                                        }
 
-                                                    @Override
-                                                    public void onError(String errorCode, String errorMessage) {
-                                                        Log.d("SCENE_DND1", errorMessage + " " + errorCode);
-                                                    }
-                                                });
-                                    }
+                                                        @Override
+                                                        public void onError(String errorCode, String errorMessage) {
+                                                            Log.d("SCENE_DND1", errorMessage + " " + errorCode);
+                                                        }
+                                                    });
+                                        }
 
-                                    @Override
-                                    public void onError(String errorCode, String errorMessage) {
-                                        Log.d("SCENE_DND1", errorMessage + " " + errorCode);
-                                    }
-                                });
+                                        @Override
+                                        public void onError(String errorCode, String errorMessage) {
+                                            Log.d("SCENE_DND1", errorMessage + " " + errorCode);
+                                        }
+                                    });
+                        }
+                    }
+                    if (!searchScene(SCENES, ROOMS.get(i).RoomNumber + "ServiceSwitchCleanupScene")) {
+                        List<SceneCondition> conds = new ArrayList<>();
+                        List<SceneTask> tasks = new ArrayList<>();
+                        if (ROOMS.get(i).getSERVICE1_B() != null) {
+                            BoolRule rule = BoolRule.newInstance("dp"+MyApp.ProjectVariables.cleanupButton, true);
+                            SceneCondition cond = SceneCondition.createDevCondition(ROOMS.get(i).getSERVICE1_B(), String.valueOf(MyApp.ProjectVariables.cleanupButton), rule);
+                            conds.add(cond);
+                            HashMap<String, Object> taskMap = new HashMap<>();
+                            taskMap.put(String.valueOf(MyApp.ProjectVariables.dndButton), false); // Starts a device.
+                            SceneTask task = TuyaHomeSdk.getSceneManagerInstance().createDpTask(ROOMS.get(i).getSERVICE1_B().devId, taskMap);
+                            tasks.add(task);
+                            TuyaHomeSdk.getSceneManagerInstance().createScene(
+                                    Login.THEHOME.getHomeId(),
+                                    ROOMS.get(i).RoomNumber + "ServiceSwitchCleanupScene", // The name of the scene.
+                                    false,
+                                    IMAGES.get(0),  // Indicates whether the scene is displayed on the homepage.
+                                    conds, // The effective period. This parameter is optional.
+                                    tasks, // The conditions.
+                                    null,     // The tasks.
+                                    SceneBean.MATCH_TYPE_AND, // The type of trigger conditions to match.
+                                    new ITuyaResultCallback<SceneBean>() {
+                                        @Override
+                                        public void onSuccess(SceneBean sceneBean) {
+                                            Log.d("SCENE_Cleanup", "createScene Success");
+                                            TuyaHomeSdk.newSceneInstance(sceneBean.getId()).enableScene(sceneBean.getId(), new
+                                                    IResultCallback() {
+                                                        @Override
+                                                        public void onSuccess() {
+                                                            Log.d("SCENE_Cleanup", "enable Scene Success");
+                                                        }
+
+                                                        @Override
+                                                        public void onError(String errorCode, String errorMessage) {
+                                                            Log.d("SCENE_Cleanup", errorMessage);
+                                                        }
+                                                    });
+                                        }
+
+                                        @Override
+                                        public void onError(String errorCode, String errorMessage) {
+                                            Log.d("SCENE_Cleanup", errorMessage);
+                                        }
+                                    });
+                        }
                     }
                 }
-                if (!searchScene(SCENES, ROOMS.get(i).RoomNumber + "ServiceSwitchDNDScene3")) {
-                    List<SceneCondition> conds = new ArrayList<>();
-                    List<SceneTask> tasks = new ArrayList<>();
-                    if (ROOMS.get(i).getSERVICE1_B() != null) {
-                        BoolRule rule = BoolRule.newInstance("dp"+MyApp.ProjectVariables.dndButton, true);
-                        SceneCondition cond = SceneCondition.createDevCondition(ROOMS.get(i).getSERVICE1_B(), String.valueOf(MyApp.ProjectVariables.dndButton), rule);
-                        conds.add(cond);
-                        HashMap<String, Object> taskMap = new HashMap<>();
-                        taskMap.put(String.valueOf(MyApp.ProjectVariables.laundryButton), false); // Starts a device.
-                        SceneTask task = TuyaHomeSdk.getSceneManagerInstance().createDpTask(ROOMS.get(i).getSERVICE1_B().devId, taskMap);
-                        tasks.add(task);
-                        TuyaHomeSdk.getSceneManagerInstance().createScene(
-                                Login.THEHOME.getHomeId(),
-                                ROOMS.get(i).RoomNumber + "ServiceSwitchDNDScene3", // The name of the scene.
-                                false,
-                                IMAGES.get(0),  // Indicates whether the scene is displayed on the homepage.
-                                conds, // The effective period. This parameter is optional.
-                                tasks, // The conditions.
-                                null,     // The tasks.
-                                SceneBean.MATCH_TYPE_AND, // The type of trigger conditions to match.
-                                new ITuyaResultCallback<SceneBean>() {
-                                    @Override
-                                    public void onSuccess(SceneBean sceneBean) {
-                                        Log.d("SCENE_DND2", "createScene Success");
-                                        TuyaHomeSdk.newSceneInstance(sceneBean.getId()).enableScene(sceneBean.getId(), new
-                                                IResultCallback() {
-                                                    @Override
-                                                    public void onSuccess() {
-                                                        Log.d("SCENE_DND2", "enable Scene Success");
-                                                    }
+                }
+            }
+            if (MyApp.ProjectVariables.laundryButton != 0 && MyApp.ProjectVariables.dndButton != 0) {
+                if (ROOMS.get(i).getSERVICE1() != null) {
+                    if (ROOMS.get(i).getSERVICE1_B().dps.get(String.valueOf(MyApp.ProjectVariables.laundryButton)) != null && ROOMS.get(i).getSERVICE1_B().dps.get(String.valueOf(MyApp.ProjectVariables.dndButton)) != null) {
+                        if (!searchScene(SCENES, ROOMS.get(i).RoomNumber + "ServiceSwitchDNDScene3")) {
+                            List<SceneCondition> conds = new ArrayList<>();
+                            List<SceneTask> tasks = new ArrayList<>();
+                            if (ROOMS.get(i).getSERVICE1_B() != null) {
+                                BoolRule rule = BoolRule.newInstance("dp" + MyApp.ProjectVariables.dndButton, true);
+                                SceneCondition cond = SceneCondition.createDevCondition(ROOMS.get(i).getSERVICE1_B(), String.valueOf(MyApp.ProjectVariables.dndButton), rule);
+                                conds.add(cond);
+                                HashMap<String, Object> taskMap = new HashMap<>();
+                                taskMap.put(String.valueOf(MyApp.ProjectVariables.laundryButton), false); // Starts a device.
+                                SceneTask task = TuyaHomeSdk.getSceneManagerInstance().createDpTask(ROOMS.get(i).getSERVICE1_B().devId, taskMap);
+                                tasks.add(task);
+                                TuyaHomeSdk.getSceneManagerInstance().createScene(
+                                        Login.THEHOME.getHomeId(),
+                                        ROOMS.get(i).RoomNumber + "ServiceSwitchDNDScene3", // The name of the scene.
+                                        false,
+                                        IMAGES.get(0),  // Indicates whether the scene is displayed on the homepage.
+                                        conds, // The effective period. This parameter is optional.
+                                        tasks, // The conditions.
+                                        null,     // The tasks.
+                                        SceneBean.MATCH_TYPE_AND, // The type of trigger conditions to match.
+                                        new ITuyaResultCallback<SceneBean>() {
+                                            @Override
+                                            public void onSuccess(SceneBean sceneBean) {
+                                                Log.d("SCENE_DND2", "createScene Success");
+                                                TuyaHomeSdk.newSceneInstance(sceneBean.getId()).enableScene(sceneBean.getId(), new
+                                                        IResultCallback() {
+                                                            @Override
+                                                            public void onSuccess() {
+                                                                Log.d("SCENE_DND2", "enable Scene Success");
+                                                            }
 
-                                                    @Override
-                                                    public void onError(String errorCode, String errorMessage) {
-                                                        Log.d("SCENE_DND2", errorMessage);
-                                                    }
-                                                });
-                                    }
+                                                            @Override
+                                                            public void onError(String errorCode, String errorMessage) {
+                                                                Log.d("SCENE_DND2", errorMessage);
+                                                            }
+                                                        });
+                                            }
 
-                                    @Override
-                                    public void onError(String errorCode, String errorMessage) {
-                                        Log.d("SCENE_DND2", errorMessage);
-                                    }
-                                });
+                                            @Override
+                                            public void onError(String errorCode, String errorMessage) {
+                                                Log.d("SCENE_DND2", errorMessage);
+                                            }
+                                        });
+                            }
+                        }
+                        if (!searchScene(SCENES, ROOMS.get(i).RoomNumber + "ServiceSwitchLaundryScene")) {
+                            List<SceneCondition> conds = new ArrayList<>();
+                            List<SceneTask> tasks = new ArrayList<>();
+                            if (ROOMS.get(i).getSERVICE1_B() != null) {
+                                BoolRule rule = BoolRule.newInstance("dp" + MyApp.ProjectVariables.laundryButton, true);
+                                SceneCondition cond = SceneCondition.createDevCondition(ROOMS.get(i).getSERVICE1_B(), String.valueOf(MyApp.ProjectVariables.laundryButton), rule);
+                                conds.add(cond);
+                                HashMap<String, Object> taskMap = new HashMap<>();
+                                taskMap.put(String.valueOf(MyApp.ProjectVariables.dndButton), false); // Starts a device.
+                                SceneTask task = TuyaHomeSdk.getSceneManagerInstance().createDpTask(ROOMS.get(i).getSERVICE1_B().devId, taskMap);
+                                tasks.add(task);
+                                TuyaHomeSdk.getSceneManagerInstance().createScene(
+                                        Login.THEHOME.getHomeId(),
+                                        ROOMS.get(i).RoomNumber + "ServiceSwitchLaundryScene", // The name of the scene.
+                                        false,
+                                        IMAGES.get(0),  // Indicates whether the scene is displayed on the homepage.
+                                        conds, // The effective period. This parameter is optional.
+                                        tasks, // The conditions.
+                                        null,     // The tasks.
+                                        SceneBean.MATCH_TYPE_AND, // The type of trigger conditions to match.
+                                        new ITuyaResultCallback<SceneBean>() {
+                                            @Override
+                                            public void onSuccess(SceneBean sceneBean) {
+                                                Log.d("SCENE_Laundry", "createScene Success");
+                                                TuyaHomeSdk.newSceneInstance(sceneBean.getId()).enableScene(sceneBean.getId(), new
+                                                        IResultCallback() {
+                                                            @Override
+                                                            public void onSuccess() {
+                                                                Log.d("SCENE_Laundry", "enable Scene Success");
+                                                            }
+
+                                                            @Override
+                                                            public void onError(String errorCode, String errorMessage) {
+                                                                Log.d("SCENE_Laundry", errorMessage);
+                                                            }
+                                                        });
+                                            }
+
+                                            @Override
+                                            public void onError(String errorCode, String errorMessage) {
+                                                Log.d("SCENE_Laundry", errorMessage);
+                                            }
+                                        });
+                            }
+                        }
                     }
                 }
-                if (!searchScene(SCENES, ROOMS.get(i).RoomNumber + "ServiceSwitchDNDScene4")) {
-                    List<SceneCondition> conds = new ArrayList<>();
-                    List<SceneTask> tasks = new ArrayList<>();
-                    if (ROOMS.get(i).getSERVICE1_B() != null) {
-                        BoolRule rule = BoolRule.newInstance("dp"+MyApp.ProjectVariables.dndButton, true);
-                        SceneCondition cond = SceneCondition.createDevCondition(ROOMS.get(i).getSERVICE1_B(), String.valueOf(MyApp.ProjectVariables.dndButton), rule);
-                        conds.add(cond);
-                        HashMap<String, Object> taskMap = new HashMap<>();
-                        taskMap.put(String.valueOf(MyApp.ProjectVariables.checkoutButton), false); // Starts a device.
-                        SceneTask task = TuyaHomeSdk.getSceneManagerInstance().createDpTask(ROOMS.get(i).getSERVICE1_B().devId, taskMap);
-                        tasks.add(task);
-                        TuyaHomeSdk.getSceneManagerInstance().createScene(
-                                Login.THEHOME.getHomeId(),
-                                ROOMS.get(i).RoomNumber + "ServiceSwitchDNDScene4", // The name of the scene.
-                                false,
-                                IMAGES.get(0),  // Indicates whether the scene is displayed on the homepage.
-                                conds, // The effective period. This parameter is optional.
-                                tasks, // The conditions.
-                                null,     // The tasks.
-                                SceneBean.MATCH_TYPE_AND, // The type of trigger conditions to match.
-                                new ITuyaResultCallback<SceneBean>() {
-                                    @Override
-                                    public void onSuccess(SceneBean sceneBean) {
-                                        Log.d("SCENE_DND2", "createScene Success");
-                                        TuyaHomeSdk.newSceneInstance(sceneBean.getId()).enableScene(sceneBean.getId(), new
-                                                IResultCallback() {
-                                                    @Override
-                                                    public void onSuccess() {
-                                                        Log.d("SCENE_DND2", "enable Scene Success");
-                                                    }
+            }
+            if (MyApp.ProjectVariables.checkoutButton != 0 && MyApp.ProjectVariables.dndButton != 0) {
+                if (ROOMS.get(i).getSERVICE1() != null) {
+                    if (ROOMS.get(i).getSERVICE1_B().dps.get(String.valueOf(MyApp.ProjectVariables.checkoutButton)) != null && ROOMS.get(i).getSERVICE1_B().dps.get(String.valueOf(MyApp.ProjectVariables.dndButton)) != null) {
+                        if (!searchScene(SCENES, ROOMS.get(i).RoomNumber + "ServiceSwitchDNDScene4")) {
+                            List<SceneCondition> conds = new ArrayList<>();
+                            List<SceneTask> tasks = new ArrayList<>();
+                            if (ROOMS.get(i).getSERVICE1_B() != null) {
+                                BoolRule rule = BoolRule.newInstance("dp" + MyApp.ProjectVariables.dndButton, true);
+                                SceneCondition cond = SceneCondition.createDevCondition(ROOMS.get(i).getSERVICE1_B(), String.valueOf(MyApp.ProjectVariables.dndButton), rule);
+                                conds.add(cond);
+                                HashMap<String, Object> taskMap = new HashMap<>();
+                                taskMap.put(String.valueOf(MyApp.ProjectVariables.checkoutButton), false); // Starts a device.
+                                SceneTask task = TuyaHomeSdk.getSceneManagerInstance().createDpTask(ROOMS.get(i).getSERVICE1_B().devId, taskMap);
+                                tasks.add(task);
+                                TuyaHomeSdk.getSceneManagerInstance().createScene(
+                                        Login.THEHOME.getHomeId(),
+                                        ROOMS.get(i).RoomNumber + "ServiceSwitchDNDScene4", // The name of the scene.
+                                        false,
+                                        IMAGES.get(0),  // Indicates whether the scene is displayed on the homepage.
+                                        conds, // The effective period. This parameter is optional.
+                                        tasks, // The conditions.
+                                        null,     // The tasks.
+                                        SceneBean.MATCH_TYPE_AND, // The type of trigger conditions to match.
+                                        new ITuyaResultCallback<SceneBean>() {
+                                            @Override
+                                            public void onSuccess(SceneBean sceneBean) {
+                                                Log.d("SCENE_DND2", "createScene Success");
+                                                TuyaHomeSdk.newSceneInstance(sceneBean.getId()).enableScene(sceneBean.getId(), new
+                                                        IResultCallback() {
+                                                            @Override
+                                                            public void onSuccess() {
+                                                                Log.d("SCENE_DND2", "enable Scene Success");
+                                                            }
 
-                                                    @Override
-                                                    public void onError(String errorCode, String errorMessage) {
-                                                        Log.d("SCENE_DND2", errorMessage);
-                                                    }
-                                                });
-                                    }
+                                                            @Override
+                                                            public void onError(String errorCode, String errorMessage) {
+                                                                Log.d("SCENE_DND2", errorMessage);
+                                                            }
+                                                        });
+                                            }
 
-                                    @Override
-                                    public void onError(String errorCode, String errorMessage) {
-                                        Log.d("SCENE_DND2", errorMessage);
-                                    }
-                                });
-                    }
-                }
-                if (!searchScene(SCENES, ROOMS.get(i).RoomNumber + "ServiceSwitchCleanupScene")) {
-                    List<SceneCondition> conds = new ArrayList<>();
-                    List<SceneTask> tasks = new ArrayList<>();
-                    if (ROOMS.get(i).getSERVICE1_B() != null) {
-                        BoolRule rule = BoolRule.newInstance("dp"+MyApp.ProjectVariables.cleanupButton, true);
-                        SceneCondition cond = SceneCondition.createDevCondition(ROOMS.get(i).getSERVICE1_B(), String.valueOf(MyApp.ProjectVariables.cleanupButton), rule);
-                        conds.add(cond);
-                        HashMap<String, Object> taskMap = new HashMap<>();
-                        taskMap.put(String.valueOf(MyApp.ProjectVariables.dndButton), false); // Starts a device.
-                        SceneTask task = TuyaHomeSdk.getSceneManagerInstance().createDpTask(ROOMS.get(i).getSERVICE1_B().devId, taskMap);
-                        tasks.add(task);
-                        TuyaHomeSdk.getSceneManagerInstance().createScene(
-                                Login.THEHOME.getHomeId(),
-                                ROOMS.get(i).RoomNumber + "ServiceSwitchCleanupScene", // The name of the scene.
-                                false,
-                                IMAGES.get(0),  // Indicates whether the scene is displayed on the homepage.
-                                conds, // The effective period. This parameter is optional.
-                                tasks, // The conditions.
-                                null,     // The tasks.
-                                SceneBean.MATCH_TYPE_AND, // The type of trigger conditions to match.
-                                new ITuyaResultCallback<SceneBean>() {
-                                    @Override
-                                    public void onSuccess(SceneBean sceneBean) {
-                                        Log.d("SCENE_Cleanup", "createScene Success");
-                                        TuyaHomeSdk.newSceneInstance(sceneBean.getId()).enableScene(sceneBean.getId(), new
-                                                IResultCallback() {
-                                                    @Override
-                                                    public void onSuccess() {
-                                                        Log.d("SCENE_Cleanup", "enable Scene Success");
-                                                    }
+                                            @Override
+                                            public void onError(String errorCode, String errorMessage) {
+                                                Log.d("SCENE_DND2", errorMessage);
+                                            }
+                                        });
+                            }
+                        }
+                        if (!searchScene(SCENES, ROOMS.get(i).RoomNumber + "ServiceSwitchCheckoutScene")) {
+                            List<SceneCondition> conds = new ArrayList<>();
+                            List<SceneTask> tasks = new ArrayList<>();
+                            if (ROOMS.get(i).getSERVICE1_B() != null) {
+                                BoolRule rule = BoolRule.newInstance("dp" + MyApp.ProjectVariables.checkoutButton, true);
+                                SceneCondition cond = SceneCondition.createDevCondition(ROOMS.get(i).getSERVICE1_B(), String.valueOf(MyApp.ProjectVariables.dndButton), rule);
+                                conds.add(cond);
+                                HashMap<String, Object> taskMap = new HashMap<>();
+                                taskMap.put(String.valueOf(MyApp.ProjectVariables.dndButton), false); // Starts a device.
+                                SceneTask task = TuyaHomeSdk.getSceneManagerInstance().createDpTask(ROOMS.get(i).getSERVICE1_B().devId, taskMap);
+                                tasks.add(task);
+                                TuyaHomeSdk.getSceneManagerInstance().createScene(
+                                        Login.THEHOME.getHomeId(),
+                                        ROOMS.get(i).RoomNumber + "ServiceSwitchCheckoutScene", // The name of the scene.
+                                        false,
+                                        IMAGES.get(0),  // Indicates whether the scene is displayed on the homepage.
+                                        conds, // The effective period. This parameter is optional.
+                                        tasks, // The conditions.
+                                        null,     // The tasks.
+                                        SceneBean.MATCH_TYPE_AND, // The type of trigger conditions to match.
+                                        new ITuyaResultCallback<SceneBean>() {
+                                            @Override
+                                            public void onSuccess(SceneBean sceneBean) {
+                                                Log.d("SCENE_Laundry", "createScene Success");
+                                                TuyaHomeSdk.newSceneInstance(sceneBean.getId()).enableScene(sceneBean.getId(), new
+                                                        IResultCallback() {
+                                                            @Override
+                                                            public void onSuccess() {
+                                                                Log.d("SCENE_Laundry", "enable Scene Success");
+                                                            }
 
-                                                    @Override
-                                                    public void onError(String errorCode, String errorMessage) {
-                                                        Log.d("SCENE_Cleanup", errorMessage);
-                                                    }
-                                                });
-                                    }
+                                                            @Override
+                                                            public void onError(String errorCode, String errorMessage) {
+                                                                Log.d("SCENE_Laundry", errorMessage);
+                                                            }
+                                                        });
+                                            }
 
-                                    @Override
-                                    public void onError(String errorCode, String errorMessage) {
-                                        Log.d("SCENE_Cleanup", errorMessage);
-                                    }
-                                });
-                    }
-                }
-                if (!searchScene(SCENES, ROOMS.get(i).RoomNumber + "ServiceSwitchLaundryScene")) {
-                    List<SceneCondition> conds = new ArrayList<>();
-                    List<SceneTask> tasks = new ArrayList<>();
-                    if (ROOMS.get(i).getSERVICE1_B() != null) {
-                        BoolRule rule = BoolRule.newInstance("dp"+MyApp.ProjectVariables.laundryButton, true);
-                        SceneCondition cond = SceneCondition.createDevCondition(ROOMS.get(i).getSERVICE1_B(), String.valueOf(MyApp.ProjectVariables.laundryButton), rule);
-                        conds.add(cond);
-                        HashMap<String, Object> taskMap = new HashMap<>();
-                        taskMap.put(String.valueOf(MyApp.ProjectVariables.dndButton), false); // Starts a device.
-                        SceneTask task = TuyaHomeSdk.getSceneManagerInstance().createDpTask(ROOMS.get(i).getSERVICE1_B().devId, taskMap);
-                        tasks.add(task);
-                        TuyaHomeSdk.getSceneManagerInstance().createScene(
-                                Login.THEHOME.getHomeId(),
-                                ROOMS.get(i).RoomNumber + "ServiceSwitchLaundryScene", // The name of the scene.
-                                false,
-                                IMAGES.get(0),  // Indicates whether the scene is displayed on the homepage.
-                                conds, // The effective period. This parameter is optional.
-                                tasks, // The conditions.
-                                null,     // The tasks.
-                                SceneBean.MATCH_TYPE_AND, // The type of trigger conditions to match.
-                                new ITuyaResultCallback<SceneBean>() {
-                                    @Override
-                                    public void onSuccess(SceneBean sceneBean) {
-                                        Log.d("SCENE_Laundry", "createScene Success");
-                                        TuyaHomeSdk.newSceneInstance(sceneBean.getId()).enableScene(sceneBean.getId(), new
-                                                IResultCallback() {
-                                                    @Override
-                                                    public void onSuccess() {
-                                                        Log.d("SCENE_Laundry", "enable Scene Success");
-                                                    }
-
-                                                    @Override
-                                                    public void onError(String errorCode, String errorMessage) {
-                                                        Log.d("SCENE_Laundry", errorMessage);
-                                                    }
-                                                });
-                                    }
-
-                                    @Override
-                                    public void onError(String errorCode, String errorMessage) {
-                                        Log.d("SCENE_Laundry", errorMessage);
-                                    }
-                                });
-                    }
-                }
-                if (!searchScene(SCENES, ROOMS.get(i).RoomNumber + "ServiceSwitchCheckoutScene")) {
-                    List<SceneCondition> conds = new ArrayList<>();
-                    List<SceneTask> tasks = new ArrayList<>();
-                    if (ROOMS.get(i).getSERVICE1_B() != null) {
-                        BoolRule rule = BoolRule.newInstance("dp"+MyApp.ProjectVariables.checkoutButton, true);
-                        SceneCondition cond = SceneCondition.createDevCondition(ROOMS.get(i).getSERVICE1_B(), String.valueOf(MyApp.ProjectVariables.dndButton), rule);
-                        conds.add(cond);
-                        HashMap<String, Object> taskMap = new HashMap<>();
-                        taskMap.put(String.valueOf(MyApp.ProjectVariables.dndButton), false); // Starts a device.
-                        SceneTask task = TuyaHomeSdk.getSceneManagerInstance().createDpTask(ROOMS.get(i).getSERVICE1_B().devId, taskMap);
-                        tasks.add(task);
-                        TuyaHomeSdk.getSceneManagerInstance().createScene(
-                                Login.THEHOME.getHomeId(),
-                                ROOMS.get(i).RoomNumber + "ServiceSwitchCheckoutScene", // The name of the scene.
-                                false,
-                                IMAGES.get(0),  // Indicates whether the scene is displayed on the homepage.
-                                conds, // The effective period. This parameter is optional.
-                                tasks, // The conditions.
-                                null,     // The tasks.
-                                SceneBean.MATCH_TYPE_AND, // The type of trigger conditions to match.
-                                new ITuyaResultCallback<SceneBean>() {
-                                    @Override
-                                    public void onSuccess(SceneBean sceneBean) {
-                                        Log.d("SCENE_Laundry", "createScene Success");
-                                        TuyaHomeSdk.newSceneInstance(sceneBean.getId()).enableScene(sceneBean.getId(), new
-                                                IResultCallback() {
-                                                    @Override
-                                                    public void onSuccess() {
-                                                        Log.d("SCENE_Laundry", "enable Scene Success");
-                                                    }
-
-                                                    @Override
-                                                    public void onError(String errorCode, String errorMessage) {
-                                                        Log.d("SCENE_Laundry", errorMessage);
-                                                    }
-                                                });
-                                    }
-
-                                    @Override
-                                    public void onError(String errorCode, String errorMessage) {
-                                        Log.d("SCENE_Laundry", errorMessage);
-                                    }
-                                });
+                                            @Override
+                                            public void onError(String errorCode, String errorMessage) {
+                                                Log.d("SCENE_Laundry", errorMessage);
+                                            }
+                                        });
+                            }
+                        }
                     }
                 }
             }
@@ -6582,6 +6555,7 @@ public class Rooms extends AppCompatActivity
         for (int i=0; i<devices.size();i++) {
             if (devices.get(i).name.equals(room.RoomNumber+deviceType)) {
                 d = devices.get(i);
+                break;
             }
         }
         return d ;

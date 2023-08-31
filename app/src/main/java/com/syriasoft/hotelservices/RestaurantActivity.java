@@ -334,6 +334,7 @@ public class RestaurantActivity extends AppCompatActivity {
         }
         getRestaurantItems();
         KeepScreenFull();
+        setLockButton();
         LinearLayout mainLayout = findViewById(R.id.rightSlide);
         mainLayout.setOnClickListener(v -> x=0);
         backHomeThread = new Runnable() {
@@ -368,8 +369,7 @@ public class RestaurantActivity extends AppCompatActivity {
         }
     }
 
-    void getRestaurantItems()
-    {
+    void getRestaurantItems() {
         Volley.newRequestQueue(act).add(re);
     }
 
@@ -511,7 +511,6 @@ public class RestaurantActivity extends AppCompatActivity {
         TextView text = (TextView) findViewById(R.id.SOS_Text);
         text.setTextColor(getResources().getColor(R.color.light_blue_A200,null));
     }
-
 
     public void setDND(View view) {
         if (MyApp.Room.getSERVICE1_B() != null) {
@@ -726,6 +725,16 @@ public class RestaurantActivity extends AppCompatActivity {
         }
         else {
             ToastMaker.MakeToast("This Room Is Vacant" , act);
+        }
+    }
+
+    void setLockButton() {
+        LinearLayout doorLayout = findViewById(R.id.Door_Button);
+        if (MyApp.BluetoothLock == null && MyApp.Room.getLOCK_B() == null) {
+            doorLayout.setVisibility(View.GONE);
+        }
+        else {
+            doorLayout.setVisibility(View.VISIBLE);
         }
     }
 }

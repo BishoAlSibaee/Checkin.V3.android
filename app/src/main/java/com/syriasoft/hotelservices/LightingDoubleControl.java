@@ -20,10 +20,10 @@ public class LightingDoubleControl extends AppCompatActivity {
     Activity act ;
     LinearLayout FirstLayout , SecondLayout ;
     List<DeviceBean> FirstDeviceList , SecondDeviceList ;
-    RecyclerView FirstDevicesRec , SeconfDevicesRec ;
+    RecyclerView FirstDevicesRec , SecondDevicesRec;
     LinearLayoutManager fManager , sManager ;
-    DoubleControlFirst_Adapter Fadapter ;
-    DoubleControlSecond_Adapter Sadapter ;
+    DoubleControlFirst_Adapter fAdapter;
+    DoubleControlSecond_Adapter sAdapter;
     public static DeviceBean FIRST , SECOND ;
 
 
@@ -39,16 +39,16 @@ public class LightingDoubleControl extends AppCompatActivity {
 
     void setActivity() {
         act = this ;
-        FirstLayout = ( LinearLayout) findViewById(R.id.FirstDeviceLayout);
-        SecondLayout = (LinearLayout) findViewById(R.id.SecondDeviceLayout);
-        FirstDevicesRec = (RecyclerView)  findViewById(R.id.FirstDevicesRecycler);
-        SeconfDevicesRec = (RecyclerView)  findViewById(R.id.SecondDevicesRecycler);
+        FirstLayout = findViewById(R.id.FirstDeviceLayout);
+        SecondLayout = findViewById(R.id.SecondDeviceLayout);
+        FirstDevicesRec = findViewById(R.id.FirstDevicesRecycler);
+        SecondDevicesRec = findViewById(R.id.SecondDevicesRecycler);
         fManager = new LinearLayoutManager(act,RecyclerView.VERTICAL,false);
         sManager = new LinearLayoutManager(act,RecyclerView.VERTICAL,false);
         FirstDevicesRec.setLayoutManager(fManager);
-        SeconfDevicesRec.setLayoutManager(sManager);
-        FirstDeviceList = new ArrayList<DeviceBean>();
-        SecondDeviceList = new ArrayList<DeviceBean>();
+        SecondDevicesRec.setLayoutManager(sManager);
+        FirstDeviceList = new ArrayList<>();
+        SecondDeviceList = new ArrayList<>();
         setDevicesButtons();
     }
 
@@ -69,10 +69,14 @@ public class LightingDoubleControl extends AppCompatActivity {
             FirstDeviceList.add(FullscreenActivity.THE_ROOM.getSWITCH4_B());
             SecondDeviceList.add(FullscreenActivity.THE_ROOM.getSWITCH4_B());
         }
-        Fadapter = new DoubleControlFirst_Adapter(FirstDeviceList);
-        FirstDevicesRec.setAdapter(Fadapter);
-        Sadapter = new DoubleControlSecond_Adapter(SecondDeviceList);
-        SeconfDevicesRec.setAdapter(Sadapter);
+        if (FullscreenActivity.THE_ROOM.getSERVICE1_B() != null) {
+            FirstDeviceList.add(FullscreenActivity.THE_ROOM.getSERVICE1_B());
+            SecondDeviceList.add(FullscreenActivity.THE_ROOM.getSERVICE1_B());
+        }
+        fAdapter = new DoubleControlFirst_Adapter(FirstDeviceList);
+        FirstDevicesRec.setAdapter(fAdapter);
+        sAdapter = new DoubleControlSecond_Adapter(SecondDeviceList);
+        SecondDevicesRec.setAdapter(sAdapter);
     }
 
     public void nextToSelectDps(View view) {

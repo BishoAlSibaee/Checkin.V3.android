@@ -21,7 +21,7 @@ public class PROJECT_VARIABLES {
     public String Logo;
     public int PoweroffClientIn;
     public int PoweroffAfterHK;
-    private int ACSenarioActive;
+    public int ACSenarioActive;
     public String OnClientBack;
     public int HKCleanTime;
     int cleanupButton,laundryButton,dndButton,checkoutButton;

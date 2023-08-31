@@ -336,6 +336,7 @@ public class RestaurantMenus extends AppCompatActivity {
         };
         backHomeThread.run();
         KeepScreenFull();
+        setLockButton();
     }
 
     @Override
@@ -696,6 +697,16 @@ public class RestaurantMenus extends AppCompatActivity {
         }
         else {
             ToastMaker.MakeToast("This Room Is Vacant" , act);
+        }
+    }
+
+    void setLockButton() {
+        LinearLayout doorLayout = findViewById(R.id.Door_Button);
+        if (MyApp.BluetoothLock == null && MyApp.Room.getLOCK_B() == null) {
+            doorLayout.setVisibility(View.GONE);
+        }
+        else {
+            doorLayout.setVisibility(View.VISIBLE);
         }
     }
 }

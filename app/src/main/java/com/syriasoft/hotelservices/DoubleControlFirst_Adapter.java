@@ -1,9 +1,11 @@
 package com.syriasoft.hotelservices;
 
+import android.annotation.SuppressLint;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -29,7 +31,7 @@ public class DoubleControlFirst_Adapter extends RecyclerView.Adapter<DoubleContr
     }
 
     @Override
-    public void onBindViewHolder(@NonNull DoubleControlFirst_Adapter.HOLDER holder, int position) {
+    public void onBindViewHolder(@NonNull DoubleControlFirst_Adapter.HOLDER holder, @SuppressLint("RecyclerView") int position) {
 
         holder.name.setText(list.get(position).getName());
         if (list.get(position).getDps().keySet().contains("1") && list.get(position).getDps().keySet().contains("2") && list.get(position).getDps().keySet().contains("3") && list.get(position).getDps().keySet().contains("4")) {
@@ -48,6 +50,7 @@ public class DoubleControlFirst_Adapter extends RecyclerView.Adapter<DoubleContr
             @Override
             public void onClick(View v) {
                 LightingDoubleControl.FIRST = list.get(position);
+                Toast.makeText(holder.itemView.getContext(),list.get(position).getName()+" selected as first device",Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -61,8 +64,8 @@ public class DoubleControlFirst_Adapter extends RecyclerView.Adapter<DoubleContr
         TextView name , dps ;
         public HOLDER(@NonNull View itemView) {
             super(itemView);
-            name = (TextView) itemView.findViewById(R.id.dev_name);
-            dps = (TextView) itemView.findViewById(R.id.dev_dps);
+            name = itemView.findViewById(R.id.dev_name);
+            dps = itemView.findViewById(R.id.dev_dps);
         }
     }
 }

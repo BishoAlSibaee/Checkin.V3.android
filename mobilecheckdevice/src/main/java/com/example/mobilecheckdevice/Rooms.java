@@ -656,7 +656,7 @@ public class Rooms extends AppCompatActivity
                 Devices = homeBean.getDeviceList();
                 if (Devices.size() == 0) {
                     Toast.makeText(act,"no devices",Toast.LENGTH_LONG).show();
-                    Log.d("devicesAre " ,"no devices" );
+                    Log.d("devicesAre " ,"no devices "+MyApp.HOME.getName() );
                 }
                 else {
                     Toast.makeText(act,"Devices are: "+Devices.size(),Toast.LENGTH_LONG).show();

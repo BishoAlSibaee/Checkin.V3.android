@@ -280,6 +280,7 @@ public class RESTAURANTS extends AppCompatActivity {
 
         });
         KeepScreenFull();
+        setLockButton();
     }
 
     public void backToMain(View view) {
@@ -618,6 +619,16 @@ public class RESTAURANTS extends AppCompatActivity {
         }
         else {
             ToastMaker.MakeToast("This Room Is Vacant" , act);
+        }
+    }
+
+    void setLockButton() {
+        LinearLayout doorLayout = findViewById(R.id.Door_Button);
+        if (MyApp.BluetoothLock == null && MyApp.Room.getLOCK_B() == null) {
+            doorLayout.setVisibility(View.GONE);
+        }
+        else {
+            doorLayout.setVisibility(View.VISIBLE);
         }
     }
 
