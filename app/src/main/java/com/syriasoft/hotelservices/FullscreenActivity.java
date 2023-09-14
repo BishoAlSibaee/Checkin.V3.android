@@ -87,12 +87,10 @@ import java.util.TimerTask;
 public class FullscreenActivity extends AppCompatActivity {
 
     public Activity act  ;
-    final String TAG = "NOTIFICATION TAG";
     Button  GymBtn,curtainBtn,ShowAc,ShowMiniBar;
     static public DatabaseReference  RoomDevicesRef,ServiceUsers,myRefLogo,myRefCheckOutDuration,myRefCheckInDuration,myRefToken,myRefDoorWarning, myRefSetPointInterval, myRefSetPoint,myRefFacility,myRefRoomServiceText,myRefServiceSwitch,myRefPowerSwitch, myRefId, myRefRorS,myRefTemp, myRefDep,myRefStatus,myRefReservation ,myRefPower ,myRefCurtain , myRefDoor ,myRefRoomStatus , Room , myRefDND, myRefTabStatus, myRefLaundry , myRefCleanup , myRefRoomService , myRefSos , myRefRestaurant , myRefCheckout ,myRefDoorSensor,myRefMotionSensor,myRefCurtainSwitch,myRefSwitch1,myRefSwitch2,myRefSwitch3,myRefSwitch4,myRefThermostat,myRefLock;
     static boolean DNDStatus=false,LaundryStatus=false,CleanupStatus=false,RoomServiceStatus,SosStatus,RestaurantStatus,CheckoutStatus = false;
     static String roomServiceOrder ="";
-    TextView time , date;
     static int  RoomOrSuite =1 , ID ,CURRENT_ROOM_STATUS=0 ,RESERVATION =0 ;
     static  boolean  Switch1Status=false,Switch2Status=false ,Switch3Status=false , Switch4Status=false  ;
     static RESERVATION THE_RESERVATION;
@@ -140,7 +138,6 @@ public class FullscreenActivity extends AppCompatActivity {
         order.removeOrder();
         FirebaseMessaging.getInstance().getToken().addOnCompleteListener(task -> {
             if (!task.isSuccessful()) {
-                Log.w(TAG, "Fetching FCM registration token failed", task.getException());
                 return;
             }
             String token = task.getResult();
@@ -198,7 +195,7 @@ public class FullscreenActivity extends AppCompatActivity {
         isPaused = false;
         requestTaskLock();
         prepareLights();
-        prepareMoodButtons();
+        getSceneBGs();
     }
 
     @Override
@@ -266,8 +263,6 @@ public class FullscreenActivity extends AppCompatActivity {
         showAc = findViewById(R.id.ACBtn_cardview);
         RoomServiceBtn = findViewById(R.id.roomservice_btn);
         curtainBtn = findViewById(R.id.curtain);
-        date = findViewById(R.id.mainDate);
-        time = findViewById(R.id.mainTime);
         homeBtn = findViewById(R.id.home_Btn);
         homeBtn.setVisibility(View.GONE);
         serviceLayout = findViewById(R.id.Service_Btns);
@@ -361,7 +356,6 @@ public class FullscreenActivity extends AppCompatActivity {
         setFireRoomListeners();
         blink();
         KeepScreenFull();
-        getSceneBGs();
         setTheAcLayout();
         setLockButton();
     }
@@ -1363,7 +1357,7 @@ public class FullscreenActivity extends AppCompatActivity {
         Window w = d.getWindow();
         w.setLayout(LinearLayout.LayoutParams.MATCH_PARENT,LinearLayout.LayoutParams.MATCH_PARENT);
         w.setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
-        final EditText orderEditeText = (EditText) d.findViewById(R.id.RoomServiceDialog_Text);
+        final EditText orderEditeText = d.findViewById(R.id.RoomServiceDialog_Text);
         Button cancel = d.findViewById(R.id.RoomServiceDialog_Cancel);
         final String[] xxx = new String[] {"","","","",""};
         final CheckBox slippers = d.findViewById(R.id.checkBox_slippers);
@@ -1426,7 +1420,7 @@ public class FullscreenActivity extends AppCompatActivity {
         orderEditeText.setVisibility(View.INVISIBLE);
         d.show();
         cancel.setOnClickListener(v1 -> d.dismiss());
-        Button ok = (Button) d.findViewById(R.id.RoomServiceDialog_OK);
+        Button ok = d.findViewById(R.id.RoomServiceDialog_OK);
         ok.setOnClickListener(v12 -> {
             for (String s : xxx) {
                 if (!s.equals("") && !s.equals("Other")) {
@@ -1499,6 +1493,8 @@ public class FullscreenActivity extends AppCompatActivity {
     private void blink() {
         final Calendar x = Calendar.getInstance(Locale.getDefault());
         final Handler handler = new Handler();
+        TextView date = findViewById(R.id.mainDate);
+        TextView time = findViewById(R.id.mainTime);
         new Thread(() -> {
             try {
                 Thread.sleep(1000);
@@ -1684,6 +1680,16 @@ public class FullscreenActivity extends AppCompatActivity {
             @Override
             public void onSuccess(List<SceneBean> result) {
                 SCENES = result ;
+                MY_SCENES.clear();
+                if (MyApp.MY_SCENES != null) {
+                    MyApp.MY_SCENES.clear();
+                }
+                LivingMood.clear();
+                SleepMood.clear();
+                WorkMood.clear();
+                RomanceMood.clear();
+                ReadMood.clear();
+                MasterOffMood.clear();
                 Log.d("scenesAre",SCENES.size()+"");
                 for (SceneBean s : SCENES) {
                     Log.d("scenesAre",s.getName());
@@ -3275,9 +3281,9 @@ public class FullscreenActivity extends AppCompatActivity {
     }
 
     public void showHideLaundryPriceList(View view) {
-        LinearLayout BtnS = (LinearLayout) findViewById(R.id.Service_Btns);
-        LinearLayout l = (LinearLayout) findViewById(R.id.laundryList_Layout);
-        TextView caption = (TextView) findViewById(R.id.laundryList_caption);
+        LinearLayout BtnS = findViewById(R.id.Service_Btns);
+        LinearLayout l = findViewById(R.id.laundryList_Layout);
+        TextView caption = findViewById(R.id.laundryList_caption);
         if (l.getVisibility() == View.GONE){
             BtnS.setVisibility(View.GONE);
             l.setVisibility(View.VISIBLE);
@@ -3503,7 +3509,7 @@ public class FullscreenActivity extends AppCompatActivity {
 
     void setLockButton() {
         LinearLayout doorLayout = findViewById(R.id.Door_Button);
-        if (MyApp.BluetoothLock == null && MyApp.Room.getLOCK_B() == null) {
+        if (MyApp.Room.getLOCK_B() == null) {
             doorLayout.setVisibility(View.GONE);
         }
         else {

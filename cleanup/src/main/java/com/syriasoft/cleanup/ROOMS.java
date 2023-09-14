@@ -6,22 +6,10 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
-
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
-import com.android.volley.Request;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
 import com.ttlock.bl.sdk.api.TTLockClient;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -85,9 +73,10 @@ public class ROOMS extends AppCompatActivity {
         LinearLayout L = new LinearLayout(act);
         L.setOrientation(LinearLayout.VERTICAL);
         Button B = new Button(act);
-        B.setText("Building "+list.get(0).Building+" "+" Floor "+list.get(0).Floor);
+        B.setText(String.format("Building %d  Floor %d (%d Rooms)", list.get(0).Building, list.get(0).Floor, list.size()));
         B.setHeight(LinearLayout.LayoutParams.WRAP_CONTENT);
         B.setWidth(LinearLayout.LayoutParams.MATCH_PARENT);
+        B.setBackgroundResource(R.color.gray);
         RecyclerView R = new RecyclerView(act);
         GridLayoutManager manager = new GridLayoutManager(act, 4);
         manager.offsetChildrenHorizontal(2);
@@ -96,6 +85,7 @@ public class ROOMS extends AppCompatActivity {
         ROOMS_ADAPTER adapter = new ROOMS_ADAPTER(list);
         R.setAdapter(adapter);
         R.setVisibility(View.GONE);
+        R.setPadding(0,10,0,0);
         B.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -115,7 +105,6 @@ public class ROOMS extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        MainActivity.getRooms();
     }
 
     public void ensureBluetoothIsEnabled() {

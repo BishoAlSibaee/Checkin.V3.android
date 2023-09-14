@@ -36,8 +36,8 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
-import com.google.firebase.iid.FirebaseInstanceId;
-import com.google.firebase.iid.InstanceIdResult;
+//import com.google.firebase.iid.FirebaseInstanceId;
+//import com.google.firebase.iid.InstanceIdResult;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.squareup.picasso.Picasso;
 
@@ -86,27 +86,40 @@ public class RestaurantOrders extends AppCompatActivity {
         setActivity();
         setActivityActions();
         getRooms();
-        FirebaseInstanceId.getInstance().getInstanceId().addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
-                    @Override
-                    public void onComplete(@NonNull Task<InstanceIdResult> task) {
-                        if (!task.isSuccessful()) {
-                            return;
-                        }
-                        String token = task.getResult().getToken();
-                        sendRegistrationToServer(token);
-                    }
-                });
+        Task<String> task = FirebaseMessaging.getInstance().getToken();
+        task.addOnCompleteListener(new OnCompleteListener<String>() {
+            @Override
+            public void onComplete(@NonNull Task<String> task) {
+                if (task.getResult() != null) {
+                    String token = task.getResult();
+                    MyFireUser.child("token").setValue(token);
+                    sendRegistrationToServer(token);
+                }
+            }
+        });
+//        FirebaseInstanceId.getInstance().getInstanceId().addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
+//                    @Override
+//                    public void onComplete(@NonNull Task<InstanceIdResult> task) {
+//                        if (!task.isSuccessful()) {
+//                            return;
+//                        }
+//                        String token = task.getResult().getToken();
+//                        sendRegistrationToServer(token);
+//                    }
+//                });
         Timer t = new Timer() ;
         t.scheduleAtFixedRate(new TimerTask() {
             @Override
-            public void run() {FirebaseInstanceId.getInstance().getInstanceId().addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
+            public void run() {
+                Task<String> task = FirebaseMessaging.getInstance().getToken();
+                task.addOnCompleteListener(new OnCompleteListener<String>() {
                     @Override
-                    public void onComplete(@NonNull Task<InstanceIdResult> task) {
-                        if (!task.isSuccessful()) {
-                            return;
+                    public void onComplete(@NonNull Task<String> task) {
+                        if (task.getResult() != null) {
+                            String token = task.getResult();
+                            MyFireUser.child("token").setValue(token);
+                            sendRegistrationToServer(token);
                         }
-                        String token = task.getResult().getToken();
-                        sendRegistrationToServer(token);
                     }
                 });
             }},1000*60*15,1000*60*15);

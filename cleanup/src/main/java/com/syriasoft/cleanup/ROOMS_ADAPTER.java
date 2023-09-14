@@ -77,72 +77,19 @@ public class ROOMS_ADAPTER extends RecyclerView.Adapter<ROOMS_ADAPTER.HOLDER> {
                 Window w = d.getWindow();
                 w.setLayout(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
                 TextView text = d.findViewById(R.id.room_dialog_text);
-                text.setText("Room : " + list.get(position).RoomNumber);
+                text.setText(String.format("Room : %d", list.get(position).RoomNumber));
                 Button door = d.findViewById(R.id.room_dialog_door);
+                door.setTextSize(holder.itemView.getContext().getResources().getDimension(R.dimen.roomDialogButtonsText));
                 Button power = d.findViewById(R.id.room_dialog_power);
+                power.setTextSize(holder.itemView.getContext().getResources().getDimension(R.dimen.roomDialogButtonsText));
                 Button powerOff = d.findViewById(R.id.button4);
+                powerOff.setTextSize(holder.itemView.getContext().getResources().getDimension(R.dimen.roomDialogButtonsText));
                 ImageView close = d.findViewById(R.id.imageView6);
                 ProgressBar p = d.findViewById(R.id.progressBar4);
                 p.setVisibility(View.INVISIBLE);
                 door.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-//                        if (list.get(position).getLOCK() != null) {
-//                            if (MainActivity.isConnected) {
-//                                final LoadingDialog dd = new LoadingDialog(holder.itemView.getContext());
-//                                TTLockClient.getDefault().controlLock(ControlAction.UNLOCK, list.get(position).getLOCK().getLockData(), list.get(position).getLOCK().getLockMac(), new ControlLockCallback() {
-//                                    @Override
-//                                    public void onControlLockSuccess(ControlLockResult controlLockResult) {
-//                                        dd.close();
-//                                        messageDialog m = new messageDialog("Room " + list.get(position).RoomNumber + " Door Opened", "Door Opened", holder.itemView.getContext());
-//                                        StringRequest request = new StringRequest(Request.Method.POST, registerDoorOpenUrl, new Response.Listener<String>() {
-//                                            @Override
-//                                            public void onResponse(String response) {
-//                                                if (response.equals("1")) {
-//
-//                                                }
-//                                            }
-//                                        }, new Response.ErrorListener() {
-//                                            @Override
-//                                            public void onErrorResponse(VolleyError error) {
-//                                                dd.close();
-//                                                Toast.makeText(holder.itemView.getContext(), error.getMessage(), Toast.LENGTH_LONG);
-//                                                //Log.d("registerOpen" , error.getMessage());
-//                                            }
-//                                        }) {
-//                                            @Override
-//                                            protected Map<String, String> getParams() throws AuthFailureError {
-//                                                Calendar c = Calendar.getInstance(Locale.getDefault());
-//                                                String Date = c.get(Calendar.YEAR) + "-" + (c.get(Calendar.MONTH) + 1) + "-" + c.get(Calendar.DAY_OF_MONTH);
-//                                                String Time = c.get(Calendar.HOUR_OF_DAY) + ":" + c.get(Calendar.MINUTE) + ":" + c.get(Calendar.SECOND);
-//                                                Map<String, String> par = new HashMap<String, String>();
-//                                                par.put("EmpID", String.valueOf(LogIn.db.getUser().id));
-//                                                par.put("JNum", String.valueOf(LogIn.db.getUser().jobNumber));
-//                                                par.put("Name", LogIn.db.getUser().name);
-//                                                par.put("Department", LogIn.db.getUser().department);
-//                                                par.put("Room", String.valueOf(list.get(position).RoomNumber));
-//                                                par.put("Date", Date);
-//                                                par.put("Time", Time);
-//                                                return par;
-//                                            }
-//                                        };
-//                                        Volley.newRequestQueue(holder.itemView.getContext()).add(request);
-//                                    }
-//
-//                                    @Override
-//                                    public void onFail(LockError error) {
-//                                        dd.close();
-//                                        Log.d("registerOpen", error.getErrorMsg());
-//                                        d.dismiss();
-//                                        //Toast.makeText(holder.itemView.getContext(),error.getErrorMsg() , Toast.LENGTH_LONG);
-//                                        messageDialog m = new messageDialog("Room " + list.get(position).RoomNumber + " Door Open Failed .. Try to be Closer", "Door Open Failed", holder.itemView.getContext());
-//                                    }
-//                                });
-//                            }
-//                            else {
-//                                new messageDialog("please connect to internet ", "No internet", holder.itemView.getContext());
-//                            }
-//                        }
                         if (list.get(position).getLOCK() != null) {
                             Log.d("doorOpenResp" , "b lock not null");
                             String url = MyApp.URL + "roomsManagement/addUserDoorOpen";
@@ -152,22 +99,24 @@ public class ROOMS_ADAPTER extends RecyclerView.Adapter<ROOMS_ADAPTER.HOLDER> {
                                 public void onResponse(String response) {
                                     try {
                                         JSONObject result = new JSONObject(response);
-                                        if (result.getString("result") != null) {
+                                        if (result.getString("result") != null)
                                             if (result.getString("result").equals("success")) {
-                                                TTLockClient.getDefault().controlLock(ControlAction.UNLOCK,list.get(position).getLOCK().getLockData(),list.get(position).getLOCK().getLockMac(),new ControlLockCallback() {
+                                                TTLockClient.getDefault().controlLock(ControlAction.UNLOCK, list.get(position).getLOCK().getLockData(), list.get(position).getLOCK().getLockMac(), new ControlLockCallback() {
                                                     @Override
                                                     public void onControlLockSuccess(ControlLockResult controlLockResult) {
                                                         p.setVisibility(View.INVISIBLE);
-                                                        Toast.makeText(holder.itemView.getContext(),"door opened",Toast.LENGTH_SHORT).show();;
+                                                        Toast.makeText(holder.itemView.getContext(), "door opened", Toast.LENGTH_SHORT).show();
+                                                        ;
                                                     }
+
                                                     @Override
                                                     public void onFail(LockError error) {
                                                         p.setVisibility(View.INVISIBLE);
-                                                        Toast.makeText(holder.itemView.getContext(),error.getErrorMsg(),Toast.LENGTH_SHORT).show();;
+                                                        Toast.makeText(holder.itemView.getContext(), error.getErrorMsg(), Toast.LENGTH_SHORT).show();
+                                                        ;
                                                     }
                                                 });
                                             }
-                                        }
                                     } catch (JSONException e) {
                                         p.setVisibility(View.INVISIBLE);
                                         Toast.makeText(holder.itemView.getContext(),e.getMessage(),Toast.LENGTH_SHORT).show();

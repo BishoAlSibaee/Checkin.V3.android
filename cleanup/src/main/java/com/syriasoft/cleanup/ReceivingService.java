@@ -2,7 +2,6 @@ package com.syriasoft.cleanup;
 
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.app.Service;
 import android.app.TaskStackBuilder;
 import android.content.Context;
@@ -11,17 +10,13 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.IBinder;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
-
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -470,9 +465,10 @@ public class ReceivingService extends Service {
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(getApplicationContext());
         stackBuilder.addParentStack(MainActivity.class);
         stackBuilder.addNextIntent(intent);
-        PendingIntent p = stackBuilder.getPendingIntent(reqCode, PendingIntent.FLAG_IMMUTABLE);
+        //stackBuilder.getPendingIntent(reqCode, PendingIntent.FLAG_IMMUTABLE);
         Intent i = new Intent(this, MainActivity.class);
         i.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+        //PendingIntent p = PendingIntent.getActivity(getApplicationContext(),reqCode,i,PendingIntent.FLAG_IMMUTABLE);
         String CHANNEL_ID = "channel_name";// The id of the channel.
         Uri soundUri = Uri.parse("android.resource://" + getApplicationContext().getPackageName() + "/" + R.raw.notification_sound);
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(context, CHANNEL_ID)
@@ -481,7 +477,7 @@ public class ReceivingService extends Service {
                 .setContentText(message)
                 .setAutoCancel(true)
                 .setSound(soundUri)
-                .setContentIntent(p)
+                //.setContentIntent(i)
                 .setColor(Color.parseColor("#0E223B"));
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

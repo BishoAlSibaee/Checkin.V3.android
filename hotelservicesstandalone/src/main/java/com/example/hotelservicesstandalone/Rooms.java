@@ -39,11 +39,6 @@ import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.gson.reflect.TypeToken;
 import com.ttlock.bl.sdk.api.ExtendedBluetoothDevice;
-import com.ttlock.bl.sdk.api.TTLockClient;
-import com.ttlock.bl.sdk.callback.ControlLockCallback;
-import com.ttlock.bl.sdk.constant.ControlAction;
-import com.ttlock.bl.sdk.entity.ControlLockResult;
-import com.ttlock.bl.sdk.entity.LockError;
 import com.ttlock.bl.sdk.gateway.api.GatewayClient;
 import com.ttlock.bl.sdk.gateway.callback.ConnectCallback;
 import com.ttlock.bl.sdk.gateway.callback.InitGatewayCallback;
@@ -123,7 +118,6 @@ public class Rooms extends AppCompatActivity
     long refreshSystemTime = 12 ;
     Timer refreshTimer;
     private final String projectLoginUrl = "users/loginProject" ;
-    static TextView actionsNow ;
 
 
 
@@ -155,6 +149,8 @@ public class Rooms extends AppCompatActivity
             });
             }},1000*60*15,1000*60*60*12);
         refreshTimer = new Timer() ;
+        setActionText("Welcome",act);
+        act.startLockTask();
     }
 
     @Override
@@ -231,7 +227,6 @@ public class Rooms extends AppCompatActivity
         mainLogo = findViewById(R.id.logoLyout) ;
         resetDevices = findViewById(R.id.button2);
         btnSLayout = findViewById(R.id.btnsLayout);
-        actionsNow = findViewById(R.id.textView26);
         TextView hotelName = findViewById(R.id.hotelName);
         hotelName.setText(MyApp.THE_PROJECT.projectName);
         ROOMS = new ArrayList<>();
@@ -1301,7 +1296,7 @@ public class Rooms extends AppCompatActivity
                                     TempRunnableList[finalI].run();
                                 }
                                 DoorRunnable[finalI].run();
-                                actionsNow.setText("Room "+ROOMS.get(finalI).RoomNumber+" door open");
+                                setActionText("Room "+ROOMS.get(finalI).RoomNumber+" door open",act);
                             }
                             else {
                                 ROOMS.get(finalI).getFireRoom().child("doorStatus").setValue(0);
@@ -1309,7 +1304,7 @@ public class Rooms extends AppCompatActivity
                                     DoorsHandlers[finalI].removeCallbacks(DoorRunnable[finalI]);
                                 }
                                 DOOR_STATUS[finalI] = false ;
-                                actionsNow.setText("Room "+ROOMS.get(finalI).RoomNumber+" door closed");
+                                setActionText("Room "+ROOMS.get(finalI).RoomNumber+" door closed",act);
                             }
                         }
                         else {
@@ -1328,7 +1323,7 @@ public class Rooms extends AppCompatActivity
                                         Log.d("acSenario" ,"start");
                                     }
                                     DoorRunnable[finalI].run();
-                                    actionsNow.setText("Room "+ROOMS.get(finalI).RoomNumber+" door open");
+                                    setActionText("Room "+ROOMS.get(finalI).RoomNumber+" door open",act);
                                 }
                                 else {
                                     ROOMS.get(finalI).getFireRoom().child("doorStatus").setValue(0);
@@ -1336,7 +1331,7 @@ public class Rooms extends AppCompatActivity
                                         DoorsHandlers[finalI].removeCallbacks(DoorRunnable[finalI]);
                                     }
                                     DOOR_STATUS[finalI] = false ;
-                                    actionsNow.setText("Room "+ROOMS.get(finalI).RoomNumber+" door closed");
+                                    setActionText("Room "+ROOMS.get(finalI).RoomNumber+" door closed",act);
                                 }
                             }
                             if (ROOMS.get(finalI).getDOORSENSOR_B().dps.get("103") != null) {
@@ -1389,14 +1384,14 @@ public class Rooms extends AppCompatActivity
                                     ROOMS.get(finalI).Cleanup = 1 ;
                                     ROOMS.get(finalI).dep = "Cleanup" ;
                                     ROOMS.get(finalI).getFireRoom().child("Cleanup").setValue(time);
-                                    actionsNow.setText("Room "+ROOMS.get(finalI).RoomNumber+" cleanup order");
+                                    setActionText("Room "+ROOMS.get(finalI).RoomNumber+" cleanup order",act);
                                 }
                                 else if (!Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_" + MyApp.ProjectVariables.cleanupButton)).toString()) && CLEANUP[finalI]) {
                                     CLEANUP[finalI] = false ;
                                     cancelServiceOrder(ROOMS.get(finalI),"Cleanup");
                                     ROOMS.get(finalI).Cleanup = 0 ;
                                     ROOMS.get(finalI).getFireRoom().child("Cleanup").setValue(0);
-                                    actionsNow.setText("Room "+ROOMS.get(finalI).RoomNumber+" cleanup order finished");
+                                    setActionText("Room "+ROOMS.get(finalI).RoomNumber+" cleanup order finished",act);
                                 }
                             }
                             if (dpStr.get("switch_"+MyApp.ProjectVariables.laundryButton) != null) {
@@ -1406,14 +1401,14 @@ public class Rooms extends AppCompatActivity
                                     ROOMS.get(finalI).Laundry = 1 ;
                                     ROOMS.get(finalI).dep = "Laundry" ;
                                     ROOMS.get(finalI).getFireRoom().child("Laundry").setValue(time);
-                                    actionsNow.setText("Room "+ROOMS.get(finalI).RoomNumber+" laundry order");
+                                    setActionText("Room "+ROOMS.get(finalI).RoomNumber+" laundry order",act);
                                 }
                                 else if (!Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_" + MyApp.ProjectVariables.laundryButton)).toString()) && LAUNDRY[finalI]) {
                                     LAUNDRY[finalI] = false ;
                                     cancelServiceOrder(ROOMS.get(finalI),"Laundry");
                                     ROOMS.get(finalI).Laundry = 0 ;
                                     ROOMS.get(finalI).getFireRoom().child("Laundry").setValue(0);
-                                    actionsNow.setText("Room "+ROOMS.get(finalI).RoomNumber+" laundry order finished");
+                                    setActionText("Room "+ROOMS.get(finalI).RoomNumber+" laundry order finished",act);
                                 }
                             }
                             if (dpStr.get("switch_"+MyApp.ProjectVariables.checkoutButton) != null) {
@@ -1423,14 +1418,14 @@ public class Rooms extends AppCompatActivity
                                     ROOMS.get(finalI).Checkout = 1 ;
                                     ROOMS.get(finalI).dep = "Checkout" ;
                                     ROOMS.get(finalI).getFireRoom().child("Checkout").setValue(time);
-                                    actionsNow.setText("Room "+ROOMS.get(finalI).RoomNumber+" checkout order");
+                                    setActionText("Room "+ROOMS.get(finalI).RoomNumber+" checkout order",act);
                                 }
                                 else if (!Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_" + MyApp.ProjectVariables.checkoutButton)).toString()) && CHECKOUT[finalI]) {
                                     CHECKOUT[finalI] = false ;
                                     cancelServiceOrder(ROOMS.get(finalI),"Checkout");
                                     ROOMS.get(finalI).Checkout = 0 ;
                                     ROOMS.get(finalI).getFireRoom().child("Checkout").setValue(0);
-                                    actionsNow.setText("Room "+ROOMS.get(finalI).RoomNumber+" checkout order finished");
+                                    setActionText("Room "+ROOMS.get(finalI).RoomNumber+" checkout order finished",act);
                                 }
                             }
                             if (dpStr.get("switch_"+MyApp.ProjectVariables.dndButton) != null) {
@@ -1440,14 +1435,14 @@ public class Rooms extends AppCompatActivity
                                     ROOMS.get(finalI).DND = 1 ;
                                     ROOMS.get(finalI).dep = "DND" ;
                                     ROOMS.get(finalI).getFireRoom().child("DND").setValue(time);
-                                    actionsNow.setText("Room "+ROOMS.get(finalI).RoomNumber+" dnd order");
+                                    setActionText("Room "+ROOMS.get(finalI).RoomNumber+" dnd on",act);
                                 }
                                 else if (!Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_" + MyApp.ProjectVariables.dndButton)).toString()) && DND[finalI]) {
                                     DND[finalI] = false ;
                                     cancelDNDOrder(ROOMS.get(finalI));
                                     ROOMS.get(finalI).DND = 0 ;
                                     ROOMS.get(finalI).getFireRoom().child("DND").setValue(0);
-                                    actionsNow.setText("Room "+ROOMS.get(finalI).RoomNumber+" dnd order finished");
+                                    setActionText("Room "+ROOMS.get(finalI).RoomNumber+" dnd off",act);
                                 }
                             }
                         }
@@ -1481,7 +1476,7 @@ public class Rooms extends AppCompatActivity
                     @Override
                     public void onDpUpdate(String devId, Map<String, Object> dpStr) {
                         Log.d("acAction" , dpStr.toString());
-                        actionsNow.setText("Room " + ROOMS.get(finalI).RoomNumber + " AC pressed");
+                        setActionText("Room " + ROOMS.get(finalI).RoomNumber + " AC action",act);
                         if (dpStr.get("temp_current") != null) {
                             double temp = (Integer.parseInt(Objects.requireNonNull(dpStr.get("temp_current")).toString())*0.1);
                             ROOMS.get(finalI).getFireRoom().child("temp").setValue(temp) ;
@@ -1531,40 +1526,6 @@ public class Rooms extends AppCompatActivity
                     @Override
                     public void onDpUpdate(String devId, Map<String, Object> dpStr) {
                         Log.d("powerActions",dpStr.toString());
-//                        if (dpStr.get("switch_1") != null) {
-//                            if (dpStr.get("switch_1").toString().equals("false")) {
-//                                ROOMS.get(finalI).getFireRoom().child("powerStatus").setValue(0);
-//                                ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getPOWER_B().name).child("1").setValue(0);
-//                            }
-//                            else if (dpStr.get("switch_1").toString().equals("true")) {
-//                                if (ROOMS.get(finalI).getPOWER_B().dps.get("2").toString().equals("false")) {
-//                                    ROOMS.get(finalI).getFireRoom().child("powerStatus").setValue(1);
-//                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getPOWER_B().name).child("1").setValue(1);
-//                                }
-//                                else if (ROOMS.get(finalI).getPOWER_B().dps.get("2").toString().equals("true")) {
-//                                    ROOMS.get(finalI).getFireRoom().child("powerStatus").setValue(2);
-//                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getPOWER_B().name).child("1").setValue(2);
-//                                }
-//                            }
-//                        }
-//                        if (dpStr.get("switch_2") != null) {
-//                            if (dpStr.get("switch_2").toString().equals("true")) {
-//                                if (ROOMS.get(finalI).getPOWER_B().dps.get("1").toString().equals("true")) {
-//                                    ROOMS.get(finalI).getFireRoom().child("powerStatus").setValue(2);
-//                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getPOWER_B().name).child("1").setValue(2);
-//                                }
-//                            }
-//                            else if (dpStr.get("switch_2").toString().equals("false")) {
-//                                if (ROOMS.get(finalI).getPOWER_B().dps.get("1").toString().equals("true")) {
-//                                    ROOMS.get(finalI).getFireRoom().child("powerStatus").setValue(1);
-//                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getPOWER_B().name).child("1").setValue(1);
-//                                }
-//                                else if (ROOMS.get(finalI).getPOWER_B().dps.get("1").toString().equals("false")) {
-//                                    ROOMS.get(finalI).getFireRoom().child("powerStatus").setValue(0);
-//                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getPOWER_B().name).child("1").setValue(0);
-//                                }
-//                            }
-//                        }
                         if (dpStr.get("switch_1") != null) {
                             v1[0] = Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_1")).toString()) ;
                         }
@@ -1573,15 +1534,15 @@ public class Rooms extends AppCompatActivity
                         }
                         if (v1[0] && v2[0]) {
                             ROOMS.get(finalI).getFireRoom().child("powerStatus").setValue(2);
-                            actionsNow.setText("Room " + ROOMS.get(finalI).RoomNumber + " power on");
+                            setActionText("Room " + ROOMS.get(finalI).RoomNumber + " power on",act);
                         }
                         else if (v1[0]) {
                             ROOMS.get(finalI).getFireRoom().child("powerStatus").setValue(1);
-                            actionsNow.setText("Room " + ROOMS.get(finalI).RoomNumber + " power bycard");
+                            setActionText("Room " + ROOMS.get(finalI).RoomNumber + " power byCard",act);
                         }
                         else if (!v2[0]) {
                             ROOMS.get(finalI).getFireRoom().child("powerStatus").setValue(0);
-                            actionsNow.setText("Room " + ROOMS.get(finalI).RoomNumber + " power off");
+                            setActionText("Room " + ROOMS.get(finalI).RoomNumber + " power off",act);
                         }
                     }
                     @Override
@@ -1633,7 +1594,7 @@ public class Rooms extends AppCompatActivity
                     @Override
                     public void onDpUpdate(String devId, Map<String, Object> dpStr) {
                         Log.d("motion" , dpStr.toString());
-                        actionsNow.setText("Room " + ROOMS.get(finalI).RoomNumber + " motion detected");
+                        setActionText("Room " + ROOMS.get(finalI).RoomNumber + " motion detected",act);
                         if (AC_SENARIO_Status[finalI]) {
                             AC_SENARIO_Status[finalI] = false ;
                             Log.d("acSenario" ,"stop");
@@ -1694,7 +1655,6 @@ public class Rooms extends AppCompatActivity
                 ROOMS.get(i).getSWITCH1().registerDeviceListener(new IDeviceListener() {
                     @Override
                     public void onDpUpdate(String devId, Map<String, Object> dpStr) {
-                        actionsNow.setText("Room " + ROOMS.get(finalI).RoomNumber + " switch 1 pressed");
                         if (dpStr.get("switch_1") != null) {
                             if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_1")).toString())) {
                                 ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH1_B().name).child("1").setValue(3);
@@ -1702,6 +1662,7 @@ public class Rooms extends AppCompatActivity
                             else {
                                 ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH1_B().name).child("1").setValue(0);
                             }
+                            setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 1 Button 1 pressed",act);
                         }
                         if (dpStr.get("switch_2") != null) {
                             if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_2")).toString())) {
@@ -1710,6 +1671,7 @@ public class Rooms extends AppCompatActivity
                             else {
                                 ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH1_B().name).child("2").setValue(0);
                             }
+                            setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 1 Button 2 pressed",act);
                         }
                         if (dpStr.get("switch_3") != null) {
                             if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_3")).toString())) {
@@ -1718,6 +1680,7 @@ public class Rooms extends AppCompatActivity
                             else {
                                 ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH1_B().name).child("3").setValue(0);
                             }
+                            setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 1 Button 3 pressed",act);
                         }
                         if (dpStr.get("switch_4") != null) {
                             if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_4")).toString())) {
@@ -1726,6 +1689,7 @@ public class Rooms extends AppCompatActivity
                             else {
                                 ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH1_B().name).child("4").setValue(0);
                             }
+                            setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 1 Button 4 pressed",act);
                         }
                     }
                     @Override
@@ -1750,7 +1714,6 @@ public class Rooms extends AppCompatActivity
                 ROOMS.get(i).getSWITCH2().registerDeviceListener(new IDeviceListener() {
                     @Override
                     public void onDpUpdate(String devId, Map<String, Object> dpStr) {
-                        actionsNow.setText("Room " + ROOMS.get(finalI).RoomNumber + " switch 2 pressed");
                         if (dpStr.get("switch_1") != null) {
                             if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_1")).toString())) {
                                 ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH2_B().name).child("1").setValue(3);
@@ -1758,6 +1721,7 @@ public class Rooms extends AppCompatActivity
                             else {
                                 ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH2_B().name).child("1").setValue(0);
                             }
+                            setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 2 Button 1 pressed",act);
                         }
                         if (dpStr.get("switch_2") != null) {
                             if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_2")).toString())) {
@@ -1766,6 +1730,7 @@ public class Rooms extends AppCompatActivity
                             else {
                                 ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH2_B().name).child("2").setValue(0);
                             }
+                            setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 2 Button 2 pressed",act);
                         }
                         if (dpStr.get("switch_3") != null) {
                             if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_3")).toString())) {
@@ -1774,6 +1739,7 @@ public class Rooms extends AppCompatActivity
                             else {
                                 ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH2_B().name).child("3").setValue(0);
                             }
+                            setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 2 Button 3 pressed",act);
                         }
                         if (dpStr.get("switch_4") != null) {
                             if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_4")).toString())) {
@@ -1782,6 +1748,7 @@ public class Rooms extends AppCompatActivity
                             else {
                                 ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH2_B().name).child("4").setValue(0);
                             }
+                            setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 2 Button 4 pressed",act);
                         }
                     }
                     @Override
@@ -1806,7 +1773,6 @@ public class Rooms extends AppCompatActivity
                 ROOMS.get(i).getSWITCH3().registerDeviceListener(new IDeviceListener() {
                     @Override
                     public void onDpUpdate(String devId, Map<String, Object> dpStr) {
-                        actionsNow.setText("Room " + ROOMS.get(finalI).RoomNumber + " switch 3 pressed");
                         if (dpStr.get("switch_1") != null) {
                             if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_1")).toString())) {
                                 ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH3_B().name).child("1").setValue(3);
@@ -1814,6 +1780,7 @@ public class Rooms extends AppCompatActivity
                             else {
                                 ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH3_B().name).child("1").setValue(0);
                             }
+                            setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 3 Button 1 pressed",act);
                         }
                         if (dpStr.get("switch_2") != null) {
                             if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_2")).toString())) {
@@ -1822,6 +1789,7 @@ public class Rooms extends AppCompatActivity
                             else {
                                 ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH3_B().name).child("2").setValue(0);
                             }
+                            setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 3 Button 2 pressed",act);
                         }
                         if (dpStr.get("switch_3") != null) {
                             if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_3")).toString())) {
@@ -1830,6 +1798,7 @@ public class Rooms extends AppCompatActivity
                             else {
                                 ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH3_B().name).child("3").setValue(0);
                             }
+                            setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 3 Button 3 pressed",act);
                         }
                         if (dpStr.get("switch_4") != null) {
                             if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_4")).toString())) {
@@ -1838,6 +1807,7 @@ public class Rooms extends AppCompatActivity
                             else {
                                 ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH3_B().name).child("4").setValue(0);
                             }
+                            setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 3 Button 4 pressed",act);
                         }
                     }
                     @Override
@@ -1862,7 +1832,6 @@ public class Rooms extends AppCompatActivity
                 ROOMS.get(i).getSWITCH4().registerDeviceListener(new IDeviceListener() {
                     @Override
                     public void onDpUpdate(String devId, Map<String, Object> dpStr) {
-                        actionsNow.setText("Room " + ROOMS.get(finalI).RoomNumber + " switch 4 pressed");
                         if (dpStr.get("switch_1") != null) {
                             if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_1")).toString())) {
                                 ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("1").setValue(3);
@@ -1870,6 +1839,7 @@ public class Rooms extends AppCompatActivity
                             else {
                                 ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("1").setValue(0);
                             }
+                            setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 4 Button 1 pressed",act);
                         }
                         if (dpStr.get("switch_2") != null) {
                             if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_2")).toString())) {
@@ -1878,6 +1848,7 @@ public class Rooms extends AppCompatActivity
                             else {
                                 ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("2").setValue(0);
                             }
+                            setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 4 Button 2 pressed",act);
                         }
                         if (dpStr.get("switch_3") != null) {
                             if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_3")).toString())) {
@@ -1886,6 +1857,7 @@ public class Rooms extends AppCompatActivity
                             else {
                                 ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("3").setValue(0);
                             }
+                            setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 4 Button 3 pressed",act);
                         }
                         if (dpStr.get("switch_4") != null) {
                             if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_4")).toString())) {
@@ -1894,6 +1866,7 @@ public class Rooms extends AppCompatActivity
                             else {
                                 ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("4").setValue(0);
                             }
+                            setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 4 Button 4 pressed",act);
                         }
                     }
                     @Override
@@ -1949,8 +1922,7 @@ public class Rooms extends AppCompatActivity
                     @Override
                     public void onDpUpdate(String devId, Map<String, Object> dpStr) {
                         if (dpStr != null) {
-                            Log.d("lockBattery",dpStr.toString());
-                            actionsNow.setText("Room " + ROOMS.get(finalI).RoomNumber + " lock "+dpStr.toString());
+                            setActionText("Room " + ROOMS.get(finalI).RoomNumber + " lock action ",act);
                             if (dpStr.get("residual_electricity") != null) {
                                 ROOMS.get(finalI).getFireRoom().child("lockBattery").setValue(Objects.requireNonNull(dpStr.get("residual_electricity")).toString());
                             }
@@ -6775,5 +6747,13 @@ public class Rooms extends AppCompatActivity
                 });
             }
         }
+    }
+
+    static void setActionText(String action , Activity act) {
+        int month = Calendar.getInstance(Locale.getDefault()).get(Calendar.MONTH) + 1 ;
+        String time = Calendar.getInstance(Locale.getDefault()).get(Calendar.YEAR)+"-"+month+"-"+Calendar.getInstance(Locale.getDefault()).get(Calendar.DAY_OF_MONTH)
+                +" "+Calendar.getInstance(Locale.getDefault()).get(Calendar.HOUR_OF_DAY)+":"+Calendar.getInstance(Locale.getDefault()).get(Calendar.MINUTE);
+        TextView actionsNow = act.findViewById(R.id.textView26);
+        actionsNow.setText(action+" "+time);
     }
 }

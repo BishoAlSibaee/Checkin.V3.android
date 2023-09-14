@@ -86,7 +86,8 @@
             android:onClick="lockAndUnlock"
             android:text="Lock Project"
             android:textAllCaps="false"
-            android:textSize="12sp" />
+            android:textSize="12sp"
+            android:visibility="gone" />
 
         <Button
             android:id="@+id/button9"

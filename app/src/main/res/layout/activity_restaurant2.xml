@@ -16,7 +16,7 @@
         android:layout_marginStart="10dp"
         android:layout_marginTop="20dp"
         android:layout_marginEnd="10dp"
-        android:background="@drawable/date_bar_background"
+        android:background="@drawable/main_buttons"
         android:orientation="horizontal"
         android:paddingStart="20dp"
         android:paddingTop="10dp"
@@ -44,9 +44,9 @@
             android:layout_height="40dp"
             android:layout_gravity="center_vertical"
             android:layout_marginStart="10dp"
+            android:contentDescription="@string/sos"
             android:visibility="gone"
-            app:srcCompat="@drawable/group_54"
-            android:contentDescription="@string/sos" />
+            app:srcCompat="@drawable/group_54" />
 
         <ImageView
             android:id="@+id/imageView7"
@@ -54,9 +54,9 @@
             android:layout_height="40dp"
             android:layout_gravity="center_vertical"
             android:layout_marginStart="10dp"
+            android:contentDescription="@string/roomService"
             android:visibility="gone"
-            app:srcCompat="@drawable/towels"
-            android:contentDescription="@string/roomService" />
+            app:srcCompat="@drawable/towels" />
 
         <ImageView
             android:id="@+id/imageView9"
@@ -64,9 +64,9 @@
             android:layout_height="40dp"
             android:layout_gravity="center_vertical"
             android:layout_marginStart="10dp"
+            android:contentDescription="@string/cleanUp"
             android:visibility="gone"
-            app:srcCompat="@drawable/cleanup_btn"
-            android:contentDescription="@string/cleanUp" />
+            app:srcCompat="@drawable/cleanup_btn" />
 
         <ImageView
             android:id="@+id/DND_Icon"
@@ -74,9 +74,9 @@
             android:layout_height="40dp"
             android:layout_gravity="center_vertical"
             android:layout_marginStart="10dp"
+            android:contentDescription="@string/dnd"
             android:visibility="gone"
-            app:srcCompat="@drawable/union_6"
-            android:contentDescription="@string/dnd" />
+            app:srcCompat="@drawable/union_6" />
 
         <ImageView
             android:id="@+id/imageView2"
@@ -84,9 +84,9 @@
             android:layout_height="40dp"
             android:layout_gravity="center_vertical"
             android:layout_marginStart="10dp"
+            android:contentDescription="@string/restaurant"
             android:visibility="gone"
-            app:srcCompat="@drawable/subtraction_10"
-            android:contentDescription="@string/restaurant" />
+            app:srcCompat="@drawable/subtraction_10" />
 
         <ImageView
             android:id="@+id/imageView10"
@@ -94,9 +94,9 @@
             android:layout_height="40dp"
             android:layout_gravity="center_vertical"
             android:layout_marginStart="10dp"
+            android:contentDescription="@string/laundry"
             android:visibility="gone"
-            app:srcCompat="@drawable/laundry_btn"
-            android:contentDescription="@string/laundry" />
+            app:srcCompat="@drawable/laundry_btn" />
 
         <ImageView
             android:id="@+id/imageView20"
@@ -104,9 +104,9 @@
             android:layout_height="40dp"
             android:layout_gravity="center_vertical"
             android:layout_marginStart="10dp"
+            android:contentDescription="@string/checkout"
             android:visibility="gone"
-            app:srcCompat="@drawable/checkout"
-            android:contentDescription="@string/checkout" />
+            app:srcCompat="@drawable/checkout" />
 
         <TextView
             android:id="@+id/mainTime"
@@ -247,7 +247,7 @@
             android:layout_marginStart="10dp"
             android:layout_marginEnd="10dp"
             android:layout_weight="1"
-            android:background="@drawable/date_bar_background"
+            android:background="@drawable/mainbtn_main"
             android:orientation="horizontal"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -281,17 +281,18 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
         android:background="@color/light_blue_A400"
-        android:orientation="horizontal"
-        android:paddingTop="10dp"
-        android:paddingBottom="10dp">
+        android:orientation="horizontal">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_gravity="center_vertical"
             android:layout_weight="1"
+            android:background="@drawable/main_btn_edge"
             android:onClick="SOS"
             android:orientation="vertical"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp"
             app:cardBackgroundColor="@color/trasparent">
 
             <ImageView
@@ -320,8 +321,11 @@
             android:layout_height="match_parent"
             android:layout_gravity="center_vertical"
             android:layout_weight="1"
+            android:background="@drawable/main_btn_edge"
             android:onClick="OpenTheDoor"
             android:orientation="vertical"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp"
             app:cardBackgroundColor="@color/trasparent">
 
             <ImageView
@@ -357,8 +361,11 @@
             android:layout_height="match_parent"
             android:layout_gravity="center_vertical"
             android:layout_weight="1"
+            android:background="@drawable/main_btn_edge"
             android:onClick="setDND"
             android:orientation="vertical"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp"
             app:cardBackgroundColor="@color/trasparent">
 
             <ImageView

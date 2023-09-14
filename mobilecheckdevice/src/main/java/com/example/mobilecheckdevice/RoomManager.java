@@ -53,6 +53,10 @@ import com.ttlock.bl.sdk.callback.SetNBServerCallback;
 import com.ttlock.bl.sdk.constant.FeatureValue;
 import com.ttlock.bl.sdk.entity.LockError;
 import com.ttlock.bl.sdk.util.FeatureValueUtil;
+import com.tuya.smart.android.ble.api.LeScanSetting;
+import com.tuya.smart.android.ble.api.ScanDeviceBean;
+import com.tuya.smart.android.ble.api.ScanType;
+import com.tuya.smart.android.ble.api.TyBleScanResponse;
 import com.tuya.smart.android.hardware.bean.HgwBean;
 import com.tuya.smart.home.sdk.TuyaHomeSdk;
 import com.tuya.smart.home.sdk.api.IGwSearchListener;
@@ -61,6 +65,7 @@ import com.tuya.smart.home.sdk.api.ITuyaGwSearcher;
 import com.tuya.smart.home.sdk.builder.ActivatorBuilder;
 import com.tuya.smart.home.sdk.builder.TuyaGwActivatorBuilder;
 import com.tuya.smart.home.sdk.builder.TuyaGwSubDevActivatorBuilder;
+import com.tuya.smart.sdk.api.IMultiModeActivatorListener;
 import com.tuya.smart.sdk.api.IResultCallback;
 import com.tuya.smart.sdk.api.ITuyaActivator;
 import com.tuya.smart.sdk.api.ITuyaActivatorGetToken;
@@ -68,6 +73,7 @@ import com.tuya.smart.sdk.api.ITuyaDevice;
 import com.tuya.smart.sdk.api.ITuyaGateway;
 import com.tuya.smart.sdk.api.ITuyaSmartActivatorListener;
 import com.tuya.smart.sdk.bean.DeviceBean;
+import com.tuya.smart.sdk.bean.MultiModeActivatorBean;
 import com.tuya.smart.sdk.enums.ActivatorModelEnum;
 
 import java.util.ArrayList;
@@ -111,6 +117,7 @@ public class RoomManager extends AppCompatActivity
         REQ = Volley.newRequestQueue(act);
         setActivity();
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
+        scanMultiMood();
     }
 
     @Override
@@ -1427,5 +1434,49 @@ public class RoomManager extends AppCompatActivity
                 Toast.makeText(act, requestError.getMessage()+"error", Toast.LENGTH_LONG).show();
             }
         });
+    }
+
+    void scanMultiMood() {
+        Log.d("multiMood","start");
+        LeScanSetting ss = new LeScanSetting.Builder().setTimeout(100).addScanType(ScanType.SIG_MESH).build();
+        TuyaHomeSdk.getBleOperator().startLeScan(ss, new TyBleScanResponse() {
+            @Override
+            public void onResult(ScanDeviceBean bean) {
+                Log.d("multiMood","found "+bean.getName());
+                TuyaHomeSdk.getActivatorInstance().getActivatorToken(Login.THEHOME.getHomeId(), new ITuyaActivatorGetToken() {
+                    @Override
+                    public void onSuccess(String token) {
+                        Log.d("multiMood","token "+token);
+                        MultiModeActivatorBean m = new MultiModeActivatorBean();
+                        m.deviceType = bean.getDeviceType();
+                        m.uuid = bean.getUuid();
+                        m.address = bean.getAddress();
+                        m.mac = bean.getMac();
+                        m.ssid = selectedWifi.getText().toString();
+                        m.pwd = wifiPass.getText().toString();
+                        m.token = token ;
+                        m.homeId = Login.THEHOME.getHomeId();
+                        TuyaHomeSdk.getActivator().newMultiModeActivator().startActivator(m, new IMultiModeActivatorListener() {
+                            @Override
+                            public void onSuccess(DeviceBean deviceBean) {
+                                Log.d("multiMood","activated "+deviceBean.name);
+                            }
+
+                            @Override
+                            public void onFailure(int code, String msg, Object handle) {
+                                Log.d("multiMood","activated "+msg);
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onFailure(String errorCode, String errorMsg) {
+                        Log.d("multiMood","token "+errorMsg);
+                    }
+                });
+            }
+
+        });
+
     }
 }

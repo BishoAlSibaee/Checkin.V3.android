@@ -16,7 +16,7 @@
         android:layout_marginStart="10dp"
         android:layout_marginTop="10dp"
         android:layout_marginEnd="10dp"
-        android:background="@drawable/date_bar_background"
+        android:background="@drawable/main_buttons"
         android:orientation="horizontal"
         android:paddingStart="20dp"
         android:paddingTop="10dp"
@@ -226,7 +226,7 @@
             android:layout_marginEnd="10dp"
             android:layout_marginBottom="10dp"
             android:layout_weight="1"
-            android:background="@drawable/date_bar_background"
+            android:background="@drawable/mainbtn_main"
             android:orientation="horizontal"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -273,8 +273,6 @@
         android:layout_gravity="bottom"
         android:background="@color/light_blue_A400"
         android:orientation="horizontal"
-        android:paddingTop="5dp"
-        android:paddingBottom="5dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
@@ -284,8 +282,11 @@
             android:layout_height="match_parent"
             android:layout_gravity="center_vertical"
             android:layout_weight="1"
+            android:background="@drawable/main_btn_edge"
             android:onClick="SOS"
             android:orientation="vertical"
+            android:paddingTop="5dp"
+            android:paddingBottom="5dp"
             app:cardBackgroundColor="@color/trasparent">
 
             <ImageView
@@ -315,9 +316,12 @@
             android:layout_height="match_parent"
             android:layout_gravity="center"
             android:layout_weight="1"
+            android:background="@drawable/main_btn_edge"
             android:gravity="center"
             android:onClick="OpenTheDoor"
             android:orientation="vertical"
+            android:paddingTop="5dp"
+            android:paddingBottom="5dp"
             app:cardBackgroundColor="@color/trasparent">
 
             <LinearLayout
@@ -363,7 +367,10 @@
             android:layout_height="match_parent"
             android:layout_gravity="center_vertical"
             android:layout_weight="1"
+            android:background="@drawable/main_btn_edge"
             android:orientation="vertical"
+            android:paddingTop="5dp"
+            android:paddingBottom="5dp"
             app:cardBackgroundColor="@color/trasparent">
 
             <ImageView
