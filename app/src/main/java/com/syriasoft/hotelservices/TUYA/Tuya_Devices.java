@@ -121,7 +121,7 @@ public class Tuya_Devices extends AppCompatActivity {
                     {
                         Calendar ca = Calendar.getInstance(Locale.getDefault());
                         long time = ca.getTimeInMillis();
-                        ErrorRegister.rigestError(act ,MyApp.THE_PROJECT.projectName,MyApp.Room.RoomNumber,time,11,s+s1,"error Getting Token From Tuya");
+                        ErrorRegister.insertError(act ,MyApp.THE_PROJECT.projectName,MyApp.Room.RoomNumber,time,11,s+s1,"error Getting Token From Tuya");
                     }
                 });
         Button b = (Button) findViewById(R.id.button12);
@@ -146,7 +146,7 @@ public class Tuya_Devices extends AppCompatActivity {
                                      d.stop();
                                      Toast.makeText(act , errorMsg , Toast.LENGTH_LONG).show();
                                      long time = ca.getTimeInMillis() ;
-                                     ErrorRegister.rigestError(act,MyApp.THE_PROJECT.projectName,MyApp.Room.RoomNumber,time,12,errorMsg,"error Searching Wifi Device ");
+                                     ErrorRegister.insertError(act,MyApp.THE_PROJECT.projectName,MyApp.Room.RoomNumber,time,12,errorMsg,"error Searching Wifi Device ");
                                  }
 
                                  @Override
@@ -196,7 +196,7 @@ public class Tuya_Devices extends AppCompatActivity {
                         d.stop();
                         ToastMaker.MakeToast(error , act);
                         long time = ca.getTimeInMillis();
-                        ErrorRegister.rigestError(act,MyApp.THE_PROJECT.projectName,MyApp.Room.RoomNumber,time,13,error,"error changing Device Name ");
+                        ErrorRegister.insertError(act,MyApp.THE_PROJECT.projectName,MyApp.Room.RoomNumber,time,13,error,"error changing Device Name ");
                     }
                     @Override
                     public void onSuccess()
@@ -241,7 +241,7 @@ public class Tuya_Devices extends AppCompatActivity {
                                                  {
                                                      d.stop();
                                                      long time = ca.getTimeInMillis();
-                                                     ErrorRegister.rigestError(act,MyApp.THE_PROJECT.projectName,MyApp.Room.RoomNumber,time,14,errorMsg,"error Searching Wire Zigbee Gateway");
+                                                     ErrorRegister.insertError(act,MyApp.THE_PROJECT.projectName,MyApp.Room.RoomNumber,time,14,errorMsg,"error Searching Wire Zigbee Gateway");
                                                  }
 
                                                  @Override
@@ -415,7 +415,7 @@ public class Tuya_Devices extends AppCompatActivity {
             {
                 loading.stop();
                 long time = ca.getTimeInMillis();
-                ErrorRegister.rigestError(act,MyApp.THE_PROJECT.projectName,MyApp.Room.RoomNumber,time,16,errorMsg,"error Getting Project Registered Devices");
+                ErrorRegister.insertError(act,MyApp.THE_PROJECT.projectName,MyApp.Room.RoomNumber,time,16,errorMsg,"error Getting Project Registered Devices");
             }
         });
     }
@@ -435,7 +435,7 @@ public class Tuya_Devices extends AppCompatActivity {
                                     d.stop();
                                     ToastMaker.MakeToast(errorMsg , act);
                                      long time = ca.getTimeInMillis();
-                                     ErrorRegister.rigestError(act,MyApp.THE_PROJECT.projectName,MyApp.Room.RoomNumber,time,17,errorMsg,"error Register Zigbee Device");
+                                     ErrorRegister.insertError(act,MyApp.THE_PROJECT.projectName,MyApp.Room.RoomNumber,time,17,errorMsg,"error Register Zigbee Device");
                                  }
 
                                  @Override

@@ -1,5 +1,6 @@
 package com.example.hotelservicesstandalone;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.util.Log;
 
@@ -12,8 +13,6 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 
@@ -37,14 +36,7 @@ public class MessagingService extends FirebaseMessagingService {
                     ROOM.powerOffRoom(r,MyApp.app);
                 }
             }
-//            else if (title.equals("checkin")) {
-//                String room = remoteMessage.getData().get("room") ;
-//                for (int i = 0; i<Rooms.ROOMS.size(); i++) {
-//                    if (room.equals(String.valueOf(Rooms.ROOMS.get(i).RoomNumber))) {
-//                        Rooms.checkInModeRoom(Rooms.ROOMS.get(i));
-//                    }
-//                }
-//            }
+
             else if(title.equals("opendoor")) {
                 String room = remoteMessage.getData().get("room") ;
                 for (int i = 0; i<Rooms.ROOMS.size(); i++) {
@@ -76,10 +68,15 @@ public class MessagingService extends FirebaseMessagingService {
             else if (title.equals("bycard")) {
                 int roomNumber;
                 if (remoteMessage.getData().get("room") != null) {
-                    roomNumber = Integer.parseInt(remoteMessage.getData().get("room").toString());
+                    roomNumber = Integer.parseInt(remoteMessage.getData().get("room"));
                     ROOM r = ROOM.searchRoomInList(MyApp.ROOMS,roomNumber);
                     ROOM.powerByCard(r,MyApp.app);
                 }
+            }
+
+            else if (title.equals("reRun")) {
+                Intent i = new Intent(this,Login.class);
+                startActivity(i);
             }
         }
     }

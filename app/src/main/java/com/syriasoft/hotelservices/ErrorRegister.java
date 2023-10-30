@@ -1,42 +1,37 @@
 package com.syriasoft.hotelservices;
 
 import android.content.Context;
-
+import android.util.Log;
 import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
+import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
-
+import com.syriasoft.hotelservices.Interface.RequestCallback;
 import java.util.HashMap;
 import java.util.Map;
 
-public  class ErrorRegister
-{
-    private static String url = LogIn.URL+"insertError.php" ;
+public  class ErrorRegister {
 
-    public static void rigestError(Context c , String hotel, int room, long dateTime, int errorCode, String errorMsg, String errorCaption)
-    {
-        StringRequest request = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
+    static RequestQueue Q ;
+
+    public static void insertError(Context c , String hotel, int room, long dateTime, int errorCode, String errorMsg, String errorCaption) {
+        StringRequest request = new StringRequest(Request.Method.POST, MyApp.ErrorsUrl, new Response.Listener<String>() {
             @Override
-            public void onResponse(String response)
-            {
-               // Toast.makeText(c,"error recorded" , Toast.LENGTH_SHORT).show();
+            public void onResponse(String response) {
+                Log.d("unExpectedCrash",response);
             }
-        }, new Response.ErrorListener()
-        {
+        }, new Response.ErrorListener() {
             @Override
-            public void onErrorResponse(VolleyError error)
-            {
-                //Toast.makeText(c,"error recording error" , Toast.LENGTH_SHORT).show();
+            public void onErrorResponse(VolleyError error) {
+                Log.d("unExpectedCrash",error.toString());
             }
-        })
-        {
+        }) {
             @Override
-            protected Map<String, String> getParams() throws AuthFailureError
-            {
-                Map<String,String> params = new HashMap<String, String>();
+            protected Map<String, String> getParams() throws AuthFailureError {
+                Map<String,String> params = new HashMap<>();
                 params.put("hotel" , hotel ) ;
                 params.put("room" ,String.valueOf( room )) ;
                 params.put("dateTime" , String.valueOf(dateTime));
@@ -46,7 +41,41 @@ public  class ErrorRegister
                  return params;
             }
         };
+        if (Q == null) {
+            Q = Volley.newRequestQueue(c);
+        }
+        Q.add(request);
+    }
 
-        Volley.newRequestQueue(c).add(request);
+    public static void insertError(Context c , String hotel, int room, long dateTime, int errorCode, String errorMsg, String errorCaption, RequestCallback callback) {
+        StringRequest request = new StringRequest(Request.Method.POST, MyApp.ErrorsUrl, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                Log.d("unExpectedCrash",response);
+                callback.onSuccess();
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.d("unExpectedCrash",error.toString());
+                callback.onFail(error.toString());
+            }
+        }) {
+            @Override
+            protected Map<String, String> getParams() throws AuthFailureError {
+                Map<String,String> params = new HashMap<>();
+                params.put("hotel" , hotel ) ;
+                params.put("room" ,String.valueOf( room )) ;
+                params.put("dateTime" , String.valueOf(dateTime));
+                params.put("errorCode" , String.valueOf(errorCode));
+                params.put("errorMsg" , errorMsg) ;
+                params.put("caption" , errorCaption) ;
+                return params;
+            }
+        };
+        if (Q == null) {
+            Q = Volley.newRequestQueue(c);
+        }
+        Q.add(request);
     }
 }

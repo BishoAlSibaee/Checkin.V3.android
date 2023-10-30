@@ -1,7 +1,5 @@
 package com.syriasoft.hotelservices;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
@@ -9,6 +7,8 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 import com.tuya.smart.home.sdk.TuyaHomeSdk;
 import com.tuya.smart.home.sdk.bean.scene.SceneBean;
@@ -30,6 +30,7 @@ public class Moods extends AppCompatActivity {
         setContentView(R.layout.activity_moods);
         setActivity();
         setActivityActions();
+        Thread.setDefaultUncaughtExceptionHandler(new DefaultExceptionHandler(this));
     }
 
     @Override

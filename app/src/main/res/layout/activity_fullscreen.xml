@@ -28,7 +28,7 @@
             android:layout_marginStart="10dp"
             android:layout_marginTop="20dp"
             android:layout_marginEnd="10dp"
-            android:background="@drawable/main_buttons"
+            android:background="@drawable/date_bar_background"
             android:orientation="horizontal"
             android:paddingStart="20dp"
             android:paddingTop="10dp"
@@ -151,7 +151,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_weight="0.4"
-                android:background="@drawable/main_buttons_on"
+                android:background="@drawable/btn_bg_normal"
                 android:orientation="horizontal"
                 android:paddingStart="20dp"
                 android:paddingTop="10dp"
@@ -637,11 +637,10 @@
 
                 <ImageView
                     android:id="@+id/imageView8"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
                     android:layout_gravity="center_horizontal"
-                    android:layout_weight="1"
-                    app:srcCompat="@drawable/towels" />
+                    app:srcCompat="@drawable/roomservice_anim" />
 
                 <TextView
                     android:id="@+id/textView38"
@@ -681,11 +680,9 @@
 
                 <ImageView
                     android:id="@+id/imageView11"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_gravity="center_horizontal"
-                    android:layout_weight="1"
-                    app:srcCompat="@drawable/checkout" />
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal" />
 
                 <TextView
                     android:id="@+id/textView42"
@@ -724,11 +721,10 @@
 
                 <ImageView
                     android:id="@+id/imageView16"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
                     android:layout_gravity="center_horizontal"
-                    android:layout_weight="1"
-                    app:srcCompat="@drawable/laundry_btn_main" />
+                    app:srcCompat="@drawable/laundry_anim" />
 
                 <TextView
                     android:id="@+id/textView44"
@@ -767,11 +763,10 @@
 
                 <ImageView
                     android:id="@+id/imageView19"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
                     android:layout_gravity="center_horizontal"
-                    android:layout_weight="1"
-                    app:srcCompat="@drawable/cleanup_btn" />
+                    app:srcCompat="@drawable/cleanup_anim" />
 
                 <TextView
                     android:id="@+id/textView45"
@@ -829,7 +824,7 @@
                 android:layout_height="match_parent"
                 android:layout_marginEnd="5dp"
                 android:layout_weight="1"
-                android:background="@drawable/mainbtn_main"
+                android:background="@drawable/frame"
                 android:gravity="center"
                 android:orientation="vertical"
                 app:cardBackgroundColor="@color/trasparent">
@@ -842,11 +837,9 @@
 
                 <ImageView
                     android:id="@+id/imageView13"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_gravity="center"
-                    android:layout_weight="1"
-                    app:srcCompat="@drawable/towels" />
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center" />
 
                 <TextView
                     android:id="@+id/textView39"
@@ -876,7 +869,7 @@
                 android:layout_marginStart="5dp"
                 android:layout_marginEnd="5dp"
                 android:layout_weight="1"
-                android:background="@drawable/mainbtn_main"
+                android:background="@drawable/frame"
                 android:gravity="center"
                 android:onClick="goToLights"
                 android:orientation="vertical"
@@ -890,11 +883,9 @@
 
                 <ImageView
                     android:id="@+id/imageView14"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_gravity="center"
-                    android:layout_weight="1"
-                    app:srcCompat="@drawable/light" />
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center" />
 
                 <TextView
                     android:id="@+id/textView40"
@@ -923,7 +914,7 @@
                 android:layout_marginStart="5dp"
                 android:layout_marginEnd="5dp"
                 android:layout_weight="1"
-                android:background="@drawable/mainbtn_main"
+                android:background="@drawable/frame"
                 android:gravity="center"
                 android:orientation="vertical"
                 app:cardBackgroundColor="@color/trasparent">
@@ -936,11 +927,15 @@
 
                 <ImageView
                     android:id="@+id/imageView1377"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
                     android:layout_gravity="center"
-                    android:layout_weight="1"
-                    app:srcCompat="@drawable/ac" />
+                    app:srcCompat="@drawable/ac_icon" />
+
+                <ImageView
+                    android:id="@+id/imageView30"
+                    android:layout_width="70dp"
+                    android:layout_height="70dp" />
 
                 <TextView
                     android:id="@+id/textView3907"
@@ -969,7 +964,7 @@
                 android:layout_height="match_parent"
                 android:layout_marginStart="5dp"
                 android:layout_weight="1"
-                android:background="@drawable/mainbtn_main"
+                android:background="@drawable/frame"
                 android:gravity="center"
                 android:onClick="goToRestaurant"
                 android:orientation="vertical"
@@ -979,15 +974,21 @@
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
-                    android:orientation="horizontal" />
+                    android:orientation="horizontal" >
+
+                </LinearLayout>
+
+                <ImageView
+                    android:id="@+id/imageView5"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:visibility="gone" />
 
                 <ImageView
                     android:id="@+id/imageView15"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_gravity="center"
-                    android:layout_weight="1"
-                    app:srcCompat="@drawable/subtraction_10" />
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center" />
 
                 <TextView
                     android:id="@+id/textView41"
@@ -1040,7 +1041,7 @@
                     android:layout_width="80dp"
                     android:layout_height="80dp"
                     android:layout_gravity="center_horizontal"
-                    app:srcCompat="@drawable/group_33" />
+                    app:srcCompat="@drawable/sosnew" />
 
                 <TextView
                     android:id="@+id/SOS_Text"
@@ -1089,7 +1090,7 @@
                         android:layout_height="80dp"
                         android:layout_gravity="center_horizontal"
                         android:visibility="visible"
-                        app:srcCompat="@drawable/open_door" />
+                        app:srcCompat="@drawable/open_doornew" />
                 </LinearLayout>
 
                 <TextView
@@ -1121,7 +1122,7 @@
                     android:layout_width="80dp"
                     android:layout_height="80dp"
                     android:layout_gravity="center_horizontal|top"
-                    app:srcCompat="@drawable/union_2" />
+                    app:srcCompat="@drawable/dndnew" />
 
                 <TextView
                     android:id="@+id/DND_Text"

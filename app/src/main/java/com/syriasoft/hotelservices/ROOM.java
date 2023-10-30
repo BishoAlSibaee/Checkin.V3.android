@@ -72,6 +72,10 @@ public class ROOM {
     public int Switch2 ;
     public int Switch3 ;
     public int Switch4 ;
+    public int Switch5 ;
+    public int Switch6 ;
+    public int Switch7 ;
+    public int Switch8 ;
     public String LockGateway ;
     public String LockName ;
     public int powerStatus ;
@@ -99,6 +103,10 @@ public class ROOM {
     private DeviceBean SWITCH2_B;
     private DeviceBean SWITCH3_B;
     private DeviceBean SWITCH4_B;
+    private DeviceBean SWITCH5_B;
+    private DeviceBean SWITCH6_B;
+    private DeviceBean SWITCH7_B;
+    private DeviceBean SWITCH8_B;
     private DeviceBean LOCK_B ;
     private ITuyaDevice POWER;
     private ITuyaDevice AC;
@@ -112,13 +120,17 @@ public class ROOM {
     private ITuyaDevice SWITCH2;
     private ITuyaDevice SWITCH3;
     private ITuyaDevice SWITCH4;
+    private ITuyaDevice SWITCH5;
+    private ITuyaDevice SWITCH6;
+    private ITuyaDevice SWITCH7;
+    private ITuyaDevice SWITCH8;
     private ITuyaDevice LOCK ;
     private ITuyaGateway WiredZBGateway ;
     private LockObj Lock ;
     ValueEventListener CleanupListener , LaundryListener , CheckoutListener , DNDListener , SetPointIntervalListener , DoorWarningListener , roomStatusListener , CheckInModeTimeListener , CheckOutModeTimeListener , ClientInListener ;
-    boolean S1B1,S1B2,S1B3,S1B4 ,S2B1,S2B2,S2B3,S2B4 ,S3B1,S3B2,S3B3,S3B4 ,S4B1,S4B2,S4B3,S4B4 ,living,sleeping,work,romance,read,masterOff;
+    boolean S1B1,S1B2,S1B3,S1B4 ,S2B1,S2B2,S2B3,S2B4 ,S3B1,S3B2,S3B3,S3B4 ,S4B1,S4B2,S4B3,S4B4 ,S5B1,S5B2,S5B3,S5B4 ,S6B1,S6B2,S6B3,S6B4, S7B1,S7B2,S7B3,S7B4 ,S8B1,S8B2,S8B3,S8B4 ,living,sleeping,work,romance,read,masterOff;
 
-    public ROOM(int id, int roomNumber, int status, int hotel, int building, int building_id, int floor, int floor_id, String roomType, int suiteStatus, int suiteNumber, int suiteId, int reservationNumber, int roomStatus, int clientIn, String message, int selected, int loading, int tablet, String dep, int cleanup, int laundry, int roomService, String roomServiceText, int checkout, int restaurant, int miniBarCheck, int facility, int SOS, int DND, int powerSwitch, int doorSensor, int motionSensor, int thermostat, int ZBGateway, int online, int curtainSwitch, int serviceSwitch, int lock, int switch1, int switch2, int switch3, int switch4, String lockGateway, String lockName, int powerStatus, int curtainStatus, int doorStatus, int doorWarning, int temp, int tempSetPoint, int setPointInterval, int checkInModeTime, int checkOutModeTime, String welcomeMessage, String logo, String token) {
+    public ROOM(int id, int roomNumber, int status, int hotel, int building, int building_id, int floor, int floor_id, String roomType, int suiteStatus, int suiteNumber, int suiteId, int reservationNumber, int roomStatus, int clientIn, String message, int selected, int loading, int tablet, String dep, int cleanup, int laundry, int roomService, String roomServiceText, int checkout, int restaurant, int miniBarCheck, int facility, int SOS, int DND, int powerSwitch, int doorSensor, int motionSensor, int thermostat, int ZBGateway, int online, int curtainSwitch, int serviceSwitch, int lock, int switch1, int switch2, int switch3,int switch4,int switch5,int switch6,int switch7,int switch8, String lockGateway, String lockName, int powerStatus, int curtainStatus, int doorStatus, int doorWarning, int temp, int tempSetPoint, int setPointInterval, int checkInModeTime, int checkOutModeTime, String welcomeMessage, String logo, String token) {
         this.id = id;
         RoomNumber = roomNumber;
         Status = status;
@@ -162,6 +174,10 @@ public class ROOM {
         Switch2 = switch2;
         Switch3 = switch3;
         Switch4 = switch4;
+        Switch4 = switch5;
+        Switch4 = switch6;
+        Switch4 = switch7;
+        Switch4 = switch8;
         LockGateway = lockGateway;
         LockName = lockName;
         this.powerStatus = powerStatus;
@@ -228,6 +244,38 @@ public class ROOM {
 
     public void setSWITCH4_B(DeviceBean SWITCH4_B) {
         this.SWITCH4_B = SWITCH4_B;
+    }
+
+    public void setSWITCH5_B(DeviceBean SWITCH5_B) {
+        this.SWITCH5_B = SWITCH5_B;
+    }
+
+    public void setSWITCH6_B(DeviceBean SWITCH6_B) {
+        this.SWITCH6_B = SWITCH6_B;
+    }
+
+    public void setSWITCH7_B(DeviceBean SWITCH7_B) {
+        this.SWITCH7_B = SWITCH7_B;
+    }
+
+    public void setSWITCH8_B(DeviceBean SWITCH8_B) {
+        this.SWITCH8_B = SWITCH8_B;
+    }
+
+    public void setSWITCH5(ITuyaDevice SWITCH5) {
+        this.SWITCH5 = SWITCH5;
+    }
+
+    public void setSWITCH6(ITuyaDevice SWITCH6) {
+        this.SWITCH6 = SWITCH6;
+    }
+
+    public void setSWITCH7(ITuyaDevice SWITCH7) {
+        this.SWITCH7 = SWITCH7;
+    }
+
+    public void setSWITCH8(ITuyaDevice SWITCH8) {
+        this.SWITCH8 = SWITCH8;
     }
 
     public void setLOCK_B(DeviceBean LOCK_B) {
@@ -336,6 +384,38 @@ public class ROOM {
 
     public DeviceBean getSWITCH4_B() {
         return SWITCH4_B;
+    }
+
+    public DeviceBean getSWITCH5_B() {
+        return SWITCH5_B;
+    }
+
+    public DeviceBean getSWITCH6_B() {
+        return SWITCH6_B;
+    }
+
+    public DeviceBean getSWITCH7_B() {
+        return SWITCH7_B;
+    }
+
+    public DeviceBean getSWITCH8_B() {
+        return SWITCH8_B;
+    }
+
+    public ITuyaDevice getSWITCH5() {
+        return SWITCH5;
+    }
+
+    public ITuyaDevice getSWITCH6() {
+        return SWITCH6;
+    }
+
+    public ITuyaDevice getSWITCH7() {
+        return SWITCH7;
+    }
+
+    public ITuyaDevice getSWITCH8() {
+        return SWITCH8;
     }
 
     public DeviceBean getLOCK_B() {

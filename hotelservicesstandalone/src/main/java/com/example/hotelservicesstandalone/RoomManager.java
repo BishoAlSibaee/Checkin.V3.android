@@ -102,6 +102,7 @@ public class RoomManager extends AppCompatActivity
         REQ = Volley.newRequestQueue(act);
         setActivity();
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
+        Thread.setDefaultUncaughtExceptionHandler(new DefaultExceptionHandler(this));
     }
 
     @Override

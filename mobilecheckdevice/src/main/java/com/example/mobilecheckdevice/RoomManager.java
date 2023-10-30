@@ -3,7 +3,6 @@ package com.example.mobilecheckdevice;
 import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.Dialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -13,7 +12,6 @@ import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
-import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -62,9 +60,11 @@ import com.tuya.smart.home.sdk.TuyaHomeSdk;
 import com.tuya.smart.home.sdk.api.IGwSearchListener;
 import com.tuya.smart.home.sdk.api.ITuyaDeviceActivator;
 import com.tuya.smart.home.sdk.api.ITuyaGwSearcher;
+import com.tuya.smart.home.sdk.bean.scene.SceneBean;
 import com.tuya.smart.home.sdk.builder.ActivatorBuilder;
 import com.tuya.smart.home.sdk.builder.TuyaGwActivatorBuilder;
 import com.tuya.smart.home.sdk.builder.TuyaGwSubDevActivatorBuilder;
+import com.tuya.smart.home.sdk.callback.ITuyaResultCallback;
 import com.tuya.smart.sdk.api.IMultiModeActivatorListener;
 import com.tuya.smart.sdk.api.IResultCallback;
 import com.tuya.smart.sdk.api.ITuyaActivator;
@@ -87,8 +87,8 @@ import retrofit2.Call;
 
 public class RoomManager extends AppCompatActivity
 {
-    private ROOM Room ;
-    private TextView foundLockNewName,foundLock,caption , lock,power,curtain,service,door,motion,switch1,switch2,switch3,switch4,ac,gateway,selectedWifi,foundWifiDevice,foundZbeeDevice,foundwireZbGateway,wirezbGatewayNewName;
+    public static ROOM Room ;
+    private TextView foundLockNewName,foundLock,caption , lock,power,curtain,service,door,motion,switch1,switch2,switch3,switch4,switch5,switch6,switch7,switch8,ac,gateway,selectedWifi,foundWifiDevice,foundZbeeDevice,foundwireZbGateway,wirezbGatewayNewName;
     private Button getWifi ;
     private WifiManager wifiManager;
     private WifiReceiver receiverWifi;
@@ -100,7 +100,6 @@ public class RoomManager extends AppCompatActivity
     private DeviceBean FOUND ;
     private ITuyaDevice FOUNDD ;
     private ITuyaGateway FOUNDG ;
-    private int ID ;
     protected static final int REQUEST_PERMISSION_REQ_CODE = 11;
     private ExtendedBluetoothDevice FOUNDLOCK ;
     ITuyaActivator mTuyaActivator ;
@@ -108,6 +107,8 @@ public class RoomManager extends AppCompatActivity
     ITuyaGwSearcher mTuyaGwSearcher ;
     ITuyaActivator mITuyaActivator ;
     RequestQueue REQ ;
+    static List<SceneBean> SCENES,MY_SCENES,LivingMood,SleepMood,WorkMood,RomanceMood,ReadMood,MasterOffMood ;
+    public static List<String> IMAGES ;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -117,7 +118,8 @@ public class RoomManager extends AppCompatActivity
         REQ = Volley.newRequestQueue(act);
         setActivity();
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
-        scanMultiMood();
+        getSceneBGs();
+        Thread.setDefaultUncaughtExceptionHandler(new DefaultExceptionHandler(this));
     }
 
     @Override
@@ -220,9 +222,18 @@ public class RoomManager extends AppCompatActivity
     }
 
     private void setActivity() {
-        ID = getIntent().getExtras().getInt("RoomId");
+        IMAGES = new ArrayList<>();
+        SCENES = new ArrayList<>();
+        MY_SCENES = new ArrayList<>();
+        LivingMood = new ArrayList<>();
+        SleepMood = new ArrayList<>();
+        WorkMood = new ArrayList<>();
+        RomanceMood = new ArrayList<>();
+        ReadMood = new ArrayList<>();
+        MasterOffMood = new ArrayList<>();
+        int ID = getIntent().getExtras().getInt("RoomId");
         for (int i = 0; i< Rooms.ROOMS.size(); i++) {
-            if (Rooms.ROOMS.get(i).id == ID ) {
+            if (Rooms.ROOMS.get(i).id == ID) {
                 Room = Rooms.ROOMS.get(i) ;
             }
         }
@@ -560,6 +571,154 @@ public class RoomManager extends AppCompatActivity
                 return false;
             }
         });
+        switch5 = findViewById(R.id.room_Switch5);
+        switch5.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                if (Room.getSWITCH5() == null ) {
+                    AlertDialog.Builder d = new AlertDialog.Builder(act);
+                    d.setTitle("No Switch 5");
+                    d.create().show();
+                }
+                else {
+                    AlertDialog.Builder b = new AlertDialog.Builder(act);
+                    b.setTitle("Delete Switch 5 ?");
+                    b.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            Room.getSWITCH5().removeDevice(new IResultCallback() {
+                                @Override
+                                public void onError(String code, String error) {
+
+                                }
+                                @Override
+                                public void onSuccess() {
+                                }
+                            });
+                        }
+                    });
+                    b.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                        }
+                    });
+                    b.create().show();
+                }
+                return false;
+            }
+        });
+        switch6 = findViewById(R.id.room_Switch6);
+        switch6.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                if (Room.getSWITCH6() == null ) {
+                    AlertDialog.Builder d = new AlertDialog.Builder(act);
+                    d.setTitle("No Switch 6");
+                    d.create().show();
+                }
+                else {
+                    AlertDialog.Builder b = new AlertDialog.Builder(act);
+                    b.setTitle("Delete Switch 6 ?");
+                    b.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            Room.getSWITCH6().removeDevice(new IResultCallback() {
+                                @Override
+                                public void onError(String code, String error) {
+
+                                }
+                                @Override
+                                public void onSuccess() {
+                                }
+                            });
+                        }
+                    });
+                    b.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                        }
+                    });
+                    b.create().show();
+                }
+                return false;
+            }
+        });
+        switch7 = findViewById(R.id.room_Switch7);
+        switch7.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                if (Room.getSWITCH7() == null ) {
+                    AlertDialog.Builder d = new AlertDialog.Builder(act);
+                    d.setTitle("No Switch 7");
+                    d.create().show();
+                }
+                else {
+                    AlertDialog.Builder b = new AlertDialog.Builder(act);
+                    b.setTitle("Delete Switch 7 ?");
+                    b.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            Room.getSWITCH7().removeDevice(new IResultCallback() {
+                                @Override
+                                public void onError(String code, String error) {
+
+                                }
+                                @Override
+                                public void onSuccess() {
+                                }
+                            });
+                        }
+                    });
+                    b.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                        }
+                    });
+                    b.create().show();
+                }
+                return false;
+            }
+        });
+        switch8 = findViewById(R.id.room_Switch8);
+        switch8.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                if (Room.getSWITCH8() == null ) {
+                    AlertDialog.Builder d = new AlertDialog.Builder(act);
+                    d.setTitle("No Switch 8");
+                    d.create().show();
+                }
+                else {
+                    AlertDialog.Builder b = new AlertDialog.Builder(act);
+                    b.setTitle("Delete Switch 8 ?");
+                    b.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            Room.getSWITCH8().removeDevice(new IResultCallback() {
+                                @Override
+                                public void onError(String code, String error) {
+
+                                }
+                                @Override
+                                public void onSuccess() {
+                                }
+                            });
+                        }
+                    });
+                    b.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                        }
+                    });
+                    b.create().show();
+                }
+                return false;
+            }
+        });
         selectedWifi = findViewById(R.id.selected_wifi);
         foundWifiDevice = findViewById(R.id.theFoundDevice);
         foundZbeeDevice = findViewById(R.id.theFoundDeviceZbee);
@@ -662,7 +821,7 @@ public class RoomManager extends AppCompatActivity
         });
         DeviceTypes = findViewById(R.id.deviceNames_spinner);
         DeviceTypesZ = findViewById(R.id.deviceNames_spinnerZbee);
-        String [] Types = new String[]{Room.RoomNumber+"Power",Room.RoomNumber+"ZGatway",Room.RoomNumber+"AC",Room.RoomNumber+"DoorSensor",Room.RoomNumber+"MotionSensor",Room.RoomNumber+"Curtain",Room.RoomNumber+"ServiceSwitch",Room.RoomNumber+"Switch1",Room.RoomNumber+"Switch2",Room.RoomNumber+"Switch3",Room.RoomNumber+"Switch4",Room.RoomNumber+"IR",Room.RoomNumber+"Lock"};
+        String [] Types = new String[]{Room.RoomNumber+"Power",Room.RoomNumber+"ZGatway",Room.RoomNumber+"AC",Room.RoomNumber+"DoorSensor",Room.RoomNumber+"MotionSensor",Room.RoomNumber+"Curtain",Room.RoomNumber+"ServiceSwitch",Room.RoomNumber+"Switch1",Room.RoomNumber+"Switch2",Room.RoomNumber+"Switch3",Room.RoomNumber+"Switch4",Room.RoomNumber+"Switch5",Room.RoomNumber+"Switch6",Room.RoomNumber+"Switch7",Room.RoomNumber+"Switch8",Room.RoomNumber+"IR",Room.RoomNumber+"Lock"};
         ArrayAdapter<String> x =  new ArrayAdapter<>(act ,R.layout.spinners_item ,Types);
         ArrayAdapter<String> y =  new ArrayAdapter<>(act ,R.layout.spinners_item ,Types);
         DeviceTypesZ.setAdapter(y);
@@ -707,6 +866,38 @@ public class RoomManager extends AppCompatActivity
         else {
             switch4.setText("YES");
             switch4.setTextColor(Color.GREEN);
+        }
+        if (Room.Switch5 == 0) {
+            switch5.setText("NO");
+            switch5.setTextColor(Color.RED);
+        }
+        else {
+            switch5.setText("YES");
+            switch5.setTextColor(Color.GREEN);
+        }
+        if (Room.Switch6 == 0) {
+            switch6.setText("NO");
+            switch6.setTextColor(Color.RED);
+        }
+        else {
+            switch6.setText("YES");
+            switch6.setTextColor(Color.GREEN);
+        }
+        if (Room.Switch7 == 0) {
+            switch7.setText("NO");
+            switch7.setTextColor(Color.RED);
+        }
+        else {
+            switch7.setText("YES");
+            switch7.setTextColor(Color.GREEN);
+        }
+        if (Room.Switch8 == 0) {
+            switch8.setText("NO");
+            switch8.setTextColor(Color.RED);
+        }
+        else {
+            switch8.setText("YES");
+            switch8.setTextColor(Color.GREEN);
         }
         if (Room.CurtainSwitch == 0) {
             curtain.setText("NO");
@@ -948,6 +1139,34 @@ public class RoomManager extends AppCompatActivity
             switch4.setText("YES");
             switch4.setTextColor(Color.GREEN);
             Room.setSwitch4Status(String.valueOf(Room.id),"1",act);
+        }
+        else if (NewName.equals(Room.RoomNumber+"Switch5")) {
+            Room.setSWITCH5_B(FOUND);
+            Room.setSWITCH5(TuyaHomeSdk.newDeviceInstance(FOUND.getDevId()));
+            switch5.setText("YES");
+            switch5.setTextColor(Color.GREEN);
+            Room.setSwitch5Status(String.valueOf(Room.id),"1",act);
+        }
+        else if (NewName.equals(Room.RoomNumber+"Switch6")) {
+            Room.setSWITCH6_B(FOUND);
+            Room.setSWITCH6(TuyaHomeSdk.newDeviceInstance(FOUND.getDevId()));
+            switch6.setText("YES");
+            switch6.setTextColor(Color.GREEN);
+            Room.setSwitch6Status(String.valueOf(Room.id),"1",act);
+        }
+        else if (NewName.equals(Room.RoomNumber+"Switch7")) {
+            Room.setSWITCH7_B(FOUND);
+            Room.setSWITCH7(TuyaHomeSdk.newDeviceInstance(FOUND.getDevId()));
+            switch7.setText("YES");
+            switch7.setTextColor(Color.GREEN);
+            Room.setSwitch7Status(String.valueOf(Room.id),"1",act);
+        }
+        else if (NewName.equals(Room.RoomNumber+"Switch8")) {
+            Room.setSWITCH8_B(FOUND);
+            Room.setSWITCH8(TuyaHomeSdk.newDeviceInstance(FOUND.getDevId()));
+            switch8.setText("YES");
+            switch8.setTextColor(Color.GREEN);
+            Room.setSwitch8Status(String.valueOf(Room.id),"1",act);
         }
         else {
             Toast.makeText(act,"Device Not Detected" , Toast.LENGTH_LONG).show();
@@ -1436,47 +1655,188 @@ public class RoomManager extends AppCompatActivity
         });
     }
 
-    void scanMultiMood() {
-        Log.d("multiMood","start");
-        LeScanSetting ss = new LeScanSetting.Builder().setTimeout(100).addScanType(ScanType.SIG_MESH).build();
-        TuyaHomeSdk.getBleOperator().startLeScan(ss, new TyBleScanResponse() {
+    void getSceneBGs() {
+        TuyaHomeSdk.getSceneManagerInstance().getSceneBgs(new ITuyaResultCallback<ArrayList<String>>() {
+            @Override
+            public void onSuccess(ArrayList<String> strings) {
+                Log.d("scenesAre","images get done");
+                IMAGES = strings ;
+                getScenes();
+            }
+
+            @Override
+            public void onError(String s, String s1) {
+                Log.d("scenesAre",s+" "+s1);
+            }
+        });
+    }
+
+    void getScenes() {
+        TuyaHomeSdk.getSceneManagerInstance().getSceneList(MyApp.HOME.getHomeId(), new ITuyaResultCallback<List<SceneBean>>() {
+            @Override
+            public void onSuccess(List<SceneBean> result) {
+                SCENES = result ;
+                MY_SCENES.clear();
+                LivingMood.clear();
+                SleepMood.clear();
+                WorkMood.clear();
+                RomanceMood.clear();
+                ReadMood.clear();
+                MasterOffMood.clear();
+                Log.d("scenesAre",SCENES.size()+"");
+                for (SceneBean s : SCENES) {
+                    Log.d("scenesAre",s.getName());
+                    if (s.getName().contains(String.valueOf(Room.RoomNumber))) {
+                        MY_SCENES.add(s);
+                    }
+                }
+                if (MY_SCENES.size() > 0) {
+                    for (int i=0;i<MY_SCENES.size();i++) {
+                        Log.d("scenesAre","my scenes "+MY_SCENES.get(i).getName());
+                        if (MY_SCENES.get(i).getName().contains("Living")) {
+                            LivingMood.add(MY_SCENES.get(i));
+                        }
+                        else if (MY_SCENES.get(i).getName().contains("Sleep")) {
+                            SleepMood.add(MY_SCENES.get(i));
+                        }
+                        else if (MY_SCENES.get(i).getName().contains("Work")) {
+                            WorkMood.add(MY_SCENES.get(i));
+                        }
+                        else if (MY_SCENES.get(i).getName().contains("Romance")) {
+                            RomanceMood.add(MY_SCENES.get(i));
+                        }
+                        else if (MY_SCENES.get(i).getName().contains("Read")) {
+                            ReadMood.add(MY_SCENES.get(i));
+                        }
+                        else if (MY_SCENES.get(i).getName().contains("MasterOff")) {
+                            MasterOffMood.add(MY_SCENES.get(i));
+                        }
+                    }
+                }
+            }
+            @Override
+            public void onError(String errorCode, String errorMessage) {
+                Log.d("scenesAre",errorCode+" "+errorMessage);
+            }
+        });
+    }
+
+    public void goToLightsControl(View view) {
+        if (Room.getSWITCH1_B() == null && Room.getSWITCH2_B() == null && Room.getSWITCH3_B() == null && Room.getSWITCH4_B() == null && Room.getSWITCH5_B() == null && Room.getSWITCH6_B() == null && Room.getSWITCH7_B() == null && Room.getSWITCH8_B() == null) {
+            new MessageDialog("no Light Switches Detected","No Lights",act);
+            return;
+        }
+        Intent i = new Intent(act,LightingControl.class);
+        startActivity(i);
+    }
+
+    public void searchMultiMoodGateway(View view) {
+        Log.d("multiMoodS","start");
+        ScanningDialog d = new ScanningDialog(act,"Scanning MultiMood Gateway");
+        d.show().setOnDismissListener(new DialogInterface.OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface dialogInterface) {
+                TuyaHomeSdk.getBleOperator().stopLeScan();
+            }
+        });
+        LeScanSetting scanSetting = new LeScanSetting.Builder()
+                .setTimeout(60000) // The duration of the scanning. Unit: milliseconds.
+                .addScanType(ScanType.SINGLE) // ScanType.SINGLE: scans for Bluetooth LE devices.
+                // .addScanType(ScanType.SIG_MESH): scans for other types of devices.
+                .build();
+        TuyaHomeSdk.getBleOperator().startLeScan(scanSetting, new TyBleScanResponse() {
             @Override
             public void onResult(ScanDeviceBean bean) {
-                Log.d("multiMood","found "+bean.getName());
-                TuyaHomeSdk.getActivatorInstance().getActivatorToken(Login.THEHOME.getHomeId(), new ITuyaActivatorGetToken() {
+                Log.d("multiMoodS","find "+bean.getName());
+                TuyaHomeSdk.getActivatorInstance().getActivatorToken(MyApp.HOME.getHomeId(), new ITuyaActivatorGetToken() {
                     @Override
                     public void onSuccess(String token) {
-                        Log.d("multiMood","token "+token);
-                        MultiModeActivatorBean m = new MultiModeActivatorBean();
-                        m.deviceType = bean.getDeviceType();
-                        m.uuid = bean.getUuid();
-                        m.address = bean.getAddress();
-                        m.mac = bean.getMac();
-                        m.ssid = selectedWifi.getText().toString();
-                        m.pwd = wifiPass.getText().toString();
-                        m.token = token ;
-                        m.homeId = Login.THEHOME.getHomeId();
-                        TuyaHomeSdk.getActivator().newMultiModeActivator().startActivator(m, new IMultiModeActivatorListener() {
+                        Log.d("multiMoodS","token "+token);
+                        MultiModeActivatorBean multiModeActivatorBean = new MultiModeActivatorBean();
+                        multiModeActivatorBean.deviceType = bean.getDeviceType(); // The type of device.
+                        multiModeActivatorBean.uuid = bean.getUuid(); // The UUID of the device.
+                        multiModeActivatorBean.address = bean.getAddress(); // The IP address of the device.
+                        multiModeActivatorBean.mac = bean.getMac(); // The MAC address of the device.
+                        multiModeActivatorBean.ssid = selectedWifi.getText().toString(); // The SSID of the target Wi-Fi network.
+                        multiModeActivatorBean.pwd = wifiPass.getText().toString(); // The password of the target Wi-Fi network.
+                        multiModeActivatorBean.token = token; // The pairing token.
+                        multiModeActivatorBean.homeId = MyApp.HOME.getHomeId(); // The value of `homeId` for the current home.
+                        multiModeActivatorBean.timeout = 120000;
+                        TuyaHomeSdk.getActivator().newMultiModeActivator().startActivator(multiModeActivatorBean, new IMultiModeActivatorListener() {
                             @Override
                             public void onSuccess(DeviceBean deviceBean) {
-                                Log.d("multiMood","activated "+deviceBean.name);
+                                Log.d("multiMoodS","device paired "+deviceBean.getName());
+                                d.close();
+                                Rooms.CHANGE_STATUS = true ;
+                                foundWifiDevice.setText(deviceBean.getName());
+                                FOUND = deviceBean ;
+                                FOUNDD = TuyaHomeSdk.newDeviceInstance(FOUND.getDevId());
+                                TuyaHomeSdk.getBleOperator().stopLeScan();
+                                new MessageDialog(deviceBean.getName(),"Success",act);
                             }
 
                             @Override
                             public void onFailure(int code, String msg, Object handle) {
-                                Log.d("multiMood","activated "+msg);
+                                Log.d("multiMoodS","pair error "+code+" "+msg);
+                                d.close();
+                                TuyaHomeSdk.getBleOperator().stopLeScan();
+                                new MessageDialog(msg+" "+code,"Failed",act);
                             }
                         });
                     }
 
                     @Override
                     public void onFailure(String errorCode, String errorMsg) {
-                        Log.d("multiMood","token "+errorMsg);
+                        d.close();
+                        TuyaHomeSdk.getBleOperator().stopLeScan();
+                        new MessageDialog(errorMsg+" "+errorCode,"Failed",act);
                     }
                 });
             }
-
         });
-
+//        TuyaHomeSdk.getBleOperator().startLeScan(scanSetting, new BleScanResponse() {
+//            @Override
+//            public void onResult(ScanDeviceBean bean) {
+//                Log.d("multiMoodS","scan result "+bean.getName());
+//                ThingHomeSdk.getActivatorInstance().getActivatorToken(MyApp.HOME.getHomeId(),
+//                        new IThingActivatorGetToken() {
+//
+//                            @Override
+//                            public void onSuccess(String token) {
+//                                Log.d("multiMoodS","token "+token);
+//                                MultiModeActivatorBean multiModeActivatorBean = new MultiModeActivatorBean();
+//                                multiModeActivatorBean.deviceType = bean.getDeviceType(); // The type of device.
+//                                multiModeActivatorBean.uuid = bean.getUuid(); // The UUID of the device.
+//                                multiModeActivatorBean.address = bean.getAddress(); // The IP address of the device.
+//                                multiModeActivatorBean.mac = bean.getMac(); // The MAC address of the device.
+//                                multiModeActivatorBean.ssid = selectedWifi.getText().toString(); // The SSID of the target Wi-Fi network.
+//                                multiModeActivatorBean.pwd = wifiPass.getText().toString(); // The password of the target Wi-Fi network.
+//                                multiModeActivatorBean.token = token; // The pairing token.
+//                                multiModeActivatorBean.homeId = MyApp.HOME.getHomeId(); // The value of `homeId` for the current home.
+//                                multiModeActivatorBean.timeout = 120000;
+//                                ThingHomeSdk.getActivator().newMultiModeActivator().startActivator(multiModeActivatorBean, new IMultiModeActivatorListener() {
+//                                    @Override
+//                                    public void onSuccess(DeviceBean deviceBean) {
+//                                        // The device is paired.
+//                                        Log.d("multiMoodS","device paired "+deviceBean.getName());
+//                                    }
+//
+//                                    @Override
+//                                    public void onFailure(int code, String msg, Object handle) {
+//                                        // Failed to pair the device.
+//                                        Log.d("multiMoodS","pair error "+code+" "+msg);
+//                                    }
+//                                });
+//                            }
+//
+//                            @Override
+//                            public void onFailure(String s, String s1) {
+//                                Log.d("multiMoodS","token error "+s+" "+s1);
+//                            }
+//                        });
+//
+//
+//            }
+//        });
     }
 }

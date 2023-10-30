@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animation-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@drawable/laundry1_on" android:duration="100"/>
+    <item android:drawable="@drawable/laundry2_on" android:duration="100"/>
+    <item android:drawable="@drawable/laundry3_on" android:duration="100"/>
+    <item android:drawable="@drawable/laundry4_on" android:duration="100"/>
+    <item android:drawable="@drawable/laundry1_on" android:duration="1000"/>
+    <item android:drawable="@drawable/laundry4_on" android:duration="100"/>
+    <item android:drawable="@drawable/laundry3_on" android:duration="100"/>
+    <item android:drawable="@drawable/laundry2_on" android:duration="100"/>
+    <item android:drawable="@drawable/laundry1_on" android:duration="1000"/>
+</animation-list>

@@ -49,6 +49,8 @@ import com.ttlock.bl.sdk.util.DigitUtil;
 import com.ttlock.bl.sdk.util.GsonUtil;
 import com.ttlock.bl.sdk.util.LogUtil;
 import com.tuya.smart.android.device.api.ITuyaDeviceMultiControl;
+import com.tuya.smart.android.user.api.ILoginCallback;
+import com.tuya.smart.android.user.bean.User;
 import com.tuya.smart.home.sdk.TuyaHomeSdk;
 import com.tuya.smart.home.sdk.bean.HomeBean;
 import com.tuya.smart.home.sdk.bean.scene.SceneBean;
@@ -56,8 +58,10 @@ import com.tuya.smart.home.sdk.bean.scene.SceneCondition;
 import com.tuya.smart.home.sdk.bean.scene.SceneTask;
 import com.tuya.smart.home.sdk.bean.scene.condition.rule.BoolRule;
 import com.tuya.smart.home.sdk.bean.scene.dev.TaskListBean;
+import com.tuya.smart.home.sdk.callback.ITuyaGetHomeListCallback;
 import com.tuya.smart.home.sdk.callback.ITuyaHomeResultCallback;
 import com.tuya.smart.home.sdk.callback.ITuyaResultCallback;
+import com.tuya.smart.sdk.api.IDevListener;
 import com.tuya.smart.sdk.api.IDeviceListener;
 import com.tuya.smart.sdk.api.IResultCallback;
 import com.tuya.smart.sdk.bean.DeviceBean;
@@ -65,6 +69,7 @@ import com.tuya.smart.sdk.enums.TYDevicePublishModeEnum;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -77,8 +82,7 @@ import java.util.TimerTask;
 import retrofit2.Call;
 import retrofit2.Callback;
 
-public class Rooms extends AppCompatActivity
-{
+public class Rooms extends AppCompatActivity {
     static ListView devicesListView , roomsListView ;
     static List<ROOM> ROOMS;
     static final String getRoomsUrl = MyApp.THE_PROJECT.url + "roomsManagement/getRoomsForControllDevice" ;
@@ -114,18 +118,18 @@ public class Rooms extends AppCompatActivity
     static List<String> IMAGES ;
     static DatabaseReference ServerDevice , ProjectVariablesRef , DevicesControls , ProjectDevices  ;
     static int addCleanupCounter=1,cancelOrderCounter=1,addLaundryCounter =1,addCheckoutCounter=1,addDNDCounter=1,cancelDNDCounter = 1 ;
-    static String PowerUnInstalled,PowerInstalled,GatewayUnInstalled,GatewayInstalled,MotionUnInstalled,MotionInstalled,DoorUnInstalled,DoorInstalled,ServiceUnInstalled,ServiceInstalled,S1UnInstalled,S1Installed,S2UnInstalled,S2Installed,S3UnInstalled,S3Installed,S4UnInstalled,S4Installed,ACUnInstalled,ACInstalled,CurtainUnInstalled,CurtainInstalled,LockUnInstalled,LockInstalled;
+    static String PowerUnInstalled,PowerInstalled,GatewayUnInstalled,GatewayInstalled,MotionUnInstalled,MotionInstalled,DoorUnInstalled,DoorInstalled,ServiceUnInstalled,ServiceInstalled,S1UnInstalled,S1Installed,S2UnInstalled,S2Installed,S3UnInstalled,S3Installed,S4UnInstalled,S4Installed,S5UnInstalled,S5Installed,S6UnInstalled,S6Installed,S7UnInstalled,S7Installed,S8UnInstalled,S8Installed,ACUnInstalled,ACInstalled,CurtainUnInstalled,CurtainInstalled,LockUnInstalled,LockInstalled;
     long refreshSystemTime = 12 ;
     Timer refreshTimer;
     private final String projectLoginUrl = "users/loginProject" ;
-
+    static List<DatabaseReference_ValueEventListener> RoomsDevicesReferencesListeners;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.rooms);
-        setActivity();
+        setActivity(act);
         getProjectVariables();
         getServiceUsersFromFirebase();
         hideSystemUI();
@@ -151,6 +155,7 @@ public class Rooms extends AppCompatActivity
         refreshTimer = new Timer() ;
         setActionText("Welcome",act);
         act.startLockTask();
+        Thread.setDefaultUncaughtExceptionHandler(new DefaultExceptionHandler(this));
     }
 
     @Override
@@ -164,10 +169,13 @@ public class Rooms extends AppCompatActivity
     }
 
     public static void refreshSystem() {
+        setTuyaApplication();
+        removeFireRoomsDevicesListeners();
+        unregisterDevicesListener();
         getRooms();
     }
 
-    private void setActivity() {
+    private void setActivity(Activity act) {
         act = this ;
         REQ = Volley.newRequestQueue(act);
         REQ1 = Volley.newRequestQueue(act);
@@ -184,10 +192,11 @@ public class Rooms extends AppCompatActivity
         configureGatewayInfo = new ConfigureGatewayInfo();
         searchText = findViewById(R.id.search_text);
         searchBtn = findViewById(R.id.button16);
+        Activity finalAct = act;
         searchBtn.setOnClickListener(v -> {
             if (!searchBtn.getText().toString().equals("X")) {
                 if (searchText.getText() == null ) {
-                    Toast.makeText(act,"enter text",Toast.LENGTH_SHORT).show();
+                    Toast.makeText(finalAct,"enter text",Toast.LENGTH_SHORT).show();
                     return;
                 }
                 if (devicesListView.getVisibility() == View.VISIBLE ) {
@@ -205,18 +214,18 @@ public class Rooms extends AppCompatActivity
 //                                x[j] = Results.get(j);
 //                            }
                         //ArrayAdapter<String> ad = new ArrayAdapter<String>(act,R.layout.spinners_item,x);
-                        Devices_Adapter adapter = new Devices_Adapter(Results,act);
+                        Devices_Adapter adapter = new Devices_Adapter(Results, finalAct);
                         devicesListView.setAdapter(adapter);
                     }
                     else {
-                        Toast.makeText(act,"no results",Toast.LENGTH_SHORT).show();
+                        Toast.makeText(finalAct,"no results",Toast.LENGTH_SHORT).show();
                     }
                 }
             }
             else {
                 if (devicesListView.getVisibility() == View.VISIBLE) {
                     searchBtn.setText(getResources().getString(R.string.search));
-                    Devices_Adapter adapter = new Devices_Adapter(Devices,act);
+                    Devices_Adapter adapter = new Devices_Adapter(Devices, finalAct);
                     devicesListView.setAdapter(adapter);
                 }
             }
@@ -232,6 +241,7 @@ public class Rooms extends AppCompatActivity
         ROOMS = new ArrayList<>();
         Locks = new ArrayList<>();
         Devices = new ArrayList<>();
+        RoomsDevicesReferencesListeners = new ArrayList<>();
         roomsListView = findViewById(R.id.RoomsListView);
         devicesListView = findViewById(R.id.DevicesListView);
         database = FirebaseDatabase.getInstance("https://hotelservices-ebe66.firebaseio.com/");
@@ -242,15 +252,14 @@ public class Rooms extends AppCompatActivity
         ProjectDevices = database.getReference(MyApp.THE_PROJECT.projectName+"Devices");
         iTuyaDeviceMultiControl = TuyaHomeSdk.getDeviceMultiControlInstance();
         mainLogo.setOnLongClickListener(v -> {
-
-            Dialog  dd = new Dialog(act);
+            Dialog  dd = new Dialog(finalAct);
             dd.setContentView(R.layout.lock_unlock_dialog);
             Button cancel = dd.findViewById(R.id.confermationDialog_cancel);
             Button lock = dd.findViewById(R.id.messageDialog_ok);
             EditText password = dd.findViewById(R.id.editTextTextPassword);
             cancel.setOnClickListener(v1 -> dd.dismiss());
             lock.setOnClickListener(v12 -> {
-                final lodingDialog loading = new lodingDialog(act);
+                final lodingDialog loading = new lodingDialog(finalAct);
                 final String pass = password.getText().toString() ;
                 StringRequest re = new StringRequest(Request.Method.POST, MyApp.THE_PROJECT.url + projectLoginUrl, response -> {
                     Log.d("lockResp",response);
@@ -259,7 +268,7 @@ public class Rooms extends AppCompatActivity
                         try {
                             JSONObject resp = new JSONObject(response);
                             if (resp.getString("result").equals("success")) {
-                                Toast.makeText(act,"Login Success",Toast.LENGTH_LONG).show();
+                                Toast.makeText(finalAct,"Login Success",Toast.LENGTH_LONG).show();
                                 lockDB.modifyValue("off");
                                 roomsListView.setVisibility(View.VISIBLE);
                                 devicesListView.setVisibility(View.GONE);
@@ -268,12 +277,12 @@ public class Rooms extends AppCompatActivity
                                 dd.dismiss();
                             }
                             else {
-                                Toast.makeText(act,"Login Failed " + resp.getString("error"),Toast.LENGTH_LONG).show();
+                                Toast.makeText(finalAct,"Login Failed " + resp.getString("error"),Toast.LENGTH_LONG).show();
                             }
                         } catch (JSONException e) {
                             Log.d("lockResp",e.getMessage());
                             e.printStackTrace();
-                            Toast.makeText(act,"Login Failed " + e,Toast.LENGTH_LONG).show();
+                            Toast.makeText(finalAct,"Login Failed " + e,Toast.LENGTH_LONG).show();
                         }
                     }
                 }, error -> {
@@ -288,7 +297,7 @@ public class Rooms extends AppCompatActivity
                         return par;
                     }
                 };
-                Volley.newRequestQueue(act).add(re);
+                Volley.newRequestQueue(finalAct).add(re);
             });
             dd.show();
             return false;
@@ -318,6 +327,7 @@ public class Rooms extends AppCompatActivity
             mainLogo.setVisibility(View.VISIBLE);
         }
         login();
+        setServerDeviceRunningFunction();
     }
 
     private void getProjectVariables() {
@@ -347,6 +357,7 @@ public class Rooms extends AppCompatActivity
     }
 
     static void getRooms() {
+        Log.d("projects" , MyApp.Device_Id+" "+MyApp.Device_Name);
         StringRequest re = new StringRequest(Request.Method.POST, getRoomsUrl, response -> {
             Log.d("roomsAre" , response);
             if (response.equals("0")) {
@@ -404,6 +415,10 @@ public class Rooms extends AppCompatActivity
                         int switch2 = row.getInt("Switch2");
                         int switch3 = row.getInt("Switch3");
                         int switch4 = row.getInt("Switch4");
+                        int switch5 = row.getInt("Switch5");
+                        int switch6 = row.getInt("Switch6");
+                        int switch7 = row.getInt("Switch7");
+                        int switch8 = row.getInt("Switch8");
                         String lockGateway = row.getString("LockGateway");
                         String lockName = row.getString("LockName");
                         int powerStatus = row.getInt("powerStatus");
@@ -417,7 +432,7 @@ public class Rooms extends AppCompatActivity
                         String logo = row.getString("Logo");
                         String token =row.getString("token");
                         ROOM room = new ROOM(id,roomNumber,status,hotel,building,building_id,floor,floor_id,roomType,suiteStatus,suiteNumber,suiteId,reservationNumber,roomStatus,clientIn,message,selected,load,tablet,dep,cleanup,laundry
-                                ,roomService,roomServiceText,checkout,restaurant,miniBarCheck,facility,SOS,DND,powerSwitch,doorSensor,motionSensor,thermostat,ZBGateway,online,curtainSwitch,serviceSwitch,lock,switch1,switch2,switch3,switch4,lockGateway
+                                ,roomService,roomServiceText,checkout,restaurant,miniBarCheck,facility,SOS,DND,powerSwitch,doorSensor,motionSensor,thermostat,ZBGateway,online,curtainSwitch,serviceSwitch,lock,switch1,switch2,switch3,switch4,switch5,switch6,switch7,switch8,lockGateway
                                 ,lockName,powerStatus,curtainStatus,doorStatus,doorWarning,temp,tempSetPoint,setPointInterval,checkInModeTime,checkOutModeTime,welcomeMessage,logo,token);
                         room.setFireRoom(database.getReference(MyApp.THE_PROJECT.projectName+"/B"+room.Building+"/F"+room.Floor+"/R"+room.RoomNumber));
                         ROOMS.add(room);
@@ -436,12 +451,14 @@ public class Rooms extends AppCompatActivity
             MyApp.ROOMS = ROOMS ;
             TextView hotelName = act.findViewById(R.id.hotelName);
             hotelName.setText(MyApp.THE_PROJECT.projectName);
-            hotelName.setText(MyApp.THE_PROJECT.projectName+" "+ROOMS.size() + " room");
+            hotelName.setText(MessageFormat.format("{0} {1} room", MyApp.THE_PROJECT.projectName, ROOMS.size()));
+            Log.d("refreshSystem","4 get rooms");
             defineVariables();
         }, error -> {
+            Log.d("roomsAre" , error.toString()+MyApp.Device_Id);
             loading.stop();
             if (!error.toString().equals("com.android.volley.ClientError")) {
-                new MessageDialog("getting rooms failed "+ error,"error",act);
+                new MessageDialog("getting rooms failed "+ error +MyApp.Device_Id,"error",act);
             }
         }){
             @Override
@@ -538,6 +555,7 @@ public class Rooms extends AppCompatActivity
 //                }
 //            };
         }
+        Log.d("refreshSystem","5 define variables");
         getTuyaDevices() ;
         loginTTLock();
     }
@@ -575,7 +593,7 @@ public class Rooms extends AppCompatActivity
                 AC_Period[finalT] = System.currentTimeMillis() - AC_Start[finalT] ;
                 if ( AC_Period[finalT] >=  MyApp.ProjectVariables.Interval  && AC_SENARIO_Status[finalT]) {
                     if (ROOMS.get(finalT).getAC_B() != null ) {
-                        TuyaHomeSdk.newDeviceInstance(ROOMS.get(finalT).getAC_B().devId).publishDps("{\" "+ROOMS.get(finalT).acVariables.TempSetDP+"\": "+ROOMS.get(finalT).acVariables.TempSetPoint+"}", new IResultCallback() {
+                        TuyaHomeSdk.newDeviceInstance(ROOMS.get(finalT).getAC_B().devId).publishDps("{\" "+ROOMS.get(finalT).acVariables.TempSetDP+"\": "+ROOMS.get(finalT).acVariables.TempSetPoint+"}",TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
                             @Override
                             public void onError(String code, String error) {
                                 Log.d("acScenario",error);
@@ -1030,6 +1048,222 @@ public class Rooms extends AppCompatActivity
                                 ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch4.name).child("4").removeValue();
                             }
                         }
+                        DeviceBean Switch5 = searchRoomDevice(Devices,ROOMS.get(i),"Switch5") ;
+                        if (Switch5 == null) {
+                            ROOMS.get(i).Switch5 = 0 ;
+                            ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).RoomNumber+"Switch5").removeValue();
+                        }
+                        else {
+                            ROOMS.get(i).setSWITCH5_B(Switch5);
+                            ROOMS.get(i).setSWITCH5(TuyaHomeSdk.newDeviceInstance(ROOMS.get(i).getSWITCH5_B().devId));
+                            ROOMS.get(i).Switch5 = 1 ;
+                            if (Switch5.dps.get("1") != null) {
+                                if (Boolean.parseBoolean(Objects.requireNonNull(Switch5.dps.get("1")).toString())) {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch5.name).child("1").setValue(3);
+                                }
+                                else {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch5.name).child("1").setValue(0);
+                                }
+                            }
+                            else {
+                                ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch5.name).child("1").removeValue();
+                            }
+                            if (Switch5.dps.get("2") != null) {
+                                if (Boolean.parseBoolean(Objects.requireNonNull(Switch5.dps.get("2")).toString())) {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch5.name).child("2").setValue(3);
+                                }
+                                else {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch5.name).child("2").setValue(0);
+                                }
+                            }
+                            else {
+                                ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch5.name).child("2").removeValue();
+                            }
+                            if (Switch5.dps.get("3") != null) {
+                                if (Boolean.parseBoolean(Objects.requireNonNull(Switch5.dps.get("3")).toString())) {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch5.name).child("3").setValue(3);
+                                }
+                                else {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch5.name).child("3").setValue(0);
+                                }
+                            }
+                            else {
+                                ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch5.name).child("3").removeValue();
+                            }
+                            if (Switch5.dps.get("4") != null) {
+                                if (Boolean.parseBoolean(Objects.requireNonNull(Switch5.dps.get("3")).toString())) {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch5.name).child("4").setValue(3);
+                                }
+                                else {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch5.name).child("4").setValue(0);
+                                }
+                            }
+                            else {
+                                ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch5.name).child("4").removeValue();
+                            }
+                        }
+                        DeviceBean Switch6 = searchRoomDevice(Devices,ROOMS.get(i),"Switch6") ;
+                        if (Switch6 == null) {
+                            ROOMS.get(i).Switch6 = 0 ;
+                            ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).RoomNumber+"Switch6").removeValue();
+                        }
+                        else {
+                            ROOMS.get(i).setSWITCH6_B(Switch6);
+                            ROOMS.get(i).setSWITCH6(TuyaHomeSdk.newDeviceInstance(ROOMS.get(i).getSWITCH6_B().devId));
+                            ROOMS.get(i).Switch6 = 1 ;
+                            if (Switch6.dps.get("1") != null) {
+                                if (Boolean.parseBoolean(Objects.requireNonNull(Switch6.dps.get("1")).toString())) {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch6.name).child("1").setValue(3);
+                                }
+                                else {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch6.name).child("1").setValue(0);
+                                }
+                            }
+                            else {
+                                ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch6.name).child("1").removeValue();
+                            }
+                            if (Switch6.dps.get("2") != null) {
+                                if (Boolean.parseBoolean(Objects.requireNonNull(Switch6.dps.get("2")).toString())) {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch6.name).child("2").setValue(3);
+                                }
+                                else {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch6.name).child("2").setValue(0);
+                                }
+                            }
+                            else {
+                                ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch6.name).child("2").removeValue();
+                            }
+                            if (Switch6.dps.get("3") != null) {
+                                if (Boolean.parseBoolean(Objects.requireNonNull(Switch6.dps.get("3")).toString())) {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch6.name).child("3").setValue(3);
+                                }
+                                else {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch6.name).child("3").setValue(0);
+                                }
+                            }
+                            else {
+                                ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch6.name).child("3").removeValue();
+                            }
+                            if (Switch6.dps.get("4") != null) {
+                                if (Boolean.parseBoolean(Objects.requireNonNull(Switch6.dps.get("3")).toString())) {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch6.name).child("4").setValue(3);
+                                }
+                                else {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch6.name).child("4").setValue(0);
+                                }
+                            }
+                            else {
+                                ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch6.name).child("4").removeValue();
+                            }
+                        }
+                        DeviceBean Switch7 = searchRoomDevice(Devices,ROOMS.get(i),"Switch7") ;
+                        if (Switch7 == null) {
+                            ROOMS.get(i).Switch7 = 0 ;
+                            ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).RoomNumber+"Switch7").removeValue();
+                        }
+                        else {
+                            ROOMS.get(i).setSWITCH7_B(Switch4);
+                            ROOMS.get(i).setSWITCH7(TuyaHomeSdk.newDeviceInstance(ROOMS.get(i).getSWITCH7_B().devId));
+                            ROOMS.get(i).Switch7 = 1 ;
+                            if (Switch7.dps.get("1") != null) {
+                                if (Boolean.parseBoolean(Objects.requireNonNull(Switch7.dps.get("1")).toString())) {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch7.name).child("1").setValue(3);
+                                }
+                                else {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch7.name).child("1").setValue(0);
+                                }
+                            }
+                            else {
+                                ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch7.name).child("1").removeValue();
+                            }
+                            if (Switch7.dps.get("2") != null) {
+                                if (Boolean.parseBoolean(Objects.requireNonNull(Switch7.dps.get("2")).toString())) {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch7.name).child("2").setValue(3);
+                                }
+                                else {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch7.name).child("2").setValue(0);
+                                }
+                            }
+                            else {
+                                ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch7.name).child("2").removeValue();
+                            }
+                            if (Switch7.dps.get("3") != null) {
+                                if (Boolean.parseBoolean(Objects.requireNonNull(Switch7.dps.get("3")).toString())) {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch7.name).child("3").setValue(3);
+                                }
+                                else {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch7.name).child("3").setValue(0);
+                                }
+                            }
+                            else {
+                                ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch7.name).child("3").removeValue();
+                            }
+                            if (Switch7.dps.get("4") != null) {
+                                if (Boolean.parseBoolean(Objects.requireNonNull(Switch7.dps.get("3")).toString())) {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch7.name).child("4").setValue(3);
+                                }
+                                else {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch7.name).child("4").setValue(0);
+                                }
+                            }
+                            else {
+                                ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch7.name).child("4").removeValue();
+                            }
+                        }
+                        DeviceBean Switch8 = searchRoomDevice(Devices,ROOMS.get(i),"Switch8") ;
+                        if (Switch8 == null) {
+                            ROOMS.get(i).Switch8 = 0 ;
+                            ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).RoomNumber+"Switch8").removeValue();
+                        }
+                        else {
+                            ROOMS.get(i).setSWITCH8_B(Switch8);
+                            ROOMS.get(i).setSWITCH8(TuyaHomeSdk.newDeviceInstance(ROOMS.get(i).getSWITCH8_B().devId));
+                            ROOMS.get(i).Switch8 = 1 ;
+                            if (Switch8.dps.get("1") != null) {
+                                if (Boolean.parseBoolean(Objects.requireNonNull(Switch8.dps.get("1")).toString())) {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch8.name).child("1").setValue(3);
+                                }
+                                else {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch8.name).child("1").setValue(0);
+                                }
+                            }
+                            else {
+                                ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch8.name).child("1").removeValue();
+                            }
+                            if (Switch8.dps.get("2") != null) {
+                                if (Boolean.parseBoolean(Objects.requireNonNull(Switch8.dps.get("2")).toString())) {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch8.name).child("2").setValue(3);
+                                }
+                                else {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch8.name).child("2").setValue(0);
+                                }
+                            }
+                            else {
+                                ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch8.name).child("2").removeValue();
+                            }
+                            if (Switch8.dps.get("3") != null) {
+                                if (Boolean.parseBoolean(Objects.requireNonNull(Switch8.dps.get("3")).toString())) {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch8.name).child("3").setValue(3);
+                                }
+                                else {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch8.name).child("3").setValue(0);
+                                }
+                            }
+                            else {
+                                ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch8.name).child("3").removeValue();
+                            }
+                            if (Switch8.dps.get("4") != null) {
+                                if (Boolean.parseBoolean(Objects.requireNonNull(Switch8.dps.get("3")).toString())) {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch8.name).child("4").setValue(3);
+                                }
+                                else {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch8.name).child("4").setValue(0);
+                                }
+                            }
+                            else {
+                                ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(Switch8.name).child("4").removeValue();
+                            }
+                        }
                         DeviceBean lock = searchRoomDevice(Devices,ROOMS.get(i),"Lock") ;
                         if (lock == null) {
                             ROOMS.get(i).lock = 0 ;
@@ -1049,7 +1283,7 @@ public class Rooms extends AppCompatActivity
                                 PowerUnInstalled = ROOMS.get(i).id+"" ;
                             }
                             else {
-                                PowerUnInstalled = PowerUnInstalled+"-"+ROOMS.get(i).id ;
+                                PowerUnInstalled = MessageFormat.format("{0}-{1}", PowerUnInstalled, ROOMS.get(i).id);
                             }
                         }
                         else if (ROOMS.get(i).PowerSwitch == 1) {
@@ -1057,7 +1291,7 @@ public class Rooms extends AppCompatActivity
                                 PowerInstalled = ROOMS.get(i).id+"" ;
                             }
                             else {
-                                PowerInstalled = PowerInstalled+"-"+ROOMS.get(i).id ;
+                                PowerInstalled = MessageFormat.format("{0}-{1}", PowerInstalled, ROOMS.get(i).id);
                             }
                         }
                         if (ROOMS.get(i).ZBGateway == 0) {
@@ -1065,7 +1299,7 @@ public class Rooms extends AppCompatActivity
                                 GatewayUnInstalled = ROOMS.get(i).id+"" ;
                             }
                             else {
-                                GatewayUnInstalled = GatewayUnInstalled+"-"+ROOMS.get(i).id ;
+                                GatewayUnInstalled = MessageFormat.format("{0}-{1}",GatewayUnInstalled,ROOMS.get(i).id);
                             }
                         }
                         else if (ROOMS.get(i).ZBGateway == 1) {
@@ -1073,7 +1307,7 @@ public class Rooms extends AppCompatActivity
                                 GatewayInstalled = ROOMS.get(i).id+"" ;
                             }
                             else {
-                                GatewayInstalled = GatewayInstalled+"-"+ROOMS.get(i).id ;
+                                GatewayInstalled = MessageFormat.format("{0}-{1}",GatewayInstalled,ROOMS.get(i).id);
                             }
                         }
                         if (ROOMS.get(i).MotionSensor == 0) {
@@ -1081,7 +1315,7 @@ public class Rooms extends AppCompatActivity
                                 MotionUnInstalled = ROOMS.get(i).id+"" ;
                             }
                             else {
-                                MotionUnInstalled = MotionUnInstalled+"-"+ROOMS.get(i).id ;
+                                MotionUnInstalled = MessageFormat.format("{0}-{1}",MotionUnInstalled,ROOMS.get(i).id);
                             }
                         }
                         else if (ROOMS.get(i).MotionSensor == 1) {
@@ -1089,7 +1323,7 @@ public class Rooms extends AppCompatActivity
                                 MotionInstalled = ROOMS.get(i).id+"" ;
                             }
                             else {
-                                MotionInstalled = MotionInstalled+"-"+ROOMS.get(i).id ;
+                                MotionInstalled = MessageFormat.format("{0}-{1}",MotionInstalled,ROOMS.get(i).id);
                             }
                         }
                         if (ROOMS.get(i).DoorSensor == 0) {
@@ -1097,7 +1331,7 @@ public class Rooms extends AppCompatActivity
                                 DoorUnInstalled = ROOMS.get(i).id+"" ;
                             }
                             else {
-                                DoorUnInstalled = DoorUnInstalled+"-"+ROOMS.get(i).id ;
+                                DoorUnInstalled = MessageFormat.format("{0}-{1}",DoorUnInstalled,ROOMS.get(i).id);
                             }
                         }
                         else if (ROOMS.get(i).DoorSensor == 1) {
@@ -1105,7 +1339,7 @@ public class Rooms extends AppCompatActivity
                                 DoorInstalled = ROOMS.get(i).id+"" ;
                             }
                             else {
-                                DoorInstalled = DoorInstalled+"-"+ROOMS.get(i).id ;
+                                DoorInstalled = MessageFormat.format("{0}-{1}",DoorInstalled,ROOMS.get(i).id);
                             }
                         }
                         if (ROOMS.get(i).ServiceSwitch == 0) {
@@ -1113,7 +1347,7 @@ public class Rooms extends AppCompatActivity
                                 ServiceUnInstalled = ROOMS.get(i).id+"" ;
                             }
                             else {
-                                ServiceUnInstalled = ServiceUnInstalled+"-"+ROOMS.get(i).id ;
+                                ServiceUnInstalled = MessageFormat.format("{0}-{1}",ServiceUnInstalled,ROOMS.get(i).id);
                             }
                         }
                         else if (ROOMS.get(i).ServiceSwitch == 1) {
@@ -1121,7 +1355,7 @@ public class Rooms extends AppCompatActivity
                                 ServiceInstalled = ROOMS.get(i).id+"" ;
                             }
                             else {
-                                ServiceInstalled = ServiceInstalled+"-"+ROOMS.get(i).id ;
+                                ServiceInstalled = MessageFormat.format("{0}-{1}",ServiceInstalled,ROOMS.get(i).id);
                             }
                         }
                         if (ROOMS.get(i).Switch1 == 0) {
@@ -1129,7 +1363,7 @@ public class Rooms extends AppCompatActivity
                                 S1UnInstalled = ROOMS.get(i).id+"" ;
                             }
                             else {
-                                S1UnInstalled = S1UnInstalled+"-"+ROOMS.get(i).id ;
+                                S1UnInstalled = MessageFormat.format("{0}-{1}",S1UnInstalled,ROOMS.get(i).id);
                             }
                         }
                         else if (ROOMS.get(i).Switch1 == 1) {
@@ -1137,7 +1371,7 @@ public class Rooms extends AppCompatActivity
                                 S1Installed = ROOMS.get(i).id+"" ;
                             }
                             else {
-                                S1Installed = S1Installed+"-"+ROOMS.get(i).id ;
+                                S1Installed = MessageFormat.format("{0}-{1}",S1Installed,ROOMS.get(i).id);
                             }
                         }
                         if (ROOMS.get(i).Switch2 == 0) {
@@ -1145,7 +1379,7 @@ public class Rooms extends AppCompatActivity
                                 S2UnInstalled = ROOMS.get(i).id+"" ;
                             }
                             else {
-                                S2UnInstalled = S2UnInstalled+"-"+ROOMS.get(i).id ;
+                                S2UnInstalled = MessageFormat.format("{0}-{1}",S2UnInstalled,ROOMS.get(i).id);
                             }
                         }
                         else if (ROOMS.get(i).Switch2 == 1) {
@@ -1153,7 +1387,7 @@ public class Rooms extends AppCompatActivity
                                 S2Installed = ROOMS.get(i).id+"" ;
                             }
                             else {
-                                S2Installed = S2Installed+"-"+ROOMS.get(i).id ;
+                                S2Installed = MessageFormat.format("{0}-{1}",S2Installed,ROOMS.get(i).id);
                             }
                         }
                         if (ROOMS.get(i).Switch3 == 0) {
@@ -1161,7 +1395,7 @@ public class Rooms extends AppCompatActivity
                                 S3UnInstalled = ROOMS.get(i).id+"" ;
                             }
                             else {
-                                S3UnInstalled = S3UnInstalled+"-"+ROOMS.get(i).id ;
+                                S3UnInstalled = MessageFormat.format("{0}-{1}",S3UnInstalled,ROOMS.get(i).id);
                             }
                         }
                         else if (ROOMS.get(i).Switch3 == 1) {
@@ -1169,7 +1403,7 @@ public class Rooms extends AppCompatActivity
                                 S3Installed = ROOMS.get(i).id+"" ;
                             }
                             else {
-                                S3Installed = S3Installed+"-"+ROOMS.get(i).id ;
+                                S3Installed = MessageFormat.format("{0}-{1}",S3Installed,ROOMS.get(i).id);
                             }
                         }
                         if (ROOMS.get(i).Switch4 == 0) {
@@ -1177,7 +1411,7 @@ public class Rooms extends AppCompatActivity
                                 S4UnInstalled = ROOMS.get(i).id+"" ;
                             }
                             else {
-                                S4UnInstalled = S4UnInstalled+"-"+ROOMS.get(i).id ;
+                                S4UnInstalled = MessageFormat.format("{0}-{1}",S4UnInstalled,ROOMS.get(i).id);
                             }
                         }
                         else if (ROOMS.get(i).Switch4 == 1) {
@@ -1185,7 +1419,71 @@ public class Rooms extends AppCompatActivity
                                 S4Installed = ROOMS.get(i).id+"" ;
                             }
                             else {
-                                S4Installed = S4Installed+"-"+ROOMS.get(i).id ;
+                                S4Installed = MessageFormat.format("{0}-{1}",S4Installed,ROOMS.get(i).id);
+                            }
+                        }
+                        if (ROOMS.get(i).Switch5 == 0) {
+                            if (i == 0) {
+                                S5UnInstalled = ROOMS.get(i).id+"" ;
+                            }
+                            else {
+                                S5UnInstalled = MessageFormat.format("{0}-{1}",S5UnInstalled,ROOMS.get(i).id);
+                            }
+                        }
+                        else if (ROOMS.get(i).Switch5 == 1) {
+                            if (i == 0) {
+                                S5Installed = ROOMS.get(i).id+"" ;
+                            }
+                            else {
+                                S5Installed = MessageFormat.format("{0}-{1}",S5Installed,ROOMS.get(i).id);
+                            }
+                        }
+                        if (ROOMS.get(i).Switch6 == 0) {
+                            if (i == 0) {
+                                S6UnInstalled = ROOMS.get(i).id+"" ;
+                            }
+                            else {
+                                S6UnInstalled = MessageFormat.format("{0}-{1}",S6UnInstalled,ROOMS.get(i).id);
+                            }
+                        }
+                        else if (ROOMS.get(i).Switch6 == 1) {
+                            if (i == 0) {
+                                S6Installed = ROOMS.get(i).id+"" ;
+                            }
+                            else {
+                                S6Installed = MessageFormat.format("{0}-{1}",S6Installed,ROOMS.get(i).id);
+                            }
+                        }
+                        if (ROOMS.get(i).Switch7 == 0) {
+                            if (i == 0) {
+                                S7UnInstalled = ROOMS.get(i).id+"" ;
+                            }
+                            else {
+                                S7UnInstalled = MessageFormat.format("{0}-{1}",S7UnInstalled,ROOMS.get(i).id);
+                            }
+                        }
+                        else if (ROOMS.get(i).Switch7 == 1) {
+                            if (i == 0) {
+                                S7Installed = ROOMS.get(i).id+"" ;
+                            }
+                            else {
+                                S7Installed = MessageFormat.format("{0}-{1}",S7Installed,ROOMS.get(i).id);
+                            }
+                        }
+                        if (ROOMS.get(i).Switch8 == 0) {
+                            if (i == 0) {
+                                S8UnInstalled = ROOMS.get(i).id+"" ;
+                            }
+                            else {
+                                S8UnInstalled = MessageFormat.format("{0}-{1}",S8UnInstalled,ROOMS.get(i).id);
+                            }
+                        }
+                        else if (ROOMS.get(i).Switch8 == 1) {
+                            if (i == 0) {
+                                S8Installed = ROOMS.get(i).id+"" ;
+                            }
+                            else {
+                                S8Installed = MessageFormat.format("{0}-{1}",S8Installed,ROOMS.get(i).id);
                             }
                         }
                         if (ROOMS.get(i).Thermostat == 0) {
@@ -1193,7 +1491,7 @@ public class Rooms extends AppCompatActivity
                                 ACUnInstalled = ROOMS.get(i).id+"" ;
                             }
                             else {
-                                ACUnInstalled = ACUnInstalled+"-"+ROOMS.get(i).id ;
+                                ACUnInstalled = MessageFormat.format("{0}-{1}",ACUnInstalled,ROOMS.get(i).id);
                             }
                         }
                         else if (ROOMS.get(i).Thermostat == 1) {
@@ -1201,7 +1499,7 @@ public class Rooms extends AppCompatActivity
                                 ACInstalled = ROOMS.get(i).id+"" ;
                             }
                             else {
-                                ACInstalled = ACInstalled+"-"+ROOMS.get(i).id ;
+                                ACInstalled = MessageFormat.format("{0}-{1}",ACInstalled,ROOMS.get(i).id);
                             }
                         }
                         if (ROOMS.get(i).CurtainSwitch == 0) {
@@ -1209,7 +1507,7 @@ public class Rooms extends AppCompatActivity
                                 CurtainUnInstalled = ROOMS.get(i).id+"" ;
                             }
                             else {
-                                CurtainUnInstalled = CurtainUnInstalled+"-"+ROOMS.get(i).id ;
+                                CurtainUnInstalled = MessageFormat.format("{0}-{1}",CurtainUnInstalled,ROOMS.get(i).id);
                             }
                         }
                         else if (ROOMS.get(i).CurtainSwitch == 1) {
@@ -1217,7 +1515,7 @@ public class Rooms extends AppCompatActivity
                                 CurtainInstalled = ROOMS.get(i).id+"" ;
                             }
                             else {
-                                CurtainInstalled = CurtainInstalled+"-"+ROOMS.get(i).id ;
+                                CurtainInstalled = MessageFormat.format("{0}-{1}",CurtainInstalled,ROOMS.get(i).id);
                             }
                         }
                         if (ROOMS.get(i).lock == 0) {
@@ -1225,7 +1523,7 @@ public class Rooms extends AppCompatActivity
                                 LockUnInstalled = ROOMS.get(i).id+"" ;
                             }
                             else {
-                                LockUnInstalled = LockUnInstalled+"-"+ROOMS.get(i).id ;
+                                LockUnInstalled = MessageFormat.format("{0}-{1}",LockUnInstalled,ROOMS.get(i).id);
                             }
                         }
                         else if (ROOMS.get(i).lock == 1) {
@@ -1233,7 +1531,7 @@ public class Rooms extends AppCompatActivity
                                 LockInstalled = ROOMS.get(i).id+"" ;
                             }
                             else {
-                                LockInstalled = LockInstalled+"-"+ROOMS.get(i).id ;
+                                LockInstalled = MessageFormat.format("{0}-{1}",LockInstalled,ROOMS.get(i).id);
                             }
                         }
                     }
@@ -1243,6 +1541,7 @@ public class Rooms extends AppCompatActivity
                 roomsListView.setAdapter(adapterRooms);
                 Devices_Adapter adapterDevices = new Devices_Adapter(Devices,act);
                 devicesListView.setAdapter(adapterDevices);
+                Log.d("refreshSystem","6 get devices");
                 setDevicesListeners();
                 setFireRoomsListener();
                 getSceneBGs();
@@ -1269,7 +1568,18 @@ public class Rooms extends AppCompatActivity
     }
 
     public void refresh(View view) {
-        refreshSystem();
+        logInFunction(MyApp.THE_PROJECT, new CallbackResult() {
+            @Override
+            public void onSuccess() {
+                Log.d("refreshFunction", "login success");
+                refreshSystem();
+            }
+
+            @Override
+            public void onFail(String error) {
+                Log.d("refreshFunction", error);
+            }
+        });
     }
 
     // set Listeners _______________________________________________
@@ -1375,76 +1685,273 @@ public class Rooms extends AppCompatActivity
                 ROOMS.get(i).getSERVICE1().registerDeviceListener(new IDeviceListener() {
                     @Override
                     public void onDpUpdate(String devId, Map<String, Object> dpStr) {
-                        Long time = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
+                        Log.d("serviceAction" , dpStr.toString());
                         if (ROOMS.get(finalI).roomStatus == 2) {
-                            if (dpStr.get("switch_"+MyApp.ProjectVariables.cleanupButton) != null) {
-                                if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_" + MyApp.ProjectVariables.cleanupButton)).toString()) && !CLEANUP[finalI]) {
-                                    CLEANUP[finalI] = true ;
-                                    addCleanupOrder(ROOMS.get(finalI));
-                                    ROOMS.get(finalI).Cleanup = 1 ;
-                                    ROOMS.get(finalI).dep = "Cleanup" ;
-                                    ROOMS.get(finalI).getFireRoom().child("Cleanup").setValue(time);
-                                    setActionText("Room "+ROOMS.get(finalI).RoomNumber+" cleanup order",act);
+                                if (dpStr.toString().length() <17) {
+                                    Log.d("serviceAction" , "_____________________________________________");
+                                    Log.d("serviceAction" , "action start");
+                                    Log.d("serviceAction" , "action "+dpStr);
+                                    Log.d("serviceAction" , "before cleanup "+CLEANUP[finalI]+" laundry "+LAUNDRY[finalI]+" dnd "+DND[finalI]+" checkout "+CHECKOUT[finalI]);
+                                    Long time = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
+                                    Log.d("serviceAction" , "length "+dpStr.toString().length());
+                                    if (dpStr.get("switch_" + MyApp.ProjectVariables.cleanupButton) != null) {
+                                        if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_" + MyApp.ProjectVariables.cleanupButton)).toString()) && !CLEANUP[finalI]) {
+                                            CLEANUP[finalI] = true;
+                                            addCleanupOrder(ROOMS.get(finalI));
+                                            ROOMS.get(finalI).Cleanup = 1;
+                                            ROOMS.get(finalI).dep = "Cleanup";
+                                            ROOMS.get(finalI).getFireRoom().child("Cleanup").setValue(time);
+                                            setActionText("Room " + ROOMS.get(finalI).RoomNumber + " cleanup order", act);
+                                        } else if (!Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_" + MyApp.ProjectVariables.cleanupButton)).toString()) && CLEANUP[finalI]) {
+                                            CLEANUP[finalI] = false;
+                                            cancelServiceOrder(ROOMS.get(finalI), "Cleanup");
+                                            ROOMS.get(finalI).Cleanup = 0;
+                                            ROOMS.get(finalI).getFireRoom().child("Cleanup").setValue(0);
+                                            setActionText("Room " + ROOMS.get(finalI).RoomNumber + " cleanup order finished", act);
+                                        }
+                                    }
+                                    if (dpStr.get("switch_" + MyApp.ProjectVariables.laundryButton) != null) {
+                                        if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_" + MyApp.ProjectVariables.laundryButton)).toString()) && !LAUNDRY[finalI]) {
+                                            LAUNDRY[finalI] = true;
+                                            addLaundryOrder(ROOMS.get(finalI));
+                                            ROOMS.get(finalI).Laundry = 1;
+                                            ROOMS.get(finalI).dep = "Laundry";
+                                            ROOMS.get(finalI).getFireRoom().child("Laundry").setValue(time);
+                                            setActionText("Room " + ROOMS.get(finalI).RoomNumber + " laundry order", act);
+                                        } else if (!Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_" + MyApp.ProjectVariables.laundryButton)).toString()) && LAUNDRY[finalI]) {
+                                            LAUNDRY[finalI] = false;
+                                            cancelServiceOrder(ROOMS.get(finalI), "Laundry");
+                                            ROOMS.get(finalI).Laundry = 0;
+                                            ROOMS.get(finalI).getFireRoom().child("Laundry").setValue(0);
+                                            setActionText("Room " + ROOMS.get(finalI).RoomNumber + " laundry order finished", act);
+                                        }
+                                    }
+                                    if (dpStr.get("switch_" + MyApp.ProjectVariables.checkoutButton) != null) {
+                                        if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_" + MyApp.ProjectVariables.checkoutButton)).toString()) && !CHECKOUT[finalI]) {
+                                            CHECKOUT[finalI] = true;
+                                            addCheckoutOrder(ROOMS.get(finalI));
+                                            ROOMS.get(finalI).Checkout = 1;
+                                            ROOMS.get(finalI).dep = "Checkout";
+                                            ROOMS.get(finalI).getFireRoom().child("Checkout").setValue(time);
+                                            setActionText("Room " + ROOMS.get(finalI).RoomNumber + " checkout order", act);
+                                        } else if (!Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_" + MyApp.ProjectVariables.checkoutButton)).toString()) && CHECKOUT[finalI]) {
+                                            CHECKOUT[finalI] = false;
+                                            cancelServiceOrder(ROOMS.get(finalI), "Checkout");
+                                            ROOMS.get(finalI).Checkout = 0;
+                                            ROOMS.get(finalI).getFireRoom().child("Checkout").setValue(0);
+                                            setActionText("Room " + ROOMS.get(finalI).RoomNumber + " checkout order finished", act);
+                                        }
+                                    }
+                                    if (dpStr.get("switch_" + MyApp.ProjectVariables.dndButton) != null) {
+                                        if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_" + MyApp.ProjectVariables.dndButton)).toString()) && !DND[finalI]) {
+                                            DND[finalI] = true;
+                                            addDNDOrder(ROOMS.get(finalI));
+                                            ROOMS.get(finalI).DND = 1;
+                                            ROOMS.get(finalI).dep = "DND";
+                                            ROOMS.get(finalI).getFireRoom().child("DND").setValue(time);
+                                            setActionText("Room " + ROOMS.get(finalI).RoomNumber + " dnd on", act);
+                                        } else if (!Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_" + MyApp.ProjectVariables.dndButton)).toString()) && DND[finalI]) {
+                                            DND[finalI] = false;
+                                            cancelDNDOrder(ROOMS.get(finalI));
+                                            ROOMS.get(finalI).DND = 0;
+                                            ROOMS.get(finalI).getFireRoom().child("DND").setValue(0);
+                                            setActionText("Room " + ROOMS.get(finalI).RoomNumber + " dnd off", act);
+                                        }
+                                    }
+                                    Log.d("serviceAction" , "after cleanup "+CLEANUP[finalI]+" laundry "+LAUNDRY[finalI]+" dnd "+DND[finalI]+" checkout "+CHECKOUT[finalI]);
+                                    Log.d("serviceAction" , ROOMS.get(finalI).getSERVICE1_B().dps.toString());
+                                    Log.d("serviceAction" , "_____________________________________________");
                                 }
-                                else if (!Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_" + MyApp.ProjectVariables.cleanupButton)).toString()) && CLEANUP[finalI]) {
-                                    CLEANUP[finalI] = false ;
-                                    cancelServiceOrder(ROOMS.get(finalI),"Cleanup");
-                                    ROOMS.get(finalI).Cleanup = 0 ;
-                                    ROOMS.get(finalI).getFireRoom().child("Cleanup").setValue(0);
-                                    setActionText("Room "+ROOMS.get(finalI).RoomNumber+" cleanup order finished",act);
-                                }
-                            }
-                            if (dpStr.get("switch_"+MyApp.ProjectVariables.laundryButton) != null) {
-                                if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_" + MyApp.ProjectVariables.laundryButton)).toString()) && !LAUNDRY[finalI]) {
-                                    LAUNDRY[finalI] = true ;
-                                    addLaundryOrder(ROOMS.get(finalI));
-                                    ROOMS.get(finalI).Laundry = 1 ;
-                                    ROOMS.get(finalI).dep = "Laundry" ;
-                                    ROOMS.get(finalI).getFireRoom().child("Laundry").setValue(time);
-                                    setActionText("Room "+ROOMS.get(finalI).RoomNumber+" laundry order",act);
-                                }
-                                else if (!Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_" + MyApp.ProjectVariables.laundryButton)).toString()) && LAUNDRY[finalI]) {
-                                    LAUNDRY[finalI] = false ;
-                                    cancelServiceOrder(ROOMS.get(finalI),"Laundry");
-                                    ROOMS.get(finalI).Laundry = 0 ;
-                                    ROOMS.get(finalI).getFireRoom().child("Laundry").setValue(0);
-                                    setActionText("Room "+ROOMS.get(finalI).RoomNumber+" laundry order finished",act);
-                                }
-                            }
-                            if (dpStr.get("switch_"+MyApp.ProjectVariables.checkoutButton) != null) {
-                                if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_" + MyApp.ProjectVariables.checkoutButton)).toString()) && !CHECKOUT[finalI]) {
-                                    CHECKOUT[finalI] = true ;
-                                    addCheckoutOrder(ROOMS.get(finalI));
-                                    ROOMS.get(finalI).Checkout = 1 ;
-                                    ROOMS.get(finalI).dep = "Checkout" ;
-                                    ROOMS.get(finalI).getFireRoom().child("Checkout").setValue(time);
-                                    setActionText("Room "+ROOMS.get(finalI).RoomNumber+" checkout order",act);
-                                }
-                                else if (!Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_" + MyApp.ProjectVariables.checkoutButton)).toString()) && CHECKOUT[finalI]) {
-                                    CHECKOUT[finalI] = false ;
-                                    cancelServiceOrder(ROOMS.get(finalI),"Checkout");
-                                    ROOMS.get(finalI).Checkout = 0 ;
-                                    ROOMS.get(finalI).getFireRoom().child("Checkout").setValue(0);
-                                    setActionText("Room "+ROOMS.get(finalI).RoomNumber+" checkout order finished",act);
-                                }
-                            }
-                            if (dpStr.get("switch_"+MyApp.ProjectVariables.dndButton) != null) {
-                                if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_" + MyApp.ProjectVariables.dndButton)).toString()) && !DND[finalI]) {
-                                    DND[finalI] = true ;
-                                    addDNDOrder(ROOMS.get(finalI));
-                                    ROOMS.get(finalI).DND = 1 ;
-                                    ROOMS.get(finalI).dep = "DND" ;
-                                    ROOMS.get(finalI).getFireRoom().child("DND").setValue(time);
-                                    setActionText("Room "+ROOMS.get(finalI).RoomNumber+" dnd on",act);
-                                }
-                                else if (!Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_" + MyApp.ProjectVariables.dndButton)).toString()) && DND[finalI]) {
-                                    DND[finalI] = false ;
-                                    cancelDNDOrder(ROOMS.get(finalI));
-                                    ROOMS.get(finalI).DND = 0 ;
-                                    ROOMS.get(finalI).getFireRoom().child("DND").setValue(0);
-                                    setActionText("Room "+ROOMS.get(finalI).RoomNumber+" dnd off",act);
-                                }
-                            }
+//                                else {
+//                                    if (ca[0] == 0) {
+//                                        Log.d("serviceAction" , "action start "+ca[0]);
+//                                        Log.d("serviceAction" , "action "+dpStr);
+//                                        Log.d("serviceAction" , "before cleanup "+CLEANUP[finalI]+" laundry "+LAUNDRY[finalI]+" dnd "+DND[finalI]+" checkout "+CHECKOUT[finalI]);
+//                                        boolean clAfter = CLEANUP[finalI];
+//                                        boolean laAfter = LAUNDRY[finalI];
+//                                        boolean chAfter = CHECKOUT[finalI];
+//                                        boolean dnAfter = DND[finalI];
+//                                        if (dpStr.get("switch_" + MyApp.ProjectVariables.cleanupButton) != null) {
+//                                            clAfter = Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_" + MyApp.ProjectVariables.cleanupButton)).toString());
+//                                        }
+//                                        if (dpStr.get("switch_" + MyApp.ProjectVariables.laundryButton) != null) {
+//                                            laAfter = Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_" + MyApp.ProjectVariables.laundryButton)).toString());
+//                                        }
+//                                        if (dpStr.get("switch_" + MyApp.ProjectVariables.checkoutButton) != null) {
+//                                            chAfter = Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_" + MyApp.ProjectVariables.checkoutButton)).toString());
+//                                        }
+//                                        if (dpStr.get("switch_" + MyApp.ProjectVariables.dndButton) != null) {
+//                                            dnAfter = Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_" + MyApp.ProjectVariables.dndButton)).toString());
+//                                        }
+//                                        Log.d("serviceAction" , "length "+dpStr.toString().length());
+//                                        Log.d("serviceAction" , "after cleanup "+clAfter+" laundry "+laAfter+" dnd "+dnAfter+" checkout "+chAfter);
+//                                        Long time = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
+//                                        if (CLEANUP[finalI] != clAfter) {
+//                                            if (clAfter) {
+//                                                CLEANUP[finalI] = true;
+//                                                addCleanupOrder(ROOMS.get(finalI));
+//                                                ROOMS.get(finalI).Cleanup = 1;
+//                                                ROOMS.get(finalI).dep = "Cleanup";
+//                                                ROOMS.get(finalI).getFireRoom().child("Cleanup").setValue(time);
+//                                                setActionText("Room " + ROOMS.get(finalI).RoomNumber + " cleanup order", act);
+//                                            }
+//                                            else {
+//                                                CLEANUP[finalI] = false;
+//                                                cancelServiceOrder(ROOMS.get(finalI), "Cleanup");
+//                                                ROOMS.get(finalI).Cleanup = 0;
+//                                                ROOMS.get(finalI).getFireRoom().child("Cleanup").setValue(0);
+//                                                setActionText("Room " + ROOMS.get(finalI).RoomNumber + " cleanup order finished", act);
+//                                            }
+//                                        }
+//                                        if (LAUNDRY[finalI] != laAfter) {
+//                                            if (laAfter) {
+//                                                LAUNDRY[finalI] = true;
+//                                                addLaundryOrder(ROOMS.get(finalI));
+//                                                ROOMS.get(finalI).Laundry = 1;
+//                                                ROOMS.get(finalI).dep = "Laundry";
+//                                                ROOMS.get(finalI).getFireRoom().child("Laundry").setValue(time);
+//                                                setActionText("Room " + ROOMS.get(finalI).RoomNumber + " laundry order", act);
+//                                                if (DND[finalI]) {
+//                                                    DND[finalI] = false;
+//                                                    cancelDNDOrder(ROOMS.get(finalI));
+//                                                    ROOMS.get(finalI).DND = 0;
+//                                                    ROOMS.get(finalI).getFireRoom().child("DND").setValue(0);
+//                                                    setActionText("Room " + ROOMS.get(finalI).RoomNumber + " dnd off", act);
+//                                                }
+//                                            }
+//                                            else {
+//                                                LAUNDRY[finalI] = false;
+//                                                cancelServiceOrder(ROOMS.get(finalI), "Laundry");
+//                                                ROOMS.get(finalI).Laundry = 0;
+//                                                ROOMS.get(finalI).getFireRoom().child("Laundry").setValue(0);
+//                                                setActionText("Room " + ROOMS.get(finalI).RoomNumber + " laundry order finished", act);
+//                                            }
+//                                        }
+//                                        if (CHECKOUT[finalI] != chAfter) {
+//                                            if (chAfter) {
+//                                                CHECKOUT[finalI] = true;
+//                                                addCheckoutOrder(ROOMS.get(finalI));
+//                                                ROOMS.get(finalI).Checkout = 1;
+//                                                ROOMS.get(finalI).dep = "Checkout";
+//                                                ROOMS.get(finalI).getFireRoom().child("Checkout").setValue(time);
+//                                                setActionText("Room " + ROOMS.get(finalI).RoomNumber + " checkout order", act);
+//                                                if (DND[finalI]) {
+//                                                    DND[finalI] = false;
+//                                                    cancelDNDOrder(ROOMS.get(finalI));
+//                                                    ROOMS.get(finalI).DND = 0;
+//                                                    ROOMS.get(finalI).getFireRoom().child("DND").setValue(0);
+//                                                    setActionText("Room " + ROOMS.get(finalI).RoomNumber + " dnd off", act);
+//                                                }
+//                                            }
+//                                            else {
+//                                                CHECKOUT[finalI] = false;
+//                                                cancelServiceOrder(ROOMS.get(finalI), "Checkout");
+//                                                ROOMS.get(finalI).Checkout = 0;
+//                                                ROOMS.get(finalI).getFireRoom().child("Checkout").setValue(0);
+//                                                setActionText("Room " + ROOMS.get(finalI).RoomNumber + " checkout order finished", act);
+//                                            }
+//                                        }
+//                                        if (DND[finalI] != dnAfter) {
+//                                            if (dnAfter) {
+//                                                DND[finalI] = true;
+//                                                addDNDOrder(ROOMS.get(finalI));
+//                                                ROOMS.get(finalI).DND = 1;
+//                                                ROOMS.get(finalI).dep = "DND";
+//                                                ROOMS.get(finalI).getFireRoom().child("DND").setValue(time);
+//                                                setActionText("Room " + ROOMS.get(finalI).RoomNumber + " dnd on", act);
+//                                            }
+//                                            else {
+//                                                DND[finalI] = false;
+//                                                cancelDNDOrder(ROOMS.get(finalI));
+//                                                ROOMS.get(finalI).DND = 0;
+//                                                ROOMS.get(finalI).getFireRoom().child("DND").setValue(0);
+//                                                setActionText("Room " + ROOMS.get(finalI).RoomNumber + " dnd off", act);
+//                                            }
+//                                        }
+//                                        Log.d("serviceAction" , "_____________________________________________");
+//                                        ca[0] = 1 ;
+//                                        Timer t = new Timer();
+//                                        t.schedule(new TimerTask() {
+//                                            @Override
+//                                            public void run() {
+//                                                ca[0] = 0;
+//                                            }
+//                                        },2000);
+//                                    }
+//
+////                                Log.d("serviceAction" , "action start");
+////                                Log.d("serviceAction" , "action "+dpStr);
+////                                Log.d("serviceAction" , "before cleanup "+CLEANUP[finalI]+" laundry "+LAUNDRY[finalI]+" dnd "+DND[finalI]+" checkout "+CHECKOUT[finalI]);
+////                                //Long time = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
+////                                Log.d("serviceAction" , "length "+dpStr.toString().length());
+////                                if (dpStr.get("switch_" + MyApp.ProjectVariables.cleanupButton) != null) {
+////                                    if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_" + MyApp.ProjectVariables.cleanupButton)).toString()) && !CLEANUP[finalI]) {
+////                                        CLEANUP[finalI] = true;
+////                                        addCleanupOrder(ROOMS.get(finalI));
+////                                        ROOMS.get(finalI).Cleanup = 1;
+////                                        ROOMS.get(finalI).dep = "Cleanup";
+////                                        ROOMS.get(finalI).getFireRoom().child("Cleanup").setValue(time);
+////                                        setActionText("Room " + ROOMS.get(finalI).RoomNumber + " cleanup order", act);
+////                                    } else if (!Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_" + MyApp.ProjectVariables.cleanupButton)).toString()) && CLEANUP[finalI]) {
+////                                        CLEANUP[finalI] = false;
+////                                        cancelServiceOrder(ROOMS.get(finalI), "Cleanup");
+////                                        ROOMS.get(finalI).Cleanup = 0;
+////                                        ROOMS.get(finalI).getFireRoom().child("Cleanup").setValue(0);
+////                                        setActionText("Room " + ROOMS.get(finalI).RoomNumber + " cleanup order finished", act);
+////                                    }
+////                                }
+////                                if (dpStr.get("switch_" + MyApp.ProjectVariables.laundryButton) != null) {
+////                                    if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_" + MyApp.ProjectVariables.laundryButton)).toString()) && !LAUNDRY[finalI]) {
+////                                        LAUNDRY[finalI] = true;
+////                                        addLaundryOrder(ROOMS.get(finalI));
+////                                        ROOMS.get(finalI).Laundry = 1;
+////                                        ROOMS.get(finalI).dep = "Laundry";
+////                                        ROOMS.get(finalI).getFireRoom().child("Laundry").setValue(time);
+////                                        setActionText("Room " + ROOMS.get(finalI).RoomNumber + " laundry order", act);
+////                                    } else if (!Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_" + MyApp.ProjectVariables.laundryButton)).toString()) && LAUNDRY[finalI]) {
+////                                        LAUNDRY[finalI] = false;
+////                                        cancelServiceOrder(ROOMS.get(finalI), "Laundry");
+////                                        ROOMS.get(finalI).Laundry = 0;
+////                                        ROOMS.get(finalI).getFireRoom().child("Laundry").setValue(0);
+////                                        setActionText("Room " + ROOMS.get(finalI).RoomNumber + " laundry order finished", act);
+////                                    }
+////                                }
+////                                if (dpStr.get("switch_" + MyApp.ProjectVariables.checkoutButton) != null) {
+////                                    if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_" + MyApp.ProjectVariables.checkoutButton)).toString()) && !CHECKOUT[finalI]) {
+////                                        CHECKOUT[finalI] = true;
+////                                        addCheckoutOrder(ROOMS.get(finalI));
+////                                        ROOMS.get(finalI).Checkout = 1;
+////                                        ROOMS.get(finalI).dep = "Checkout";
+////                                        ROOMS.get(finalI).getFireRoom().child("Checkout").setValue(time);
+////                                        setActionText("Room " + ROOMS.get(finalI).RoomNumber + " checkout order", act);
+////                                    } else if (!Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_" + MyApp.ProjectVariables.checkoutButton)).toString()) && CHECKOUT[finalI]) {
+////                                        CHECKOUT[finalI] = false;
+////                                        cancelServiceOrder(ROOMS.get(finalI), "Checkout");
+////                                        ROOMS.get(finalI).Checkout = 0;
+////                                        ROOMS.get(finalI).getFireRoom().child("Checkout").setValue(0);
+////                                        setActionText("Room " + ROOMS.get(finalI).RoomNumber + " checkout order finished", act);
+////                                    }
+////                                }
+////                                if (dpStr.get("switch_" + MyApp.ProjectVariables.dndButton) != null) {
+////                                    if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_" + MyApp.ProjectVariables.dndButton)).toString()) && !DND[finalI]) {
+////                                        DND[finalI] = true;
+////                                        addDNDOrder(ROOMS.get(finalI));
+////                                        ROOMS.get(finalI).DND = 1;
+////                                        ROOMS.get(finalI).dep = "DND";
+////                                        ROOMS.get(finalI).getFireRoom().child("DND").setValue(time);
+////                                        setActionText("Room " + ROOMS.get(finalI).RoomNumber + " dnd on", act);
+////                                    } else if (!Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_" + MyApp.ProjectVariables.dndButton)).toString()) && DND[finalI]) {
+////                                        DND[finalI] = false;
+////                                        cancelDNDOrder(ROOMS.get(finalI));
+////                                        ROOMS.get(finalI).DND = 0;
+////                                        ROOMS.get(finalI).getFireRoom().child("DND").setValue(0);
+////                                        setActionText("Room " + ROOMS.get(finalI).RoomNumber + " dnd off", act);
+////                                    }
+////                                }
+////                                Log.d("serviceAction" , "after cleanup "+CLEANUP[finalI]+" laundry "+LAUNDRY[finalI]+" dnd "+DND[finalI]+" checkout "+CHECKOUT[finalI]);
+////                                Log.d("serviceAction" , ROOMS.get(finalI).getSERVICE1_B().dps.toString());
+////                                Log.d("serviceAction" , "_____________________________________________");
+//                           }
                         }
                     }
                     @Override
@@ -1470,6 +1977,117 @@ public class Rooms extends AppCompatActivity
 
                     }
                 });
+//                long[] v = {0};
+//                ROOMS.get(i).getSERVICE1().registerDevListener(new IDevListener() {
+//                    @Override
+//                    public void onDpUpdate(String devId, String dpStr) {
+//
+//                        Long time = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
+//                        if (ROOMS.get(finalI).roomStatus == 2) {
+//                            long h = Calendar.getInstance().getTimeInMillis();
+//                            if (h > (v[0]+2000)) {
+//                                v[0] = h;
+//                                Log.d("serviceAction" , "action start");
+//                                Log.d("serviceAction" , "action "+dpStr);
+//                                Log.d("serviceAction" , "before cleanup "+CLEANUP[finalI]+" laundry "+LAUNDRY[finalI]+" dnd "+DND[finalI]+" checkout "+CHECKOUT[finalI]);
+//                                try {
+//                                    JSONObject cleanup = new JSONObject(dpStr);
+//                                    CLEANUP[finalI] = cleanup.getBoolean(String.valueOf(MyApp.ProjectVariables.cleanupButton));
+//                                } catch (JSONException e) {
+//                                    e.printStackTrace();
+//                                }
+//                                try {
+//                                    JSONObject laundry = new JSONObject(dpStr);
+//                                    LAUNDRY[finalI] = laundry.getBoolean(String.valueOf(MyApp.ProjectVariables.laundryButton));
+//                                } catch (JSONException e) {
+//                                    e.printStackTrace();
+//                                }
+//                                try {
+//                                    JSONObject dnd = new JSONObject(dpStr);
+//                                    DND[finalI] = dnd.getBoolean(String.valueOf(MyApp.ProjectVariables.dndButton));
+//                                } catch (JSONException e) {
+//                                    e.printStackTrace();
+//                                }
+//                                try {
+//                                    JSONObject checkout = new JSONObject(dpStr);
+//                                    CHECKOUT[finalI] = checkout.getBoolean(String.valueOf(MyApp.ProjectVariables.checkoutButton));
+//                                } catch (JSONException e) {
+//                                    e.printStackTrace();
+//                                }
+//                                Log.d("serviceAction" , "after cleanup "+CLEANUP[finalI]+" laundry "+LAUNDRY[finalI]+" dnd "+DND[finalI]+" checkout "+CHECKOUT[finalI]);
+//                                if (CLEANUP[finalI]) {
+//                                    addCleanupOrder(ROOMS.get(finalI));
+//                                    ROOMS.get(finalI).Cleanup = 1;
+//                                    ROOMS.get(finalI).dep = "Cleanup";
+//                                    ROOMS.get(finalI).getFireRoom().child("Cleanup").setValue(time);
+//                                    setActionText("Room " + ROOMS.get(finalI).RoomNumber + " cleanup order", act);
+//                                } else {
+//                                    cancelServiceOrder(ROOMS.get(finalI), "Cleanup");
+//                                    ROOMS.get(finalI).Cleanup = 0;
+//                                    ROOMS.get(finalI).getFireRoom().child("Cleanup").setValue(0);
+//                                    setActionText("Room " + ROOMS.get(finalI).RoomNumber + " cleanup order finished", act);
+//                                }
+//                                if (LAUNDRY[finalI]) {
+//                                    addLaundryOrder(ROOMS.get(finalI));
+//                                    ROOMS.get(finalI).Laundry = 1;
+//                                    ROOMS.get(finalI).dep = "Laundry";
+//                                    ROOMS.get(finalI).getFireRoom().child("Laundry").setValue(time);
+//                                    setActionText("Room " + ROOMS.get(finalI).RoomNumber + " laundry order", act);
+//                                } else {
+//                                    cancelServiceOrder(ROOMS.get(finalI), "Laundry");
+//                                    ROOMS.get(finalI).Laundry = 0;
+//                                    ROOMS.get(finalI).getFireRoom().child("Laundry").setValue(0);
+//                                    setActionText("Room " + ROOMS.get(finalI).RoomNumber + " laundry order finished", act);
+//                                }
+//                                if (DND[finalI]) {
+//                                    addDNDOrder(ROOMS.get(finalI));
+//                                    ROOMS.get(finalI).DND = 1;
+//                                    ROOMS.get(finalI).dep = "DND";
+//                                    ROOMS.get(finalI).getFireRoom().child("DND").setValue(time);
+//                                    setActionText("Room " + ROOMS.get(finalI).RoomNumber + " dnd on", act);
+//                                } else {
+//                                    cancelDNDOrder(ROOMS.get(finalI));
+//                                    ROOMS.get(finalI).DND = 0;
+//                                    ROOMS.get(finalI).getFireRoom().child("DND").setValue(0);
+//                                    setActionText("Room " + ROOMS.get(finalI).RoomNumber + " dnd off", act);
+//                                }
+//                                if (CHECKOUT[finalI]) {
+//                                    addCheckoutOrder(ROOMS.get(finalI));
+//                                    ROOMS.get(finalI).Checkout = 1;
+//                                    ROOMS.get(finalI).dep = "Checkout";
+//                                    ROOMS.get(finalI).getFireRoom().child("Checkout").setValue(time);
+//                                    setActionText("Room " + ROOMS.get(finalI).RoomNumber + " checkout order", act);
+//                                } else {
+//                                    cancelServiceOrder(ROOMS.get(finalI), "Checkout");
+//                                    ROOMS.get(finalI).Checkout = 0;
+//                                    ROOMS.get(finalI).getFireRoom().child("Checkout").setValue(0);
+//                                    setActionText("Room " + ROOMS.get(finalI).RoomNumber + " checkout order finished", act);
+//                                }
+//                                Log.d("serviceAction" , "_____________________________________________");
+//                            }
+//                        }
+//                    }
+//
+//                    @Override
+//                    public void onRemoved(String devId) {
+//
+//                    }
+//
+//                    @Override
+//                    public void onStatusChanged(String devId, boolean online) {
+//
+//                    }
+//
+//                    @Override
+//                    public void onNetworkStatusChanged(String devId, boolean status) {
+//
+//                    }
+//
+//                    @Override
+//                    public void onDevInfoUpdate(String devId) {
+//
+//                    }
+//                });
             }
             if (ROOMS.get(i).getAC_B() !=null) {
                 ROOMS.get(i).getAC().registerDeviceListener(new IDeviceListener() {
@@ -1522,33 +2140,94 @@ public class Rooms extends AppCompatActivity
             if (ROOMS.get(i).getPOWER_B() != null) {
                 final boolean[] v1 = {Boolean.parseBoolean(Objects.requireNonNull(ROOMS.get(finalI).getPOWER_B().dps.get("1")).toString())};
                 final boolean[] v2 = {Boolean.parseBoolean(Objects.requireNonNull(ROOMS.get(finalI).getPOWER_B().dps.get("2")).toString())};
-                ROOMS.get(i).getPOWER().registerDeviceListener(new IDeviceListener() {
+                long[] v = {0};
+                ROOMS.get(i).getPOWER().registerDevListener(new IDevListener() {
                     @Override
-                    public void onDpUpdate(String devId, Map<String, Object> dpStr) {
-                        Log.d("powerActions",dpStr.toString());
-                        if (dpStr.get("switch_1") != null) {
-                            v1[0] = Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_1")).toString()) ;
+                    public void onDpUpdate(String devId, String dpStr) {
+                        long h = Calendar.getInstance().getTimeInMillis();
+                        if (h > (v[0]+1500)) {
+                            Log.d("powerActions","action start");
+                            Log.d("powerActions","action"+dpStr);
+                            Log.d("powerActions","before action "+v1[0]+" "+v2[0]);
+                            v[0] = h;
+                            try {
+                                JSONObject l1 = new JSONObject(dpStr);
+                                v1[0] = l1.getBoolean("1");
+                            }
+                            catch(JSONException e) {
+                                Log.d("powerActions","l1 error "+e.getMessage());
+                            }
+                            try {
+                                JSONObject l2 = new JSONObject(dpStr);
+                                v2[0] = l2.getBoolean("2");
+                            }
+                            catch(JSONException e) {
+                                Log.d("powerActions","l2 error "+e.getMessage());
+                            }
+                            if (v1[0] && v2[0]) {
+                                ROOMS.get(finalI).getFireRoom().child("powerStatus").setValue(2);
+                                setActionText("Room " + ROOMS.get(finalI).RoomNumber + " power on",act);
+                            }
+                            else if (v1[0]) {
+                                ROOMS.get(finalI).getFireRoom().child("powerStatus").setValue(1);
+                                setActionText("Room " + ROOMS.get(finalI).RoomNumber + " power byCard",act);
+                            }
+                            else {
+                                ROOMS.get(finalI).getFireRoom().child("powerStatus").setValue(0);
+                                setActionText("Room " + ROOMS.get(finalI).RoomNumber + " power off",act);
+                            }
+                            Log.d("powerActions","after action "+v1[0]+" "+v2[0]);
+                            Log.d("powerActions","action finish");
+                            Log.d("powerActions","________________________________________________________");
                         }
-                        if (dpStr.get("switch_2") != null) {
-                            v2[0] = Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_2")).toString()) ;
-                        }
-                        if (v1[0] && v2[0]) {
-                            ROOMS.get(finalI).getFireRoom().child("powerStatus").setValue(2);
-                            setActionText("Room " + ROOMS.get(finalI).RoomNumber + " power on",act);
-                        }
-                        else if (v1[0]) {
-                            ROOMS.get(finalI).getFireRoom().child("powerStatus").setValue(1);
-                            setActionText("Room " + ROOMS.get(finalI).RoomNumber + " power byCard",act);
-                        }
-                        else if (!v2[0]) {
-                            ROOMS.get(finalI).getFireRoom().child("powerStatus").setValue(0);
-                            setActionText("Room " + ROOMS.get(finalI).RoomNumber + " power off",act);
-                        }
+//                        try {
+//                            JSONObject s = new JSONObject(dpStr);
+//                            v1[0] = s.getBoolean("1");
+//                            v2[0] = s.getBoolean("2");
+//                            if (v1[0] && v2[0]) {
+//                                ROOMS.get(finalI).getFireRoom().child("powerStatus").setValue(2);
+//                                setActionText("Room " + ROOMS.get(finalI).RoomNumber + " power on",act);
+//                            }
+//                            else if (v1[0]) {
+//                                ROOMS.get(finalI).getFireRoom().child("powerStatus").setValue(1);
+//                                setActionText("Room " + ROOMS.get(finalI).RoomNumber + " power byCard",act);
+//                            }
+//                            else if (!v2[0]) {
+//                                ROOMS.get(finalI).getFireRoom().child("powerStatus").setValue(0);
+//                                setActionText("Room " + ROOMS.get(finalI).RoomNumber + " power off",act);
+//                            }
+//                            Log.d("powerActions0","after action "+v1[0]+" "+v2[0]);
+//                            Log.d("powerActions0","action finish");
+//                            Log.d("powerActions0","________________________________________________________");
+//                        } catch (JSONException e) {
+//                            Log.d("powerActions",e.getMessage());
+//                            if (e.getMessage().equals("No value for 1")) {
+//
+//                                v2[0] = Boolean.parseBoolean(Objects.requireNonNull(ROOMS.get(finalI).getPOWER_B().dps.get("2")).toString());
+//                            }
+//                            if (v1[0] && v2[0]) {
+//                                ROOMS.get(finalI).getFireRoom().child("powerStatus").setValue(2);
+//                                setActionText("Room " + ROOMS.get(finalI).RoomNumber + " power on",act);
+//                            }
+//                            else if (v1[0]) {
+//                                ROOMS.get(finalI).getFireRoom().child("powerStatus").setValue(1);
+//                                setActionText("Room " + ROOMS.get(finalI).RoomNumber + " power byCard",act);
+//                            }
+//                            else if (!v2[0]) {
+//                                ROOMS.get(finalI).getFireRoom().child("powerStatus").setValue(0);
+//                                setActionText("Room " + ROOMS.get(finalI).RoomNumber + " power off",act);
+//                            }
+//                            Log.d("powerActions","after action "+v1[0]+" "+v2[0]);
+//                            Log.d("powerActions","action finish");
+//                            Log.d("powerActions","________________________________________________________");
+//                        }
                     }
+
                     @Override
                     public void onRemoved(String devId) {
-                        ROOMS.get(finalI).setPowerSwitchStatus(String.valueOf(ROOMS.get(finalI).id),"0",act);
+
                     }
+
                     @Override
                     public void onStatusChanged(String devId, boolean online) {
 
@@ -1620,7 +2299,7 @@ public class Rooms extends AppCompatActivity
                             String dp = "{\" "+ROOMS.get(finalI).acVariables.TempSetDP+"\": "+t+"}";
                             Log.d("acSenario" ,dp);
                             if (ROOMS.get(finalI).getAC() != null ) {
-                                ROOMS.get(finalI).getAC().publishDps(dp, new IResultCallback() {
+                                ROOMS.get(finalI).getAC().publishDps(dp,TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
                                     @Override
                                     public void onError(String code, String error) {
                                         Log.d("acSenario" ,error);
@@ -1655,41 +2334,39 @@ public class Rooms extends AppCompatActivity
                 ROOMS.get(i).getSWITCH1().registerDeviceListener(new IDeviceListener() {
                     @Override
                     public void onDpUpdate(String devId, Map<String, Object> dpStr) {
-                        if (dpStr.get("switch_1") != null) {
-                            if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_1")).toString())) {
-                                ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH1_B().name).child("1").setValue(3);
+                        if (dpStr.toString().length() <17) {
+                            if (dpStr.get("switch_1") != null) {
+                                if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_1")).toString())) {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH1_B().name).child("1").setValue(3);
+                                } else {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH1_B().name).child("1").setValue(0);
+                                }
+                                setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 1 Button 1 pressed", act);
                             }
-                            else {
-                                ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH1_B().name).child("1").setValue(0);
+                            if (dpStr.get("switch_2") != null) {
+                                if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_2")).toString())) {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH1_B().name).child("2").setValue(3);
+                                } else {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH1_B().name).child("2").setValue(0);
+                                }
+                                setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 1 Button 2 pressed", act);
                             }
-                            setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 1 Button 1 pressed",act);
-                        }
-                        if (dpStr.get("switch_2") != null) {
-                            if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_2")).toString())) {
-                                ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH1_B().name).child("2").setValue(3);
+                            if (dpStr.get("switch_3") != null) {
+                                if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_3")).toString())) {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH1_B().name).child("3").setValue(3);
+                                } else {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH1_B().name).child("3").setValue(0);
+                                }
+                                setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 1 Button 3 pressed", act);
                             }
-                            else {
-                                ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH1_B().name).child("2").setValue(0);
+                            if (dpStr.get("switch_4") != null) {
+                                if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_4")).toString())) {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH1_B().name).child("4").setValue(3);
+                                } else {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH1_B().name).child("4").setValue(0);
+                                }
+                                setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 1 Button 4 pressed", act);
                             }
-                            setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 1 Button 2 pressed",act);
-                        }
-                        if (dpStr.get("switch_3") != null) {
-                            if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_3")).toString())) {
-                                ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH1_B().name).child("3").setValue(3);
-                            }
-                            else {
-                                ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH1_B().name).child("3").setValue(0);
-                            }
-                            setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 1 Button 3 pressed",act);
-                        }
-                        if (dpStr.get("switch_4") != null) {
-                            if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_4")).toString())) {
-                                ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH1_B().name).child("4").setValue(3);
-                            }
-                            else {
-                                ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH1_B().name).child("4").setValue(0);
-                            }
-                            setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 1 Button 4 pressed",act);
                         }
                     }
                     @Override
@@ -1714,41 +2391,39 @@ public class Rooms extends AppCompatActivity
                 ROOMS.get(i).getSWITCH2().registerDeviceListener(new IDeviceListener() {
                     @Override
                     public void onDpUpdate(String devId, Map<String, Object> dpStr) {
-                        if (dpStr.get("switch_1") != null) {
-                            if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_1")).toString())) {
-                                ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH2_B().name).child("1").setValue(3);
+                        if (dpStr.toString().length() <17) {
+                            if (dpStr.get("switch_1") != null) {
+                                if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_1")).toString())) {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH2_B().name).child("1").setValue(3);
+                                } else {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH2_B().name).child("1").setValue(0);
+                                }
+                                setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 2 Button 1 pressed", act);
                             }
-                            else {
-                                ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH2_B().name).child("1").setValue(0);
+                            if (dpStr.get("switch_2") != null) {
+                                if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_2")).toString())) {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH2_B().name).child("2").setValue(3);
+                                } else {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH2_B().name).child("2").setValue(0);
+                                }
+                                setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 2 Button 2 pressed", act);
                             }
-                            setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 2 Button 1 pressed",act);
-                        }
-                        if (dpStr.get("switch_2") != null) {
-                            if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_2")).toString())) {
-                                ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH2_B().name).child("2").setValue(3);
+                            if (dpStr.get("switch_3") != null) {
+                                if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_3")).toString())) {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH2_B().name).child("3").setValue(3);
+                                } else {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH2_B().name).child("3").setValue(0);
+                                }
+                                setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 2 Button 3 pressed", act);
                             }
-                            else {
-                                ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH2_B().name).child("2").setValue(0);
+                            if (dpStr.get("switch_4") != null) {
+                                if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_4")).toString())) {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH2_B().name).child("4").setValue(3);
+                                } else {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH2_B().name).child("4").setValue(0);
+                                }
+                                setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 2 Button 4 pressed", act);
                             }
-                            setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 2 Button 2 pressed",act);
-                        }
-                        if (dpStr.get("switch_3") != null) {
-                            if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_3")).toString())) {
-                                ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH2_B().name).child("3").setValue(3);
-                            }
-                            else {
-                                ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH2_B().name).child("3").setValue(0);
-                            }
-                            setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 2 Button 3 pressed",act);
-                        }
-                        if (dpStr.get("switch_4") != null) {
-                            if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_4")).toString())) {
-                                ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH2_B().name).child("4").setValue(3);
-                            }
-                            else {
-                                ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH2_B().name).child("4").setValue(0);
-                            }
-                            setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 2 Button 4 pressed",act);
                         }
                     }
                     @Override
@@ -1773,41 +2448,39 @@ public class Rooms extends AppCompatActivity
                 ROOMS.get(i).getSWITCH3().registerDeviceListener(new IDeviceListener() {
                     @Override
                     public void onDpUpdate(String devId, Map<String, Object> dpStr) {
-                        if (dpStr.get("switch_1") != null) {
-                            if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_1")).toString())) {
-                                ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH3_B().name).child("1").setValue(3);
+                        if (dpStr.toString().length() <17) {
+                            if (dpStr.get("switch_1") != null) {
+                                if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_1")).toString())) {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH3_B().name).child("1").setValue(3);
+                                } else {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH3_B().name).child("1").setValue(0);
+                                }
+                                setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 3 Button 1 pressed", act);
                             }
-                            else {
-                                ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH3_B().name).child("1").setValue(0);
+                            if (dpStr.get("switch_2") != null) {
+                                if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_2")).toString())) {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH3_B().name).child("2").setValue(3);
+                                } else {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH3_B().name).child("2").setValue(0);
+                                }
+                                setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 3 Button 2 pressed", act);
                             }
-                            setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 3 Button 1 pressed",act);
-                        }
-                        if (dpStr.get("switch_2") != null) {
-                            if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_2")).toString())) {
-                                ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH3_B().name).child("2").setValue(3);
+                            if (dpStr.get("switch_3") != null) {
+                                if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_3")).toString())) {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH3_B().name).child("3").setValue(3);
+                                } else {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH3_B().name).child("3").setValue(0);
+                                }
+                                setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 3 Button 3 pressed", act);
                             }
-                            else {
-                                ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH3_B().name).child("2").setValue(0);
+                            if (dpStr.get("switch_4") != null) {
+                                if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_4")).toString())) {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH3_B().name).child("4").setValue(3);
+                                } else {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH3_B().name).child("4").setValue(0);
+                                }
+                                setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 3 Button 4 pressed", act);
                             }
-                            setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 3 Button 2 pressed",act);
-                        }
-                        if (dpStr.get("switch_3") != null) {
-                            if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_3")).toString())) {
-                                ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH3_B().name).child("3").setValue(3);
-                            }
-                            else {
-                                ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH3_B().name).child("3").setValue(0);
-                            }
-                            setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 3 Button 3 pressed",act);
-                        }
-                        if (dpStr.get("switch_4") != null) {
-                            if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_4")).toString())) {
-                                ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH3_B().name).child("4").setValue(3);
-                            }
-                            else {
-                                ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH3_B().name).child("4").setValue(0);
-                            }
-                            setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 3 Button 4 pressed",act);
                         }
                     }
                     @Override
@@ -1832,46 +2505,272 @@ public class Rooms extends AppCompatActivity
                 ROOMS.get(i).getSWITCH4().registerDeviceListener(new IDeviceListener() {
                     @Override
                     public void onDpUpdate(String devId, Map<String, Object> dpStr) {
-                        if (dpStr.get("switch_1") != null) {
-                            if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_1")).toString())) {
-                                ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("1").setValue(3);
+                        if (dpStr.toString().length() <17) {
+                            if (dpStr.get("switch_1") != null) {
+                                if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_1")).toString())) {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("1").setValue(3);
+                                } else {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("1").setValue(0);
+                                }
+                                setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 4 Button 1 pressed", act);
                             }
-                            else {
-                                ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("1").setValue(0);
+                            if (dpStr.get("switch_2") != null) {
+                                if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_2")).toString())) {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("2").setValue(3);
+                                } else {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("2").setValue(0);
+                                }
+                                setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 4 Button 2 pressed", act);
                             }
-                            setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 4 Button 1 pressed",act);
-                        }
-                        if (dpStr.get("switch_2") != null) {
-                            if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_2")).toString())) {
-                                ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("2").setValue(3);
+                            if (dpStr.get("switch_3") != null) {
+                                if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_3")).toString())) {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("3").setValue(3);
+                                } else {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("3").setValue(0);
+                                }
+                                setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 4 Button 3 pressed", act);
                             }
-                            else {
-                                ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("2").setValue(0);
+                            if (dpStr.get("switch_4") != null) {
+                                if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_4")).toString())) {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("4").setValue(3);
+                                } else {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("4").setValue(0);
+                                }
+                                setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 4 Button 4 pressed", act);
                             }
-                            setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 4 Button 2 pressed",act);
-                        }
-                        if (dpStr.get("switch_3") != null) {
-                            if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_3")).toString())) {
-                                ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("3").setValue(3);
-                            }
-                            else {
-                                ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("3").setValue(0);
-                            }
-                            setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 4 Button 3 pressed",act);
-                        }
-                        if (dpStr.get("switch_4") != null) {
-                            if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_4")).toString())) {
-                                ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("4").setValue(3);
-                            }
-                            else {
-                                ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("4").setValue(0);
-                            }
-                            setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 4 Button 4 pressed",act);
                         }
                     }
                     @Override
                     public void onRemoved(String devId) {
                         ROOMS.get(finalI).setSwitch4Status(String.valueOf(ROOMS.get(finalI).id),"0",act);
+                    }
+                    @Override
+                    public void onStatusChanged(String devId, boolean online) {
+
+                    }
+                    @Override
+                    public void onNetworkStatusChanged(String devId, boolean status) {
+
+                    }
+                    @Override
+                    public void onDevInfoUpdate(String devId) {
+
+                    }
+                });
+            }
+            if (ROOMS.get(i).getSWITCH5_B() != null) {
+                ROOMS.get(i).getSWITCH5().registerDeviceListener(new IDeviceListener() {
+                    @Override
+                    public void onDpUpdate(String devId, Map<String, Object> dpStr) {
+                        if (dpStr.toString().length() <17) {
+                            if (dpStr.get("switch_1") != null) {
+                                if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_1")).toString())) {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH5_B().name).child("1").setValue(3);
+                                } else {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH5_B().name).child("1").setValue(0);
+                                }
+                                setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 5 Button 1 pressed", act);
+                            }
+                            if (dpStr.get("switch_2") != null) {
+                                if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_2")).toString())) {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH5_B().name).child("2").setValue(3);
+                                } else {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH5_B().name).child("2").setValue(0);
+                                }
+                                setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 5 Button 2 pressed", act);
+                            }
+                            if (dpStr.get("switch_3") != null) {
+                                if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_3")).toString())) {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH5_B().name).child("3").setValue(3);
+                                } else {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH5_B().name).child("3").setValue(0);
+                                }
+                                setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 5 Button 3 pressed", act);
+                            }
+                            if (dpStr.get("switch_4") != null) {
+                                if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_4")).toString())) {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH5_B().name).child("4").setValue(3);
+                                } else {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH5_B().name).child("4").setValue(0);
+                                }
+                                setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 5 Button 4 pressed", act);
+                            }
+                        }
+                    }
+                    @Override
+                    public void onRemoved(String devId) {
+                        ROOMS.get(finalI).setSwitch5Status(String.valueOf(ROOMS.get(finalI).id),"0",act);
+                    }
+                    @Override
+                    public void onStatusChanged(String devId, boolean online) {
+
+                    }
+                    @Override
+                    public void onNetworkStatusChanged(String devId, boolean status) {
+
+                    }
+                    @Override
+                    public void onDevInfoUpdate(String devId) {
+
+                    }
+                });
+            }
+            if (ROOMS.get(i).getSWITCH6_B() != null) {
+                ROOMS.get(i).getSWITCH6().registerDeviceListener(new IDeviceListener() {
+                    @Override
+                    public void onDpUpdate(String devId, Map<String, Object> dpStr) {
+                        if (dpStr.toString().length() <17) {
+                            if (dpStr.get("switch_1") != null) {
+                                if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_1")).toString())) {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH6_B().name).child("1").setValue(3);
+                                } else {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH6_B().name).child("1").setValue(0);
+                                }
+                                setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 6 Button 1 pressed", act);
+                            }
+                            if (dpStr.get("switch_2") != null) {
+                                if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_2")).toString())) {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH6_B().name).child("2").setValue(3);
+                                } else {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH6_B().name).child("2").setValue(0);
+                                }
+                                setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 6 Button 2 pressed", act);
+                            }
+                            if (dpStr.get("switch_3") != null) {
+                                if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_3")).toString())) {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH6_B().name).child("3").setValue(3);
+                                } else {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH6_B().name).child("3").setValue(0);
+                                }
+                                setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 6 Button 3 pressed", act);
+                            }
+                            if (dpStr.get("switch_4") != null) {
+                                if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_4")).toString())) {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH6_B().name).child("4").setValue(3);
+                                } else {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH6_B().name).child("4").setValue(0);
+                                }
+                                setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 6 Button 4 pressed", act);
+                            }
+                        }
+                    }
+                    @Override
+                    public void onRemoved(String devId) {
+                        ROOMS.get(finalI).setSwitch6Status(String.valueOf(ROOMS.get(finalI).id),"0",act);
+                    }
+                    @Override
+                    public void onStatusChanged(String devId, boolean online) {
+
+                    }
+                    @Override
+                    public void onNetworkStatusChanged(String devId, boolean status) {
+
+                    }
+                    @Override
+                    public void onDevInfoUpdate(String devId) {
+
+                    }
+                });
+            }
+            if (ROOMS.get(i).getSWITCH7_B() != null) {
+                ROOMS.get(i).getSWITCH7().registerDeviceListener(new IDeviceListener() {
+                    @Override
+                    public void onDpUpdate(String devId, Map<String, Object> dpStr) {
+                        if (dpStr.toString().length() <17) {
+                            if (dpStr.get("switch_1") != null) {
+                                if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_1")).toString())) {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH7_B().name).child("1").setValue(3);
+                                } else {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH7_B().name).child("1").setValue(0);
+                                }
+                                setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 7 Button 1 pressed", act);
+                            }
+                            if (dpStr.get("switch_2") != null) {
+                                if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_2")).toString())) {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH7_B().name).child("2").setValue(3);
+                                } else {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH7_B().name).child("2").setValue(0);
+                                }
+                                setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 7 Button 2 pressed", act);
+                            }
+                            if (dpStr.get("switch_3") != null) {
+                                if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_3")).toString())) {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH7_B().name).child("3").setValue(3);
+                                } else {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH7_B().name).child("3").setValue(0);
+                                }
+                                setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 7 Button 3 pressed", act);
+                            }
+                            if (dpStr.get("switch_4") != null) {
+                                if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_4")).toString())) {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH7_B().name).child("4").setValue(3);
+                                } else {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH7_B().name).child("4").setValue(0);
+                                }
+                                setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 7 Button 4 pressed", act);
+                            }
+                        }
+                    }
+                    @Override
+                    public void onRemoved(String devId) {
+                        ROOMS.get(finalI).setSwitch7Status(String.valueOf(ROOMS.get(finalI).id),"0",act);
+                    }
+                    @Override
+                    public void onStatusChanged(String devId, boolean online) {
+
+                    }
+                    @Override
+                    public void onNetworkStatusChanged(String devId, boolean status) {
+
+                    }
+                    @Override
+                    public void onDevInfoUpdate(String devId) {
+
+                    }
+                });
+            }
+            if (ROOMS.get(i).getSWITCH8_B() != null) {
+                ROOMS.get(i).getSWITCH8().registerDeviceListener(new IDeviceListener() {
+                    @Override
+                    public void onDpUpdate(String devId, Map<String, Object> dpStr) {
+                        if (dpStr.toString().length() <17) {
+                            if (dpStr.get("switch_1") != null) {
+                                if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_1")).toString())) {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH8_B().name).child("1").setValue(3);
+                                } else {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH8_B().name).child("1").setValue(0);
+                                }
+                                setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 8 Button 1 pressed", act);
+                            }
+                            if (dpStr.get("switch_2") != null) {
+                                if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_2")).toString())) {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH8_B().name).child("2").setValue(3);
+                                } else {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH8_B().name).child("2").setValue(0);
+                                }
+                                setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 8 Button 2 pressed", act);
+                            }
+                            if (dpStr.get("switch_3") != null) {
+                                if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_3")).toString())) {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH8_B().name).child("3").setValue(3);
+                                } else {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH8_B().name).child("3").setValue(0);
+                                }
+                                setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 8 Button 3 pressed", act);
+                            }
+                            if (dpStr.get("switch_4") != null) {
+                                if (Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_4")).toString())) {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH8_B().name).child("4").setValue(3);
+                                } else {
+                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH8_B().name).child("4").setValue(0);
+                                }
+                                setActionText("Room " + ROOMS.get(finalI).RoomNumber + " switch 8 Button 4 pressed", act);
+                            }
+                        }
+                    }
+                    @Override
+                    public void onRemoved(String devId) {
+                        ROOMS.get(finalI).setSwitch8Status(String.valueOf(ROOMS.get(finalI).id),"0",act);
                     }
                     @Override
                     public void onStatusChanged(String devId, boolean online) {
@@ -1921,6 +2820,7 @@ public class Rooms extends AppCompatActivity
                 ROOMS.get(i).getLOCK().registerDeviceListener(new IDeviceListener() {
                     @Override
                     public void onDpUpdate(String devId, Map<String, Object> dpStr) {
+                        Log.d("doorAction" , dpStr.toString());
                         if (dpStr != null) {
                             setActionText("Room " + ROOMS.get(finalI).RoomNumber + " lock action ",act);
                             if (dpStr.get("residual_electricity") != null) {
@@ -1951,6 +2851,61 @@ public class Rooms extends AppCompatActivity
                 });
             }
         }
+        Log.d("refreshSystem","7 set devices listener");
+    }
+
+    static void unregisterDevicesListener() {
+        for (int i = 0; i< ROOMS.size(); i++) {
+            if (ROOMS.get(i).getDOORSENSOR_B() != null ) {
+                ROOMS.get(i).getDOORSENSOR().unRegisterDevListener();
+            }
+            if (ROOMS.get(i).getSERVICE1_B() != null) {
+                ROOMS.get(i).getSERVICE1().unRegisterDevListener();
+            }
+            if (ROOMS.get(i).getAC_B() !=null) {
+                ROOMS.get(i).getAC().unRegisterDevListener();
+            }
+            if (ROOMS.get(i).getPOWER_B() != null) {
+                ROOMS.get(i).getPOWER().unRegisterDevListener();
+            }
+            if (ROOMS.get(i).getCURTAIN_B() != null) {
+                ROOMS.get(i).getCURTAIN().unRegisterDevListener();
+            }
+            if (ROOMS.get(i).getMOTIONSENSOR_B() != null ) {
+                ROOMS.get(i).getMOTIONSENSOR().unRegisterDevListener();
+            }
+            if (ROOMS.get(i).getSWITCH1_B() != null) {
+                ROOMS.get(i).getSWITCH1().unRegisterDevListener();
+            }
+            if (ROOMS.get(i).getSWITCH2_B() != null) {
+                ROOMS.get(i).getSWITCH2().unRegisterDevListener();
+            }
+            if (ROOMS.get(i).getSWITCH3_B() != null) {
+                ROOMS.get(i).getSWITCH3().unRegisterDevListener();
+            }
+            if (ROOMS.get(i).getSWITCH4_B() != null) {
+                ROOMS.get(i).getSWITCH4().unRegisterDevListener();
+            }
+            if (ROOMS.get(i).getSWITCH5_B() != null) {
+                ROOMS.get(i).getSWITCH5().unRegisterDevListener();
+            }
+            if (ROOMS.get(i).getSWITCH6_B() != null) {
+                ROOMS.get(i).getSWITCH6().unRegisterDevListener();
+            }
+            if (ROOMS.get(i).getSWITCH7_B() != null) {
+                ROOMS.get(i).getSWITCH7().unRegisterDevListener();
+            }
+            if (ROOMS.get(i).getSWITCH8_B() != null) {
+                ROOMS.get(i).getSWITCH8().unRegisterDevListener();
+            }
+            if (ROOMS.get(i).getGATEWAY_B() != null) {
+                ROOMS.get(i).getGATEWAY().unRegisterDevListener();
+            }
+            if (ROOMS.get(i).getLOCK_B() != null) {
+                ROOMS.get(i).getLOCK().unRegisterDevListener();
+            }
+        }
+        Log.d("refreshSystem","3 remove devices listener");
     }
 
     static public void setFireRoomsListener() {
@@ -1962,8 +2917,8 @@ public class Rooms extends AppCompatActivity
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
                         if (snapshot.getValue() != null) {
                             if (Long.parseLong(snapshot.getValue().toString()) == 0) {
-                                if (CLEANUP[finalI]) {  //Boolean.parseBoolean(ROOMS.get(finalI).getSERVICE1_B().dps.get(String.valueOf(MyApp.ProjectVariables.cleanupButton)).toString())
-                                    TuyaHomeSdk.newDeviceInstance(ROOMS.get(finalI).getSERVICE1_B().devId).publishDps("{\" "+MyApp.ProjectVariables.cleanupButton+"\" : false}", TYDevicePublishModeEnum.TYDevicePublishModeAuto, new IResultCallback() {
+                                if (CLEANUP[finalI]) {
+                                    TuyaHomeSdk.newDeviceInstance(ROOMS.get(finalI).getSERVICE1_B().devId).publishDps("{\" "+MyApp.ProjectVariables.cleanupButton+"\" : false}", TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
                                         @Override
                                         public void onError(String code, String error) {
 
@@ -1979,7 +2934,7 @@ public class Rooms extends AppCompatActivity
                             }
                             else if (Long.parseLong(snapshot.getValue().toString()) > 0){
                                 if (!CLEANUP[finalI]) {
-                                    TuyaHomeSdk.newDeviceInstance(ROOMS.get(finalI).getSERVICE1_B().devId).publishDps("{\" "+MyApp.ProjectVariables.cleanupButton+"\" : true}", TYDevicePublishModeEnum.TYDevicePublishModeAuto, new IResultCallback() {
+                                    TuyaHomeSdk.newDeviceInstance(ROOMS.get(finalI).getSERVICE1_B().devId).publishDps("{\" "+MyApp.ProjectVariables.cleanupButton+"\" : true}", TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
                                         @Override
                                         public void onError(String code, String error) {
 
@@ -2005,8 +2960,8 @@ public class Rooms extends AppCompatActivity
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
                         if (snapshot.getValue() != null) {
                             if (Long.parseLong(snapshot.getValue().toString()) == 0) {
-                                if (LAUNDRY[finalI]) { //Boolean.parseBoolean(ROOMS.get(finalI).getSERVICE1_B().dps.get(String.valueOf(MyApp.ProjectVariables.laundryButton)).toString())
-                                    TuyaHomeSdk.newDeviceInstance(ROOMS.get(finalI).getSERVICE1_B().devId).publishDps("{\""+MyApp.ProjectVariables.laundryButton+"\" : false}", TYDevicePublishModeEnum.TYDevicePublishModeAuto, new IResultCallback() {
+                                if (LAUNDRY[finalI]) {
+                                    TuyaHomeSdk.newDeviceInstance(ROOMS.get(finalI).getSERVICE1_B().devId).publishDps("{\""+MyApp.ProjectVariables.laundryButton+"\" : false}", TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
                                         @Override
                                         public void onError(String code, String error) {
 
@@ -2022,7 +2977,7 @@ public class Rooms extends AppCompatActivity
                             }
                             else if (Long.parseLong(snapshot.getValue().toString()) > 0) {
                                 if (!LAUNDRY[finalI]) {
-                                    TuyaHomeSdk.newDeviceInstance(ROOMS.get(finalI).getSERVICE1_B().devId).publishDps("{\""+MyApp.ProjectVariables.laundryButton+"\" : true}", TYDevicePublishModeEnum.TYDevicePublishModeAuto, new IResultCallback() {
+                                    TuyaHomeSdk.newDeviceInstance(ROOMS.get(finalI).getSERVICE1_B().devId).publishDps("{\""+MyApp.ProjectVariables.laundryButton+"\" : true}", TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
                                         @Override
                                         public void onError(String code, String error) {
 
@@ -2050,8 +3005,8 @@ public class Rooms extends AppCompatActivity
                             if (Long.parseLong(snapshot.getValue().toString()) == 0) {
                                 if (ROOMS.get(finalI).getSERVICE1_B() != null) {
                                     if (ROOMS.get(finalI).getSERVICE1_B().dps.get(String.valueOf(MyApp.ProjectVariables.checkoutButton)) != null) {
-                                        if (CHECKOUT[finalI]) { //Boolean.parseBoolean(ROOMS.get(finalI).getSERVICE1_B().dps.get(String.valueOf(MyApp.ProjectVariables.checkoutButton)).toString())
-                                            TuyaHomeSdk.newDeviceInstance(ROOMS.get(finalI).getSERVICE1_B().devId).publishDps("{\" "+MyApp.ProjectVariables.checkoutButton+"\":false}", TYDevicePublishModeEnum.TYDevicePublishModeAuto, new IResultCallback() {
+                                        if (CHECKOUT[finalI]) {
+                                            TuyaHomeSdk.newDeviceInstance(ROOMS.get(finalI).getSERVICE1_B().devId).publishDps("{\" "+MyApp.ProjectVariables.checkoutButton+"\":false}", TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
                                                 @Override
                                                 public void onError(String code, String error) {
 
@@ -2071,7 +3026,7 @@ public class Rooms extends AppCompatActivity
                                 if (ROOMS.get(finalI).getSERVICE1_B() != null) {
                                     if (ROOMS.get(finalI).getSERVICE1_B().dps.get(String.valueOf(MyApp.ProjectVariables.checkoutButton)) != null) {
                                         if (!CHECKOUT[finalI]) {
-                                            TuyaHomeSdk.newDeviceInstance(ROOMS.get(finalI).getSERVICE1_B().devId).publishDps("{\" "+MyApp.ProjectVariables.checkoutButton+"\":true}", TYDevicePublishModeEnum.TYDevicePublishModeAuto, new IResultCallback() {
+                                            TuyaHomeSdk.newDeviceInstance(ROOMS.get(finalI).getSERVICE1_B().devId).publishDps("{\" "+MyApp.ProjectVariables.checkoutButton+"\":true}", TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
                                                 @Override
                                                 public void onError(String code, String error) {
 
@@ -2100,8 +3055,8 @@ public class Rooms extends AppCompatActivity
                         if (snapshot.getValue() != null) {
                             if (Long.parseLong(snapshot.getValue().toString()) == 0) {
                                 if (ROOMS.get(finalI).getSERVICE1_B().dps.get(String.valueOf(MyApp.ProjectVariables.dndButton)) != null) {
-                                    if (DND[finalI]) { //Boolean.parseBoolean(ROOMS.get(finalI).getSERVICE1_B().dps.get(String.valueOf(MyApp.ProjectVariables.dndButton)).toString())
-                                        TuyaHomeSdk.newDeviceInstance(ROOMS.get(finalI).getSERVICE1_B().devId).publishDps("{\" "+MyApp.ProjectVariables.dndButton+"\":false}", TYDevicePublishModeEnum.TYDevicePublishModeAuto, new IResultCallback() {
+                                    if (DND[finalI]) {
+                                        TuyaHomeSdk.newDeviceInstance(ROOMS.get(finalI).getSERVICE1_B().devId).publishDps("{\" "+MyApp.ProjectVariables.dndButton+"\":false}", TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
                                             @Override
                                             public void onError(String code, String error) {
 
@@ -2117,7 +3072,7 @@ public class Rooms extends AppCompatActivity
                             else if (Long.parseLong(snapshot.getValue().toString()) > 0) {
                                 if (ROOMS.get(finalI).getSERVICE1_B().dps.get(String.valueOf(MyApp.ProjectVariables.dndButton)) != null) {
                                     if (!DND[finalI]) {
-                                        TuyaHomeSdk.newDeviceInstance(ROOMS.get(finalI).getSERVICE1_B().devId).publishDps("{\" "+MyApp.ProjectVariables.dndButton+"\":true}", TYDevicePublishModeEnum.TYDevicePublishModeAuto, new IResultCallback() {
+                                        TuyaHomeSdk.newDeviceInstance(ROOMS.get(finalI).getSERVICE1_B().devId).publishDps("{\" "+MyApp.ProjectVariables.dndButton+"\":true}", TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
                                             @Override
                                             public void onError(String code, String error) {
 
@@ -2254,32 +3209,21 @@ public class Rooms extends AppCompatActivity
             });
             if (ROOMS.get(i).getPOWER_B() != null && ROOMS.get(i).getPOWER() != null) {
                 if (ROOMS.get(i).getPOWER_B().dps.get("1") != null) {
-                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getPOWER_B().name).child("1").addValueEventListener(new ValueEventListener() {
+                    RoomsDevicesReferencesListeners.add(new DatabaseReference_ValueEventListener(ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getPOWER_B().name).child("1")
+                    ,ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getPOWER_B().name).child("1").addValueEventListener(new ValueEventListener() {
                         @Override
                         public void onDataChange(@NonNull DataSnapshot snapshot) {
                             if (snapshot.getValue() != null) {
-                                Log.d("powerActions",snapshot.getValue().toString());
                                 if (Integer.parseInt(snapshot.getValue().toString()) == 0) {
                                     if (ROOMS.get(finalI).getPOWER_B() != null) {
-                                        turnSwitchButtonOff(ROOMS.get(finalI).getPOWER_B(), "1", new CallbackResult() {
+                                        TuyaHomeSdk.newDeviceInstance(ROOMS.get(finalI).getPOWER_B().devId).publishDps("{\"1\": false, \"2\": false}",TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
+                                            @Override
+                                            public void onError(String code, String error) {
+
+                                            }
+
                                             @Override
                                             public void onSuccess() {
-
-                                            }
-
-                                            @Override
-                                            public void onFail(String error) {
-
-                                            }
-                                        });
-                                        turnSwitchButtonOff(ROOMS.get(finalI).getPOWER_B(), "2", new CallbackResult() {
-                                            @Override
-                                            public void onSuccess() {
-
-                                            }
-
-                                            @Override
-                                            public void onFail(String error) {
 
                                             }
                                         });
@@ -2287,25 +3231,36 @@ public class Rooms extends AppCompatActivity
                                 }
                                 else if (Integer.parseInt(snapshot.getValue().toString()) == 1) {
                                     if (ROOMS.get(finalI).getPOWER_B() != null) {
-                                        turnSwitchButtonOn(ROOMS.get(finalI).getPOWER_B(), "1", new CallbackResult() {
+//                                        turnSwitchButtonOn(ROOMS.get(finalI).getPOWER_B(), "1", new CallbackResult() {
+//                                            @Override
+//                                            public void onSuccess() {
+//                                                Log.d("powerActions","success");
+//                                            }
+//
+//                                            @Override
+//                                            public void onFail(String error) {
+//                                                Log.d("powerActions",error);
+//                                            }
+//                                        });
+//                                        turnSwitchButtonOff(ROOMS.get(finalI).getPOWER_B(), "2", new CallbackResult() {
+//                                            @Override
+//                                            public void onSuccess() {
+//                                                Log.d("powerActions","success");
+//                                            }
+//
+//                                            @Override
+//                                            public void onFail(String error) {
+//                                                Log.d("powerActions",error);
+//                                            }
+//                                        });
+                                        TuyaHomeSdk.newDeviceInstance(ROOMS.get(finalI).getPOWER_B().devId).publishDps("{\"1\": true, \"2\": false}",TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
+                                            @Override
+                                            public void onError(String code, String error) {
+
+                                            }
+
                                             @Override
                                             public void onSuccess() {
-
-                                            }
-
-                                            @Override
-                                            public void onFail(String error) {
-
-                                            }
-                                        });
-                                        turnSwitchButtonOff(ROOMS.get(finalI).getPOWER_B(), "2", new CallbackResult() {
-                                            @Override
-                                            public void onSuccess() {
-
-                                            }
-
-                                            @Override
-                                            public void onFail(String error) {
 
                                             }
                                         });
@@ -2313,28 +3268,42 @@ public class Rooms extends AppCompatActivity
                                 }
                                 else if (Integer.parseInt(snapshot.getValue().toString()) == 2) {
                                     if (ROOMS.get(finalI).getPOWER_B() != null) {
-                                        turnSwitchButtonOn(ROOMS.get(finalI).getPOWER_B(), "1", new CallbackResult() {
+//                                        turnSwitchButtonOn(ROOMS.get(finalI).getPOWER_B(), "1", new CallbackResult() {
+//                                            @Override
+//                                            public void onSuccess() {
+//                                                Log.d("powerActions","success");
+//                                            }
+//
+//                                            @Override
+//                                            public void onFail(String error) {
+//                                                Log.d("powerActions",error);
+//                                            }
+//                                        });
+//                                        turnSwitchButtonOn(ROOMS.get(finalI).getPOWER_B(), "2", new CallbackResult() {
+//                                            @Override
+//                                            public void onSuccess() {
+//                                                Log.d("powerActions","success");
+//                                            }
+//
+//                                            @Override
+//                                            public void onFail(String error) {
+//                                                Log.d("powerActions",error);
+//                                            }
+//                                        });
+                                        TuyaHomeSdk.newDeviceInstance(ROOMS.get(finalI).getPOWER_B().devId).publishDps("{\"1\": true, \"2\": true}",TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
+                                            @Override
+                                            public void onError(String code, String error) {
+
+                                            }
+
                                             @Override
                                             public void onSuccess() {
 
                                             }
-
-                                            @Override
-                                            public void onFail(String error) {
-
-                                            }
                                         });
-                                        turnSwitchButtonOn(ROOMS.get(finalI).getPOWER_B(), "2", new CallbackResult() {
-                                            @Override
-                                            public void onSuccess() {
-
-                                            }
-
-                                            @Override
-                                            public void onFail(String error) {
-
-                                            }
-                                        });
+                                    }
+                                    else {
+                                        Log.d("powerActions","null");
                                     }
                                 }
                             }
@@ -2343,32 +3312,33 @@ public class Rooms extends AppCompatActivity
                         public void onCancelled(@NonNull DatabaseError error) {
 
                         }
-                    });
+                    })));
                 }
             }
             if (ROOMS.get(i).getSWITCH1_B() != null && ROOMS.get(i).getSWITCH1() != null) {
                 if (ROOMS.get(i).getSWITCH1_B().dps.get("1") != null) {
-                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH1_B().name).child("1").addValueEventListener(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(@NonNull DataSnapshot snapshot) {
-                            if (snapshot.getValue() != null) {
-                                Log.d("S1FBvalue",snapshot.getValue().toString());
-                                if (snapshot.getValue().toString().equals("1")) {
-                                    Log.d("S1FBvalue","is 1");
-                                    turnSwitchButtonOn(ROOMS.get(finalI).getSWITCH1_B(), "1", new CallbackResult() {
-                                        @Override
-                                        public void onSuccess() {
-                                            Log.d("S1FBvalue","success");
-                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH1_B().name).child("1").setValue(3);
-                                        }
+                    RoomsDevicesReferencesListeners.add(new DatabaseReference_ValueEventListener(ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH1_B().name).child("1"),
+                            ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH1_B().name).child("1").addValueEventListener(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                    if (snapshot.getValue() != null) {
+                                        Log.d("S1FBvalue",snapshot.getValue().toString());
+                                        if (snapshot.getValue().toString().equals("1")) {
+                                            Log.d("S1FBvalue","is 1");
+                                            turnSwitchButtonOn(ROOMS.get(finalI).getSWITCH1_B(), "1", new CallbackResult() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    Log.d("S1FBvalue","success");
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH1_B().name).child("1").setValue(3);
+                                                }
 
-                                        @Override
-                                        public void onFail(String error) {
-                                            Log.d("S1FBvalue",error);
-                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH1_B().name).child("1").setValue(0);
-                                            Toast.makeText(act,error,Toast.LENGTH_LONG).show();
-                                        }
-                                    });
+                                                @Override
+                                                public void onFail(String error) {
+                                                    Log.d("S1FBvalue",error);
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH1_B().name).child("1").setValue(0);
+                                                    Toast.makeText(act,error,Toast.LENGTH_LONG).show();
+                                                }
+                                            });
 //                                    ROOMS.get(finalI).getSWITCH1().publishDps("{\"1\":true}", new IResultCallback() {
 //                                        @Override
 //                                        public void onError(String code, String error) {
@@ -2415,23 +3385,23 @@ public class Rooms extends AppCompatActivity
 //                                            });
 //                                        }
 //                                    });
-                                }
-                                if (snapshot.getValue().toString().equals("2")) {
-                                    Log.d("S1FBvalue","is 2");
-                                    turnSwitchButtonOff(ROOMS.get(finalI).getSWITCH1_B(), "1", new CallbackResult() {
-                                        @Override
-                                        public void onSuccess() {
-                                            Log.d("S1FBvalue","success");
-                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH1_B().name).child("1").setValue(0);
                                         }
+                                        if (snapshot.getValue().toString().equals("2")) {
+                                            Log.d("S1FBvalue","is 2");
+                                            turnSwitchButtonOff(ROOMS.get(finalI).getSWITCH1_B(), "1", new CallbackResult() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    Log.d("S1FBvalue","success");
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH1_B().name).child("1").setValue(0);
+                                                }
 
-                                        @Override
-                                        public void onFail(String error) {
-                                            Log.d("S1FBvalue",error);
-                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH1_B().name).child("1").setValue(3);
-                                            Toast.makeText(act,error,Toast.LENGTH_LONG).show();
-                                        }
-                                    });
+                                                @Override
+                                                public void onFail(String error) {
+                                                    Log.d("S1FBvalue",error);
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH1_B().name).child("1").setValue(3);
+                                                    Toast.makeText(act,error,Toast.LENGTH_LONG).show();
+                                                }
+                                            });
 //                                    ROOMS.get(finalI).getSWITCH1().publishDps("{\" 1\":false}", new IResultCallback() {
 //                                        @Override
 //                                        public void onError(String code, String error) {
@@ -2478,17 +3448,18 @@ public class Rooms extends AppCompatActivity
 //                                            });
 //                                        }
 //                                    });
+                                        }
+                                    }
                                 }
-                            }
-                        }
-                        @Override
-                        public void onCancelled(@NonNull DatabaseError error) {
+                                @Override
+                                public void onCancelled(@NonNull DatabaseError error) {
 
-                        }
-                    });
+                                }
+                            })));
                 }
                 if (ROOMS.get(i).getSWITCH1_B().dps.get("2") != null) {
-                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH1_B().name).child("2").addValueEventListener(new ValueEventListener() {
+                    RoomsDevicesReferencesListeners.add(new DatabaseReference_ValueEventListener(ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH1_B().name).child("2")
+                            ,ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH1_B().name).child("2").addValueEventListener(new ValueEventListener() {
                         @Override
                         public void onDataChange(@NonNull DataSnapshot snapshot) {
                             if (snapshot.getValue() != null) {
@@ -2575,28 +3546,29 @@ public class Rooms extends AppCompatActivity
                         public void onCancelled(@NonNull DatabaseError error) {
 
                         }
-                    });
+                    })));
                 }
                 if (ROOMS.get(i).getSWITCH1_B().dps.get("3") != null) {
-                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH1_B().name).child("3").addValueEventListener(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(@NonNull DataSnapshot snapshot) {
-                            if (snapshot.getValue() != null) {
-                                Log.d("S1FBvalue",snapshot.getValue().toString());
-                                if (snapshot.getValue().toString().equals("1")) {
-                                    Log.d("S1FBvalue","is 1");
-                                    turnSwitchButtonOn(ROOMS.get(finalI).getSWITCH1_B(), "3", new CallbackResult() {
-                                        @Override
-                                        public void onSuccess() {
-                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH1_B().name).child("3").setValue(3);
-                                        }
+                    RoomsDevicesReferencesListeners.add(new DatabaseReference_ValueEventListener(ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH1_B().name).child("3"),
+                            ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH1_B().name).child("3").addValueEventListener(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                    if (snapshot.getValue() != null) {
+                                        Log.d("S1FBvalue",snapshot.getValue().toString());
+                                        if (snapshot.getValue().toString().equals("1")) {
+                                            Log.d("S1FBvalue","is 1");
+                                            turnSwitchButtonOn(ROOMS.get(finalI).getSWITCH1_B(), "3", new CallbackResult() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH1_B().name).child("3").setValue(3);
+                                                }
 
-                                        @Override
-                                        public void onFail(String error) {
-                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH1_B().name).child("3").setValue(0);
-                                            Toast.makeText(act,error,Toast.LENGTH_LONG).show();
-                                        }
-                                    });
+                                                @Override
+                                                public void onFail(String error) {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH1_B().name).child("3").setValue(0);
+                                                    Toast.makeText(act,error,Toast.LENGTH_LONG).show();
+                                                }
+                                            });
 //                                    ROOMS.get(finalI).getSWITCH1().publishDps("{\" 3\":true}", new IResultCallback() {
 //                                        @Override
 //                                        public void onError(String code, String error) {
@@ -2643,21 +3615,21 @@ public class Rooms extends AppCompatActivity
 //                                            });
 //                                        }
 //                                    });
-                                }
-                                if (snapshot.getValue().toString().equals("2")) {
-                                    Log.d("S1FBvalue","is 2");
-                                    turnSwitchButtonOff(ROOMS.get(finalI).getSWITCH1_B(), "3", new CallbackResult() {
-                                        @Override
-                                        public void onSuccess() {
-                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH1_B().name).child("3").setValue(0);
                                         }
+                                        if (snapshot.getValue().toString().equals("2")) {
+                                            Log.d("S1FBvalue","is 2");
+                                            turnSwitchButtonOff(ROOMS.get(finalI).getSWITCH1_B(), "3", new CallbackResult() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH1_B().name).child("3").setValue(0);
+                                                }
 
-                                        @Override
-                                        public void onFail(String error) {
-                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH1_B().name).child("3").setValue(3);
-                                            Toast.makeText(act,error,Toast.LENGTH_LONG).show();
-                                        }
-                                    });
+                                                @Override
+                                                public void onFail(String error) {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH1_B().name).child("3").setValue(3);
+                                                    Toast.makeText(act,error,Toast.LENGTH_LONG).show();
+                                                }
+                                            });
 //                                    ROOMS.get(finalI).getSWITCH1().publishDps("{\" 3\":false}", new IResultCallback() {
 //                                        @Override
 //                                        public void onError(String code, String error) {
@@ -2704,35 +3676,36 @@ public class Rooms extends AppCompatActivity
 //                                            });
 //                                        }
 //                                    });
+                                        }
+                                    }
                                 }
-                            }
-                        }
-                        @Override
-                        public void onCancelled(@NonNull DatabaseError error) {
+                                @Override
+                                public void onCancelled(@NonNull DatabaseError error) {
 
-                        }
-                    });
+                                }
+                            })));
                 }
                 if (ROOMS.get(i).getSWITCH1_B().dps.get("4") != null) {
-                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH1_B().name).child("4").addValueEventListener(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(@NonNull DataSnapshot snapshot) {
-                            if (snapshot.getValue() != null) {
-                                Log.d("S1FBvalue",snapshot.getValue().toString());
-                                if (snapshot.getValue().toString().equals("1")) {
-                                    Log.d("S1FBvalue","is 1");
-                                    turnSwitchButtonOn(ROOMS.get(finalI).getSWITCH1_B(), "4", new CallbackResult() {
-                                        @Override
-                                        public void onSuccess() {
-                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH1_B().name).child("4").setValue(3);
-                                        }
+                    RoomsDevicesReferencesListeners.add(new DatabaseReference_ValueEventListener(ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH1_B().name).child("4"),
+                            ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH1_B().name).child("4").addValueEventListener(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                    if (snapshot.getValue() != null) {
+                                        Log.d("S1FBvalue",snapshot.getValue().toString());
+                                        if (snapshot.getValue().toString().equals("1")) {
+                                            Log.d("S1FBvalue","is 1");
+                                            turnSwitchButtonOn(ROOMS.get(finalI).getSWITCH1_B(), "4", new CallbackResult() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH1_B().name).child("4").setValue(3);
+                                                }
 
-                                        @Override
-                                        public void onFail(String error) {
-                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH1_B().name).child("4").setValue(0);
-                                            Toast.makeText(act,error,Toast.LENGTH_LONG).show();
-                                        }
-                                    });
+                                                @Override
+                                                public void onFail(String error) {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH1_B().name).child("4").setValue(0);
+                                                    Toast.makeText(act,error,Toast.LENGTH_LONG).show();
+                                                }
+                                            });
 //                                    ROOMS.get(finalI).getSWITCH1().publishDps("{\" 4\":true}", new IResultCallback() {
 //                                        @Override
 //                                        public void onError(String code, String error) {
@@ -2778,21 +3751,21 @@ public class Rooms extends AppCompatActivity
 //                                            });
 //                                        }
 //                                    });
-                                }
-                                if (snapshot.getValue().toString().equals("2")) {
-                                    Log.d("S1FBvalue","is 2");
-                                    turnSwitchButtonOff(ROOMS.get(finalI).getSWITCH1_B(), "4", new CallbackResult() {
-                                        @Override
-                                        public void onSuccess() {
-                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH1_B().name).child("4").setValue(0);
                                         }
+                                        if (snapshot.getValue().toString().equals("2")) {
+                                            Log.d("S1FBvalue","is 2");
+                                            turnSwitchButtonOff(ROOMS.get(finalI).getSWITCH1_B(), "4", new CallbackResult() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH1_B().name).child("4").setValue(0);
+                                                }
 
-                                        @Override
-                                        public void onFail(String error) {
-                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH1_B().name).child("4").setValue(3);
-                                            Toast.makeText(act,error,Toast.LENGTH_LONG).show();
-                                        }
-                                    });
+                                                @Override
+                                                public void onFail(String error) {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH1_B().name).child("4").setValue(3);
+                                                    Toast.makeText(act,error,Toast.LENGTH_LONG).show();
+                                                }
+                                            });
 //                                    ROOMS.get(finalI).getSWITCH1().publishDps("{\" 4\":false}", new IResultCallback() {
 //                                        @Override
 //                                        public void onError(String code, String error) {
@@ -2838,35 +3811,36 @@ public class Rooms extends AppCompatActivity
 //                                            });
 //                                        }
 //                                    });
+                                        }
+                                    }
                                 }
-                            }
-                        }
-                        @Override
-                        public void onCancelled(@NonNull DatabaseError error) {
+                                @Override
+                                public void onCancelled(@NonNull DatabaseError error) {
 
-                        }
-                    });
+                                }
+                            })));
                 }
             }
             if (ROOMS.get(i).getSWITCH2_B() != null && ROOMS.get(i).getSWITCH2() != null) {
                 if (ROOMS.get(i).getSWITCH2_B().dps.get("1") != null) {
-                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH2_B().name).child("1").addValueEventListener(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(@NonNull DataSnapshot snapshot) {
-                            if (snapshot.getValue() != null) {
-                                if (Integer.parseInt(snapshot.getValue().toString()) == 1) {
-                                    turnSwitchButtonOn(ROOMS.get(finalI).getSWITCH2_B(), "1", new CallbackResult() {
-                                        @Override
-                                        public void onSuccess() {
-                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH2_B().name).child("1").setValue(3);
-                                        }
+                    RoomsDevicesReferencesListeners.add(new DatabaseReference_ValueEventListener(ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH2_B().name).child("1"),
+                            ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH2_B().name).child("1").addValueEventListener(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                    if (snapshot.getValue() != null) {
+                                        if (Integer.parseInt(snapshot.getValue().toString()) == 1) {
+                                            turnSwitchButtonOn(ROOMS.get(finalI).getSWITCH2_B(), "1", new CallbackResult() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH2_B().name).child("1").setValue(3);
+                                                }
 
-                                        @Override
-                                        public void onFail(String error) {
-                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH2_B().name).child("1").setValue(0);
-                                            Toast.makeText(act,error,Toast.LENGTH_LONG).show();
-                                        }
-                                    });
+                                                @Override
+                                                public void onFail(String error) {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH2_B().name).child("1").setValue(0);
+                                                    Toast.makeText(act,error,Toast.LENGTH_LONG).show();
+                                                }
+                                            });
 //                                    ROOMS.get(finalI).getSWITCH2().publishDps("{\" 1\":true}", new IResultCallback() {
 //                                        @Override
 //                                        public void onError(String code, String error) {
@@ -2877,20 +3851,20 @@ public class Rooms extends AppCompatActivity
 //                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH2_B().name).child("1").setValue(3);
 //                                        }
 //                                    });
-                                }
-                                if (Integer.parseInt(snapshot.getValue().toString()) == 2) {
-                                    turnSwitchButtonOff(ROOMS.get(finalI).getSWITCH2_B(), "1", new CallbackResult() {
-                                        @Override
-                                        public void onSuccess() {
-                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH2_B().name).child("1").setValue(0);
                                         }
+                                        if (Integer.parseInt(snapshot.getValue().toString()) == 2) {
+                                            turnSwitchButtonOff(ROOMS.get(finalI).getSWITCH2_B(), "1", new CallbackResult() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH2_B().name).child("1").setValue(0);
+                                                }
 
-                                        @Override
-                                        public void onFail(String error) {
-                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH2_B().name).child("1").setValue(3);
-                                            Toast.makeText(act,error,Toast.LENGTH_LONG).show();
-                                        }
-                                    });
+                                                @Override
+                                                public void onFail(String error) {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH2_B().name).child("1").setValue(3);
+                                                    Toast.makeText(act,error,Toast.LENGTH_LONG).show();
+                                                }
+                                            });
 //                                    ROOMS.get(finalI).getSWITCH2().publishDps("{\" 1\":false}", new IResultCallback() {
 //                                        @Override
 //                                        public void onError(String code, String error) {
@@ -2901,33 +3875,34 @@ public class Rooms extends AppCompatActivity
 //                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH2_B().name).child("1").setValue(0);
 //                                        }
 //                                    });
+                                        }
+                                    }
                                 }
-                            }
-                        }
-                        @Override
-                        public void onCancelled(@NonNull DatabaseError error) {
+                                @Override
+                                public void onCancelled(@NonNull DatabaseError error) {
 
-                        }
-                    });
+                                }
+                            })));
                 }
                 if (ROOMS.get(i).getSWITCH2_B().dps.get("2") != null) {
-                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH2_B().name).child("2").addValueEventListener(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(@NonNull DataSnapshot snapshot) {
-                            if (snapshot.getValue() != null) {
-                                if (Integer.parseInt(snapshot.getValue().toString()) == 1) {
-                                    turnSwitchButtonOn(ROOMS.get(finalI).getSWITCH2_B(), "2", new CallbackResult() {
-                                        @Override
-                                        public void onSuccess() {
-                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH2_B().name).child("2").setValue(3);
-                                        }
+                    RoomsDevicesReferencesListeners.add(new DatabaseReference_ValueEventListener(ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH2_B().name).child("2"),
+                            ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH2_B().name).child("2").addValueEventListener(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                    if (snapshot.getValue() != null) {
+                                        if (Integer.parseInt(snapshot.getValue().toString()) == 1) {
+                                            turnSwitchButtonOn(ROOMS.get(finalI).getSWITCH2_B(), "2", new CallbackResult() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH2_B().name).child("2").setValue(3);
+                                                }
 
-                                        @Override
-                                        public void onFail(String error) {
-                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH2_B().name).child("2").setValue(0);
-                                            Toast.makeText(act,error,Toast.LENGTH_LONG).show();
-                                        }
-                                    });
+                                                @Override
+                                                public void onFail(String error) {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH2_B().name).child("2").setValue(0);
+                                                    Toast.makeText(act,error,Toast.LENGTH_LONG).show();
+                                                }
+                                            });
 //                                    ROOMS.get(finalI).getSWITCH2().publishDps("{\" 2\":true}", new IResultCallback() {
 //                                        @Override
 //                                        public void onError(String code, String error) {
@@ -2938,20 +3913,20 @@ public class Rooms extends AppCompatActivity
 //                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH2_B().name).child("2").setValue(3);
 //                                        }
 //                                    });
-                                }
-                                if (Integer.parseInt(snapshot.getValue().toString()) == 2) {
-                                    turnSwitchButtonOff(ROOMS.get(finalI).getSWITCH2_B(), "2", new CallbackResult() {
-                                        @Override
-                                        public void onSuccess() {
-                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH2_B().name).child("2").setValue(0);
                                         }
+                                        if (Integer.parseInt(snapshot.getValue().toString()) == 2) {
+                                            turnSwitchButtonOff(ROOMS.get(finalI).getSWITCH2_B(), "2", new CallbackResult() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH2_B().name).child("2").setValue(0);
+                                                }
 
-                                        @Override
-                                        public void onFail(String error) {
-                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH2_B().name).child("2").setValue(3);
-                                            Toast.makeText(act,error,Toast.LENGTH_LONG).show();
-                                        }
-                                    });
+                                                @Override
+                                                public void onFail(String error) {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH2_B().name).child("2").setValue(3);
+                                                    Toast.makeText(act,error,Toast.LENGTH_LONG).show();
+                                                }
+                                            });
 //                                    ROOMS.get(finalI).getSWITCH2().publishDps("{\" 2\":false}", new IResultCallback() {
 //                                        @Override
 //                                        public void onError(String code, String error) {
@@ -2962,33 +3937,34 @@ public class Rooms extends AppCompatActivity
 //                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH2_B().name).child("2").setValue(0);
 //                                        }
 //                                    });
+                                        }
+                                    }
                                 }
-                            }
-                        }
-                        @Override
-                        public void onCancelled(@NonNull DatabaseError error) {
+                                @Override
+                                public void onCancelled(@NonNull DatabaseError error) {
 
-                        }
-                    });
+                                }
+                            })));
                 }
                 if (ROOMS.get(i).getSWITCH2_B().dps.get("3") != null) {
-                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH2_B().name).child("3").addValueEventListener(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(@NonNull DataSnapshot snapshot) {
-                            if (snapshot.getValue() != null) {
-                                if (Integer.parseInt(snapshot.getValue().toString()) == 1) {
-                                    turnSwitchButtonOn(ROOMS.get(finalI).getSWITCH2_B(), "1", new CallbackResult() {
-                                        @Override
-                                        public void onSuccess() {
-                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH2_B().name).child("3").setValue(3);
-                                        }
+                    RoomsDevicesReferencesListeners.add(new DatabaseReference_ValueEventListener(ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH2_B().name).child("3"),
+                            ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH2_B().name).child("3").addValueEventListener(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                    if (snapshot.getValue() != null) {
+                                        if (Integer.parseInt(snapshot.getValue().toString()) == 1) {
+                                            turnSwitchButtonOn(ROOMS.get(finalI).getSWITCH2_B(), "3", new CallbackResult() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH2_B().name).child("3").setValue(3);
+                                                }
 
-                                        @Override
-                                        public void onFail(String error) {
-                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH2_B().name).child("3").setValue(0);
-                                            Toast.makeText(act,error,Toast.LENGTH_LONG).show();
-                                        }
-                                    });
+                                                @Override
+                                                public void onFail(String error) {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH2_B().name).child("3").setValue(0);
+                                                    Toast.makeText(act,error,Toast.LENGTH_LONG).show();
+                                                }
+                                            });
 //                                    ROOMS.get(finalI).getSWITCH2().publishDps("{\" 3\":true}", new IResultCallback() {
 //                                        @Override
 //                                        public void onError(String code, String error) {
@@ -2999,20 +3975,20 @@ public class Rooms extends AppCompatActivity
 //                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH2_B().name).child("3").setValue(3);
 //                                        }
 //                                    });
-                                }
-                                if (Integer.parseInt(snapshot.getValue().toString()) == 2) {
-                                    turnSwitchButtonOff(ROOMS.get(finalI).getSWITCH2_B(), "1", new CallbackResult() {
-                                        @Override
-                                        public void onSuccess() {
-                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH2_B().name).child("3").setValue(0);
                                         }
+                                        if (Integer.parseInt(snapshot.getValue().toString()) == 2) {
+                                            turnSwitchButtonOff(ROOMS.get(finalI).getSWITCH2_B(), "3", new CallbackResult() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH2_B().name).child("3").setValue(0);
+                                                }
 
-                                        @Override
-                                        public void onFail(String error) {
-                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH2_B().name).child("3").setValue(3);
-                                            Toast.makeText(act,error,Toast.LENGTH_LONG).show();
-                                        }
-                                    });
+                                                @Override
+                                                public void onFail(String error) {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH2_B().name).child("3").setValue(3);
+                                                    Toast.makeText(act,error,Toast.LENGTH_LONG).show();
+                                                }
+                                            });
 //                                    ROOMS.get(finalI).getSWITCH2().publishDps("{\" 3\":false}", new IResultCallback() {
 //                                        @Override
 //                                        public void onError(String code, String error) {
@@ -3023,33 +3999,34 @@ public class Rooms extends AppCompatActivity
 //                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH2_B().name).child("3").setValue(0);
 //                                        }
 //                                    });
+                                        }
+                                    }
                                 }
-                            }
-                        }
-                        @Override
-                        public void onCancelled(@NonNull DatabaseError error) {
+                                @Override
+                                public void onCancelled(@NonNull DatabaseError error) {
 
-                        }
-                    });
+                                }
+                            })));
                 }
                 if (ROOMS.get(i).getSWITCH2_B().dps.get("4") != null) {
-                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH2_B().name).child("4").addValueEventListener(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(@NonNull DataSnapshot snapshot) {
-                            if (snapshot.getValue() != null) {
-                                if (Integer.parseInt(snapshot.getValue().toString()) == 1) {
-                                    turnSwitchButtonOn(ROOMS.get(finalI).getSWITCH2_B(), "4", new CallbackResult() {
-                                        @Override
-                                        public void onSuccess() {
-                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH2_B().name).child("4").setValue(3);
-                                        }
+                    RoomsDevicesReferencesListeners.add(new DatabaseReference_ValueEventListener(ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH2_B().name).child("4"),
+                            ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH2_B().name).child("4").addValueEventListener(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                    if (snapshot.getValue() != null) {
+                                        if (Integer.parseInt(snapshot.getValue().toString()) == 1) {
+                                            turnSwitchButtonOn(ROOMS.get(finalI).getSWITCH2_B(), "4", new CallbackResult() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH2_B().name).child("4").setValue(3);
+                                                }
 
-                                        @Override
-                                        public void onFail(String error) {
-                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH2_B().name).child("4").setValue(0);
-                                            Toast.makeText(act,error,Toast.LENGTH_LONG).show();
-                                        }
-                                    });
+                                                @Override
+                                                public void onFail(String error) {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH2_B().name).child("4").setValue(0);
+                                                    Toast.makeText(act,error,Toast.LENGTH_LONG).show();
+                                                }
+                                            });
 //                                    ROOMS.get(finalI).getSWITCH2().publishDps("{\" 4\":true}", new IResultCallback() {
 //                                        @Override
 //                                        public void onError(String code, String error) {
@@ -3060,20 +4037,20 @@ public class Rooms extends AppCompatActivity
 //                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH2_B().name).child("4").setValue(3);
 //                                        }
 //                                    });
-                                }
-                                if (Integer.parseInt(snapshot.getValue().toString()) == 2) {
-                                    turnSwitchButtonOff(ROOMS.get(finalI).getSWITCH2_B(), "4", new CallbackResult() {
-                                        @Override
-                                        public void onSuccess() {
-                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH2_B().name).child("4").setValue(0);
                                         }
+                                        if (Integer.parseInt(snapshot.getValue().toString()) == 2) {
+                                            turnSwitchButtonOff(ROOMS.get(finalI).getSWITCH2_B(), "4", new CallbackResult() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH2_B().name).child("4").setValue(0);
+                                                }
 
-                                        @Override
-                                        public void onFail(String error) {
-                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH2_B().name).child("4").setValue(3);
-                                            Toast.makeText(act,error,Toast.LENGTH_LONG).show();
-                                        }
-                                    });
+                                                @Override
+                                                public void onFail(String error) {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH2_B().name).child("4").setValue(3);
+                                                    Toast.makeText(act,error,Toast.LENGTH_LONG).show();
+                                                }
+                                            });
 //                                    ROOMS.get(finalI).getSWITCH2().publishDps("{\" 4\":false}", new IResultCallback() {
 //                                        @Override
 //                                        public void onError(String code, String error) {
@@ -3084,35 +4061,36 @@ public class Rooms extends AppCompatActivity
 //                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH2_B().name).child("4").setValue(0);
 //                                        }
 //                                    });
+                                        }
+                                    }
                                 }
-                            }
-                        }
-                        @Override
-                        public void onCancelled(@NonNull DatabaseError error) {
+                                @Override
+                                public void onCancelled(@NonNull DatabaseError error) {
 
-                        }
-                    });
+                                }
+                            })));
                 }
             }
             if (ROOMS.get(i).getSWITCH3_B() != null && ROOMS.get(i).getSWITCH3() != null) {
                 if (ROOMS.get(i).getSWITCH3_B().dps.get("1") != null) {
-                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH3_B().name).child("1").addValueEventListener(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(@NonNull DataSnapshot snapshot) {
-                            if (snapshot.getValue() != null) {
-                                if (Integer.parseInt(snapshot.getValue().toString()) == 1) {
-                                    turnSwitchButtonOn(ROOMS.get(finalI).getSWITCH3_B(), "1", new CallbackResult() {
-                                        @Override
-                                        public void onSuccess() {
-                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH3_B().name).child("1").setValue(3);
-                                        }
+                    RoomsDevicesReferencesListeners.add(new DatabaseReference_ValueEventListener(ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH3_B().name).child("1"),
+                            ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH3_B().name).child("1").addValueEventListener(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                    if (snapshot.getValue() != null) {
+                                        if (Integer.parseInt(snapshot.getValue().toString()) == 1) {
+                                            turnSwitchButtonOn(ROOMS.get(finalI).getSWITCH3_B(), "1", new CallbackResult() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH3_B().name).child("1").setValue(3);
+                                                }
 
-                                        @Override
-                                        public void onFail(String error) {
-                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH3_B().name).child("1").setValue(0);
-                                            Toast.makeText(act,error,Toast.LENGTH_LONG).show();
-                                        }
-                                    });
+                                                @Override
+                                                public void onFail(String error) {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH3_B().name).child("1").setValue(0);
+                                                    Toast.makeText(act,error,Toast.LENGTH_LONG).show();
+                                                }
+                                            });
 //                                    ROOMS.get(finalI).getSWITCH3().publishDps("{\" 1\":true}", new IResultCallback() {
 //                                        @Override
 //                                        public void onError(String code, String error) {
@@ -3123,20 +4101,20 @@ public class Rooms extends AppCompatActivity
 //                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH3_B().name).child("1").setValue(3);
 //                                        }
 //                                    });
-                                }
-                                if (Integer.parseInt(snapshot.getValue().toString()) == 2) {
-                                    turnSwitchButtonOff(ROOMS.get(finalI).getSWITCH3_B(), "1", new CallbackResult() {
-                                        @Override
-                                        public void onSuccess() {
-                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH3_B().name).child("1").setValue(0);
                                         }
+                                        if (Integer.parseInt(snapshot.getValue().toString()) == 2) {
+                                            turnSwitchButtonOff(ROOMS.get(finalI).getSWITCH3_B(), "1", new CallbackResult() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH3_B().name).child("1").setValue(0);
+                                                }
 
-                                        @Override
-                                        public void onFail(String error) {
-                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH3_B().name).child("1").setValue(3);
-                                            Toast.makeText(act,error,Toast.LENGTH_LONG).show();
-                                        }
-                                    });
+                                                @Override
+                                                public void onFail(String error) {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH3_B().name).child("1").setValue(3);
+                                                    Toast.makeText(act,error,Toast.LENGTH_LONG).show();
+                                                }
+                                            });
 //                                    ROOMS.get(finalI).getSWITCH3().publishDps("{\" 1\":false}", new IResultCallback() {
 //                                        @Override
 //                                        public void onError(String code, String error) {
@@ -3147,33 +4125,34 @@ public class Rooms extends AppCompatActivity
 //                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH3_B().name).child("1").setValue(0);
 //                                        }
 //                                    });
+                                        }
+                                    }
                                 }
-                            }
-                        }
-                        @Override
-                        public void onCancelled(@NonNull DatabaseError error) {
+                                @Override
+                                public void onCancelled(@NonNull DatabaseError error) {
 
-                        }
-                    });
+                                }
+                            })));
                 }
                 if (ROOMS.get(i).getSWITCH3_B().dps.get("2") != null) {
-                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH3_B().name).child("2").addValueEventListener(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(@NonNull DataSnapshot snapshot) {
-                            if (snapshot.getValue() != null) {
-                                if (Integer.parseInt(snapshot.getValue().toString()) == 1) {
-                                    turnSwitchButtonOn(ROOMS.get(finalI).getSWITCH3_B(), "2", new CallbackResult() {
-                                        @Override
-                                        public void onSuccess() {
-                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH3_B().name).child("2").setValue(3);
-                                        }
+                    RoomsDevicesReferencesListeners.add(new DatabaseReference_ValueEventListener(ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH3_B().name).child("2"),
+                            ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH3_B().name).child("2").addValueEventListener(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                    if (snapshot.getValue() != null) {
+                                        if (Integer.parseInt(snapshot.getValue().toString()) == 1) {
+                                            turnSwitchButtonOn(ROOMS.get(finalI).getSWITCH3_B(), "2", new CallbackResult() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH3_B().name).child("2").setValue(3);
+                                                }
 
-                                        @Override
-                                        public void onFail(String error) {
-                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH3_B().name).child("2").setValue(0);
-                                            Toast.makeText(act,error,Toast.LENGTH_LONG).show();
-                                        }
-                                    });
+                                                @Override
+                                                public void onFail(String error) {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH3_B().name).child("2").setValue(0);
+                                                    Toast.makeText(act,error,Toast.LENGTH_LONG).show();
+                                                }
+                                            });
 //                                    ROOMS.get(finalI).getSWITCH3().publishDps("{\" 2\":true}", new IResultCallback() {
 //                                        @Override
 //                                        public void onError(String code, String error) {
@@ -3184,20 +4163,20 @@ public class Rooms extends AppCompatActivity
 //                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH3_B().name).child("2").setValue(3);
 //                                        }
 //                                    });
-                                }
-                                if (Integer.parseInt(snapshot.getValue().toString()) == 2) {
-                                    turnSwitchButtonOff(ROOMS.get(finalI).getSWITCH3_B(), "2", new CallbackResult() {
-                                        @Override
-                                        public void onSuccess() {
-                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH3_B().name).child("2").setValue(0);
                                         }
+                                        if (Integer.parseInt(snapshot.getValue().toString()) == 2) {
+                                            turnSwitchButtonOff(ROOMS.get(finalI).getSWITCH3_B(), "2", new CallbackResult() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH3_B().name).child("2").setValue(0);
+                                                }
 
-                                        @Override
-                                        public void onFail(String error) {
-                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH3_B().name).child("2").setValue(3);
-                                            Toast.makeText(act,error,Toast.LENGTH_LONG).show();
-                                        }
-                                    });
+                                                @Override
+                                                public void onFail(String error) {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH3_B().name).child("2").setValue(3);
+                                                    Toast.makeText(act,error,Toast.LENGTH_LONG).show();
+                                                }
+                                            });
 //                                    ROOMS.get(finalI).getSWITCH3().publishDps("{\" 2\":false}", new IResultCallback() {
 //                                        @Override
 //                                        public void onError(String code, String error) {
@@ -3208,33 +4187,34 @@ public class Rooms extends AppCompatActivity
 //                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH3_B().name).child("2").setValue(0);
 //                                        }
 //                                    });
+                                        }
+                                    }
                                 }
-                            }
-                        }
-                        @Override
-                        public void onCancelled(@NonNull DatabaseError error) {
+                                @Override
+                                public void onCancelled(@NonNull DatabaseError error) {
 
-                        }
-                    });
+                                }
+                            })));
                 }
                 if (ROOMS.get(i).getSWITCH3_B().dps.get("3") != null) {
-                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH3_B().name).child("3").addValueEventListener(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(@NonNull DataSnapshot snapshot) {
-                            if (snapshot.getValue() != null) {
-                                if (Integer.parseInt(snapshot.getValue().toString()) == 1) {
-                                    turnSwitchButtonOn(ROOMS.get(finalI).getSWITCH3_B(), "3", new CallbackResult() {
-                                        @Override
-                                        public void onSuccess() {
-                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH3_B().name).child("3").setValue(3);
-                                        }
+                    RoomsDevicesReferencesListeners.add(new DatabaseReference_ValueEventListener(ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH3_B().name).child("3"),
+                            ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH3_B().name).child("3").addValueEventListener(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                    if (snapshot.getValue() != null) {
+                                        if (Integer.parseInt(snapshot.getValue().toString()) == 1) {
+                                            turnSwitchButtonOn(ROOMS.get(finalI).getSWITCH3_B(), "3", new CallbackResult() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH3_B().name).child("3").setValue(3);
+                                                }
 
-                                        @Override
-                                        public void onFail(String error) {
-                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH3_B().name).child("3").setValue(0);
-                                            Toast.makeText(act,error,Toast.LENGTH_LONG).show();
-                                        }
-                                    });
+                                                @Override
+                                                public void onFail(String error) {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH3_B().name).child("3").setValue(0);
+                                                    Toast.makeText(act,error,Toast.LENGTH_LONG).show();
+                                                }
+                                            });
 //                                    ROOMS.get(finalI).getSWITCH3().publishDps("{\" 3\":true}", new IResultCallback() {
 //                                        @Override
 //                                        public void onError(String code, String error) {
@@ -3245,20 +4225,20 @@ public class Rooms extends AppCompatActivity
 //                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH3_B().name).child("3").setValue(3);
 //                                        }
 //                                    });
-                                }
-                                if (Integer.parseInt(snapshot.getValue().toString()) == 2) {
-                                    turnSwitchButtonOff(ROOMS.get(finalI).getSWITCH3_B(), "3", new CallbackResult() {
-                                        @Override
-                                        public void onSuccess() {
-                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH3_B().name).child("3").setValue(0);
                                         }
+                                        if (Integer.parseInt(snapshot.getValue().toString()) == 2) {
+                                            turnSwitchButtonOff(ROOMS.get(finalI).getSWITCH3_B(), "3", new CallbackResult() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH3_B().name).child("3").setValue(0);
+                                                }
 
-                                        @Override
-                                        public void onFail(String error) {
-                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH3_B().name).child("3").setValue(3);
-                                            Toast.makeText(act,error,Toast.LENGTH_LONG).show();
-                                        }
-                                    });
+                                                @Override
+                                                public void onFail(String error) {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH3_B().name).child("3").setValue(3);
+                                                    Toast.makeText(act,error,Toast.LENGTH_LONG).show();
+                                                }
+                                            });
 //                                    ROOMS.get(finalI).getSWITCH3().publishDps("{\" 3\":false}", new IResultCallback() {
 //                                        @Override
 //                                        public void onError(String code, String error) {
@@ -3269,33 +4249,34 @@ public class Rooms extends AppCompatActivity
 //                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH3_B().name).child("3").setValue(0);
 //                                        }
 //                                    });
+                                        }
+                                    }
                                 }
-                            }
-                        }
-                        @Override
-                        public void onCancelled(@NonNull DatabaseError error) {
+                                @Override
+                                public void onCancelled(@NonNull DatabaseError error) {
 
-                        }
-                    });
+                                }
+                            })));
                 }
                 if (ROOMS.get(i).getSWITCH3_B().dps.get("4") != null) {
-                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH3_B().name).child("4").addValueEventListener(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(@NonNull DataSnapshot snapshot) {
-                            if (snapshot.getValue() != null) {
-                                if (Integer.parseInt(snapshot.getValue().toString()) == 1) {
-                                    turnSwitchButtonOn(ROOMS.get(finalI).getSWITCH3_B(), "4", new CallbackResult() {
-                                        @Override
-                                        public void onSuccess() {
-                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH3_B().name).child("4").setValue(3);
-                                        }
+                    RoomsDevicesReferencesListeners.add(new DatabaseReference_ValueEventListener(ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH3_B().name).child("4"),
+                            ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH3_B().name).child("4").addValueEventListener(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                    if (snapshot.getValue() != null) {
+                                        if (Integer.parseInt(snapshot.getValue().toString()) == 1) {
+                                            turnSwitchButtonOn(ROOMS.get(finalI).getSWITCH3_B(), "4", new CallbackResult() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH3_B().name).child("4").setValue(3);
+                                                }
 
-                                        @Override
-                                        public void onFail(String error) {
-                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH3_B().name).child("4").setValue(0);
-                                            Toast.makeText(act,error,Toast.LENGTH_LONG).show();
-                                        }
-                                    });
+                                                @Override
+                                                public void onFail(String error) {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH3_B().name).child("4").setValue(0);
+                                                    Toast.makeText(act,error,Toast.LENGTH_LONG).show();
+                                                }
+                                            });
 //                                    ROOMS.get(finalI).getSWITCH3().publishDps("{\" 4\":true}", new IResultCallback() {
 //                                        @Override
 //                                        public void onError(String code, String error) {
@@ -3306,20 +4287,20 @@ public class Rooms extends AppCompatActivity
 //                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH3_B().name).child("4").setValue(3);
 //                                        }
 //                                    });
-                                }
-                                if (Integer.parseInt(snapshot.getValue().toString()) == 2) {
-                                    turnSwitchButtonOff(ROOMS.get(finalI).getSWITCH3_B(), "4", new CallbackResult() {
-                                        @Override
-                                        public void onSuccess() {
-                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH3_B().name).child("4").setValue(0);
                                         }
+                                        if (Integer.parseInt(snapshot.getValue().toString()) == 2) {
+                                            turnSwitchButtonOff(ROOMS.get(finalI).getSWITCH3_B(), "4", new CallbackResult() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH3_B().name).child("4").setValue(0);
+                                                }
 
-                                        @Override
-                                        public void onFail(String error) {
-                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH3_B().name).child("4").setValue(3);
-                                            Toast.makeText(act,error,Toast.LENGTH_LONG).show();
-                                        }
-                                    });
+                                                @Override
+                                                public void onFail(String error) {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH3_B().name).child("4").setValue(3);
+                                                    Toast.makeText(act,error,Toast.LENGTH_LONG).show();
+                                                }
+                                            });
 //                                    ROOMS.get(finalI).getSWITCH3().publishDps("{\" 4\":false}", new IResultCallback() {
 //                                        @Override
 //                                        public void onError(String code, String error) {
@@ -3330,19 +4311,20 @@ public class Rooms extends AppCompatActivity
 //                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH3_B().name).child("4").setValue(0);
 //                                        }
 //                                    });
+                                        }
+                                    }
                                 }
-                            }
-                        }
-                        @Override
-                        public void onCancelled(@NonNull DatabaseError error) {
+                                @Override
+                                public void onCancelled(@NonNull DatabaseError error) {
 
-                        }
-                    });
+                                }
+                            })));
                 }
             }
             if (ROOMS.get(i).getSWITCH4_B() != null && ROOMS.get(i).getSWITCH4() != null) {
                 if (ROOMS.get(i).getSWITCH4_B().dps.get("1") != null) {
-                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH4_B().name).child("1").addValueEventListener(new ValueEventListener() {
+                    RoomsDevicesReferencesListeners.add(new DatabaseReference_ValueEventListener(ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH4_B().name).child("1"),
+                            ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH4_B().name).child("1").addValueEventListener(new ValueEventListener() {
                         @Override
                         public void onDataChange(@NonNull DataSnapshot snapshot) {
                             if (snapshot.getValue() != null) {
@@ -3400,26 +4382,27 @@ public class Rooms extends AppCompatActivity
                         public void onCancelled(@NonNull DatabaseError error) {
 
                         }
-                    });
+                    })));
                 }
                 if (ROOMS.get(i).getSWITCH4_B().dps.get("2") != null) {
-                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH4_B().name).child("2").addValueEventListener(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(@NonNull DataSnapshot snapshot) {
-                            if (snapshot.getValue() != null) {
-                                if (Integer.parseInt(snapshot.getValue().toString()) == 1) {
-                                    turnSwitchButtonOn(ROOMS.get(finalI).getSWITCH4_B(), "2", new CallbackResult() {
-                                        @Override
-                                        public void onSuccess() {
-                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("2").setValue(3);
-                                        }
+                    RoomsDevicesReferencesListeners.add(new DatabaseReference_ValueEventListener(ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH4_B().name).child("2"),
+                            ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH4_B().name).child("2").addValueEventListener(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                    if (snapshot.getValue() != null) {
+                                        if (Integer.parseInt(snapshot.getValue().toString()) == 1) {
+                                            turnSwitchButtonOn(ROOMS.get(finalI).getSWITCH4_B(), "2", new CallbackResult() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("2").setValue(3);
+                                                }
 
-                                        @Override
-                                        public void onFail(String error) {
-                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("2").setValue(0);
-                                            Toast.makeText(act,error,Toast.LENGTH_LONG).show();
-                                        }
-                                    });
+                                                @Override
+                                                public void onFail(String error) {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("2").setValue(0);
+                                                    Toast.makeText(act,error,Toast.LENGTH_LONG).show();
+                                                }
+                                            });
 //                                    ROOMS.get(finalI).getSWITCH4().publishDps("{\" 2\":true}", new IResultCallback() {
 //                                        @Override
 //                                        public void onError(String code, String error) {
@@ -3430,57 +4413,58 @@ public class Rooms extends AppCompatActivity
 //                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("2").setValue(3);
 //                                        }
 //                                    });
+                                        }
+                                        if (Integer.parseInt(snapshot.getValue().toString()) == 2) {
+                                            turnSwitchButtonOff(ROOMS.get(finalI).getSWITCH4_B(), "2", new CallbackResult() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("2").setValue(0);
+                                                }
+
+                                                @Override
+                                                public void onFail(String error) {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("2").setValue(3);
+                                                    Toast.makeText(act,error,Toast.LENGTH_LONG).show();
+                                                }
+                                            });
+                                            ROOMS.get(finalI).getSWITCH4().publishDps("{\" 2\":false}", new IResultCallback() {
+                                                @Override
+                                                public void onError(String code, String error) {
+
+                                                }
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("2").setValue(0);
+                                                }
+                                            });
+                                        }
+                                    }
                                 }
-                                if (Integer.parseInt(snapshot.getValue().toString()) == 2) {
-                                    turnSwitchButtonOff(ROOMS.get(finalI).getSWITCH4_B(), "2", new CallbackResult() {
-                                        @Override
-                                        public void onSuccess() {
-                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("2").setValue(0);
-                                        }
+                                @Override
+                                public void onCancelled(@NonNull DatabaseError error) {
 
-                                        @Override
-                                        public void onFail(String error) {
-                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("2").setValue(3);
-                                            Toast.makeText(act,error,Toast.LENGTH_LONG).show();
-                                        }
-                                    });
-                                    ROOMS.get(finalI).getSWITCH4().publishDps("{\" 2\":false}", new IResultCallback() {
-                                        @Override
-                                        public void onError(String code, String error) {
-
-                                        }
-                                        @Override
-                                        public void onSuccess() {
-                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("2").setValue(0);
-                                        }
-                                    });
                                 }
-                            }
-                        }
-                        @Override
-                        public void onCancelled(@NonNull DatabaseError error) {
-
-                        }
-                    });
+                            })));
                 }
                 if (ROOMS.get(i).getSWITCH4_B().dps.get("3") != null) {
-                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH4_B().name).child("3").addValueEventListener(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(@NonNull DataSnapshot snapshot) {
-                            if (snapshot.getValue() != null) {
-                                if (Integer.parseInt(snapshot.getValue().toString()) == 1) {
-                                    turnSwitchButtonOn(ROOMS.get(finalI).getSWITCH4_B(), "3", new CallbackResult() {
-                                        @Override
-                                        public void onSuccess() {
-                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("3").setValue(3);
-                                        }
+                    RoomsDevicesReferencesListeners.add(new DatabaseReference_ValueEventListener(ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH4_B().name).child("3"),
+                            ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH4_B().name).child("3").addValueEventListener(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                    if (snapshot.getValue() != null) {
+                                        if (Integer.parseInt(snapshot.getValue().toString()) == 1) {
+                                            turnSwitchButtonOn(ROOMS.get(finalI).getSWITCH4_B(), "3", new CallbackResult() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("3").setValue(3);
+                                                }
 
-                                        @Override
-                                        public void onFail(String error) {
-                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("3").setValue(0);
-                                            Toast.makeText(act,error,Toast.LENGTH_LONG).show();
-                                        }
-                                    });
+                                                @Override
+                                                public void onFail(String error) {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("3").setValue(0);
+                                                    Toast.makeText(act,error,Toast.LENGTH_LONG).show();
+                                                }
+                                            });
 //                                    ROOMS.get(finalI).getSWITCH4().publishDps("{\" 3\":true}", new IResultCallback() {
 //                                        @Override
 //                                        public void onError(String code, String error) {
@@ -3491,20 +4475,20 @@ public class Rooms extends AppCompatActivity
 //                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("3").setValue(3);
 //                                        }
 //                                    });
-                                }
-                                if (Integer.parseInt(snapshot.getValue().toString()) == 2) {
-                                    turnSwitchButtonOff(ROOMS.get(finalI).getSWITCH4_B(), "3", new CallbackResult() {
-                                        @Override
-                                        public void onSuccess() {
-                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("3").setValue(0);
                                         }
+                                        if (Integer.parseInt(snapshot.getValue().toString()) == 2) {
+                                            turnSwitchButtonOff(ROOMS.get(finalI).getSWITCH4_B(), "3", new CallbackResult() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("3").setValue(0);
+                                                }
 
-                                        @Override
-                                        public void onFail(String error) {
-                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("3").setValue(3);
-                                            Toast.makeText(act,error,Toast.LENGTH_LONG).show();
-                                        }
-                                    });
+                                                @Override
+                                                public void onFail(String error) {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("3").setValue(3);
+                                                    Toast.makeText(act,error,Toast.LENGTH_LONG).show();
+                                                }
+                                            });
 //                                    ROOMS.get(finalI).getSWITCH4().publishDps("{\" 3\":false}", new IResultCallback() {
 //                                        @Override
 //                                        public void onError(String code, String error) {
@@ -3515,33 +4499,34 @@ public class Rooms extends AppCompatActivity
 //                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("3").setValue(0);
 //                                        }
 //                                    });
+                                        }
+                                    }
                                 }
-                            }
-                        }
-                        @Override
-                        public void onCancelled(@NonNull DatabaseError error) {
+                                @Override
+                                public void onCancelled(@NonNull DatabaseError error) {
 
-                        }
-                    });
+                                }
+                            })));
                 }
                 if (ROOMS.get(i).getSWITCH4_B().dps.get("4") != null) {
-                    ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH4_B().name).child("4").addValueEventListener(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(@NonNull DataSnapshot snapshot) {
-                            if (snapshot.getValue() != null) {
-                                if (Integer.parseInt(snapshot.getValue().toString()) == 1) {
-                                    turnSwitchButtonOn(ROOMS.get(finalI).getSWITCH4_B(), "4", new CallbackResult() {
-                                        @Override
-                                        public void onSuccess() {
-                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("4").setValue(3);
-                                        }
+                    RoomsDevicesReferencesListeners.add(new DatabaseReference_ValueEventListener(ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH4_B().name).child("4"),
+                            ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH4_B().name).child("4").addValueEventListener(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                    if (snapshot.getValue() != null) {
+                                        if (Integer.parseInt(snapshot.getValue().toString()) == 1) {
+                                            turnSwitchButtonOn(ROOMS.get(finalI).getSWITCH4_B(), "4", new CallbackResult() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("4").setValue(3);
+                                                }
 
-                                        @Override
-                                        public void onFail(String error) {
-                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("4").setValue(0);
-                                            Toast.makeText(act,error,Toast.LENGTH_LONG).show();
-                                        }
-                                    });
+                                                @Override
+                                                public void onFail(String error) {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("4").setValue(0);
+                                                    Toast.makeText(act,error,Toast.LENGTH_LONG).show();
+                                                }
+                                            });
 //                                    ROOMS.get(finalI).getSWITCH3().publishDps("{\" 4\":true}", new IResultCallback() {
 //                                        @Override
 //                                        public void onError(String code, String error) {
@@ -3552,20 +4537,20 @@ public class Rooms extends AppCompatActivity
 //                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("4").setValue(3);
 //                                        }
 //                                    });
-                                }
-                                if (Integer.parseInt(snapshot.getValue().toString()) == 2) {
-                                    turnSwitchButtonOff(ROOMS.get(finalI).getSWITCH4_B(), "4", new CallbackResult() {
-                                        @Override
-                                        public void onSuccess() {
-                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("4").setValue(0);
                                         }
+                                        if (Integer.parseInt(snapshot.getValue().toString()) == 2) {
+                                            turnSwitchButtonOff(ROOMS.get(finalI).getSWITCH4_B(), "4", new CallbackResult() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("4").setValue(0);
+                                                }
 
-                                        @Override
-                                        public void onFail(String error) {
-                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("4").setValue(3);
-                                            Toast.makeText(act,error,Toast.LENGTH_LONG).show();
-                                        }
-                                    });
+                                                @Override
+                                                public void onFail(String error) {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("4").setValue(3);
+                                                    Toast.makeText(act,error,Toast.LENGTH_LONG).show();
+                                                }
+                                            });
 //                                    ROOMS.get(finalI).getSWITCH3().publishDps("{\" 4\":false}", new IResultCallback() {
 //                                        @Override
 //                                        public void onError(String code, String error) {
@@ -3576,14 +4561,1014 @@ public class Rooms extends AppCompatActivity
 //                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("4").setValue(0);
 //                                        }
 //                                    });
+                                        }
+                                    }
                                 }
-                            }
-                        }
-                        @Override
-                        public void onCancelled(@NonNull DatabaseError error) {
+                                @Override
+                                public void onCancelled(@NonNull DatabaseError error) {
 
-                        }
-                    });
+                                }
+                            }) ));
+                }
+            }
+            if (ROOMS.get(i).getSWITCH5_B() != null && ROOMS.get(i).getSWITCH5() != null) {
+                if (ROOMS.get(i).getSWITCH5_B().dps.get("1") != null) {
+                    RoomsDevicesReferencesListeners.add(new DatabaseReference_ValueEventListener(ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH5_B().name).child("1"),
+                            ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH5_B().name).child("1").addValueEventListener(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                    if (snapshot.getValue() != null) {
+                                        if (Integer.parseInt(snapshot.getValue().toString()) == 1) {
+                                            turnSwitchButtonOn(ROOMS.get(finalI).getSWITCH5_B(), "1", new CallbackResult() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH5_B().name).child("1").setValue(3);
+                                                }
+
+                                                @Override
+                                                public void onFail(String error) {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH5_B().name).child("1").setValue(0);
+                                                    Toast.makeText(act,error,Toast.LENGTH_LONG).show();
+                                                }
+                                            });
+//                                    ROOMS.get(finalI).getSWITCH4().publishDps("{\" 1\":true}", new IResultCallback() {
+//                                        @Override
+//                                        public void onError(String code, String error) {
+//
+//                                        }
+//                                        @Override
+//                                        public void onSuccess() {
+//                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("1").setValue(3);
+//                                        }
+//                                    });
+                                        }
+                                        if (Integer.parseInt(snapshot.getValue().toString()) == 2) {
+                                            turnSwitchButtonOff(ROOMS.get(finalI).getSWITCH5_B(), "1", new CallbackResult() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH5_B().name).child("1").setValue(0);
+                                                }
+
+                                                @Override
+                                                public void onFail(String error) {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH5_B().name).child("1").setValue(3);
+                                                    Toast.makeText(act,error,Toast.LENGTH_LONG).show();
+                                                }
+                                            });
+//                                    ROOMS.get(finalI).getSWITCH4().publishDps("{\" 1\":false}", new IResultCallback() {
+//                                        @Override
+//                                        public void onError(String code, String error) {
+//
+//                                        }
+//                                        @Override
+//                                        public void onSuccess() {
+//                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("1").setValue(0);
+//                                        }
+//                                    });
+                                        }
+                                    }
+                                }
+                                @Override
+                                public void onCancelled(@NonNull DatabaseError error) {
+
+                                }
+                            })));
+                }
+                if (ROOMS.get(i).getSWITCH5_B().dps.get("2") != null) {
+                    RoomsDevicesReferencesListeners.add(new DatabaseReference_ValueEventListener(ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH5_B().name).child("2"),
+                            ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH5_B().name).child("2").addValueEventListener(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                    if (snapshot.getValue() != null) {
+                                        if (Integer.parseInt(snapshot.getValue().toString()) == 1) {
+                                            turnSwitchButtonOn(ROOMS.get(finalI).getSWITCH5_B(), "2", new CallbackResult() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH5_B().name).child("2").setValue(3);
+                                                }
+
+                                                @Override
+                                                public void onFail(String error) {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH5_B().name).child("2").setValue(0);
+                                                    Toast.makeText(act,error,Toast.LENGTH_LONG).show();
+                                                }
+                                            });
+//                                    ROOMS.get(finalI).getSWITCH4().publishDps("{\" 2\":true}", new IResultCallback() {
+//                                        @Override
+//                                        public void onError(String code, String error) {
+//
+//                                        }
+//                                        @Override
+//                                        public void onSuccess() {
+//                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("2").setValue(3);
+//                                        }
+//                                    });
+                                        }
+                                        if (Integer.parseInt(snapshot.getValue().toString()) == 2) {
+                                            turnSwitchButtonOff(ROOMS.get(finalI).getSWITCH5_B(), "2", new CallbackResult() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH5_B().name).child("2").setValue(0);
+                                                }
+
+                                                @Override
+                                                public void onFail(String error) {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH5_B().name).child("2").setValue(3);
+                                                    Toast.makeText(act,error,Toast.LENGTH_LONG).show();
+                                                }
+                                            });
+                                            ROOMS.get(finalI).getSWITCH5().publishDps("{\" 2\":false}", new IResultCallback() {
+                                                @Override
+                                                public void onError(String code, String error) {
+
+                                                }
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH5_B().name).child("2").setValue(0);
+                                                }
+                                            });
+                                        }
+                                    }
+                                }
+                                @Override
+                                public void onCancelled(@NonNull DatabaseError error) {
+
+                                }
+                            })));
+                }
+                if (ROOMS.get(i).getSWITCH5_B().dps.get("3") != null) {
+                    RoomsDevicesReferencesListeners.add(new DatabaseReference_ValueEventListener(ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH5_B().name).child("3"),
+                            ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH5_B().name).child("3").addValueEventListener(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                    if (snapshot.getValue() != null) {
+                                        if (Integer.parseInt(snapshot.getValue().toString()) == 1) {
+                                            turnSwitchButtonOn(ROOMS.get(finalI).getSWITCH5_B(), "3", new CallbackResult() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH5_B().name).child("3").setValue(3);
+                                                }
+
+                                                @Override
+                                                public void onFail(String error) {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH5_B().name).child("3").setValue(0);
+                                                    Toast.makeText(act,error,Toast.LENGTH_LONG).show();
+                                                }
+                                            });
+//                                    ROOMS.get(finalI).getSWITCH4().publishDps("{\" 3\":true}", new IResultCallback() {
+//                                        @Override
+//                                        public void onError(String code, String error) {
+//
+//                                        }
+//                                        @Override
+//                                        public void onSuccess() {
+//                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("3").setValue(3);
+//                                        }
+//                                    });
+                                        }
+                                        if (Integer.parseInt(snapshot.getValue().toString()) == 2) {
+                                            turnSwitchButtonOff(ROOMS.get(finalI).getSWITCH5_B(), "3", new CallbackResult() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH5_B().name).child("3").setValue(0);
+                                                }
+
+                                                @Override
+                                                public void onFail(String error) {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH5_B().name).child("3").setValue(3);
+                                                    Toast.makeText(act,error,Toast.LENGTH_LONG).show();
+                                                }
+                                            });
+//                                    ROOMS.get(finalI).getSWITCH4().publishDps("{\" 3\":false}", new IResultCallback() {
+//                                        @Override
+//                                        public void onError(String code, String error) {
+//
+//                                        }
+//                                        @Override
+//                                        public void onSuccess() {
+//                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("3").setValue(0);
+//                                        }
+//                                    });
+                                        }
+                                    }
+                                }
+                                @Override
+                                public void onCancelled(@NonNull DatabaseError error) {
+
+                                }
+                            })));
+                }
+                if (ROOMS.get(i).getSWITCH5_B().dps.get("4") != null) {
+                    RoomsDevicesReferencesListeners.add(new DatabaseReference_ValueEventListener(ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH5_B().name).child("4"),
+                            ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH5_B().name).child("4").addValueEventListener(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                    if (snapshot.getValue() != null) {
+                                        if (Integer.parseInt(snapshot.getValue().toString()) == 1) {
+                                            turnSwitchButtonOn(ROOMS.get(finalI).getSWITCH5_B(), "4", new CallbackResult() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH5_B().name).child("4").setValue(3);
+                                                }
+
+                                                @Override
+                                                public void onFail(String error) {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH5_B().name).child("4").setValue(0);
+                                                    Toast.makeText(act,error,Toast.LENGTH_LONG).show();
+                                                }
+                                            });
+//                                    ROOMS.get(finalI).getSWITCH3().publishDps("{\" 4\":true}", new IResultCallback() {
+//                                        @Override
+//                                        public void onError(String code, String error) {
+//
+//                                        }
+//                                        @Override
+//                                        public void onSuccess() {
+//                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("4").setValue(3);
+//                                        }
+//                                    });
+                                        }
+                                        if (Integer.parseInt(snapshot.getValue().toString()) == 2) {
+                                            turnSwitchButtonOff(ROOMS.get(finalI).getSWITCH5_B(), "4", new CallbackResult() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH5_B().name).child("4").setValue(0);
+                                                }
+
+                                                @Override
+                                                public void onFail(String error) {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH5_B().name).child("4").setValue(3);
+                                                    Toast.makeText(act,error,Toast.LENGTH_LONG).show();
+                                                }
+                                            });
+//                                    ROOMS.get(finalI).getSWITCH3().publishDps("{\" 4\":false}", new IResultCallback() {
+//                                        @Override
+//                                        public void onError(String code, String error) {
+//
+//                                        }
+//                                        @Override
+//                                        public void onSuccess() {
+//                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("4").setValue(0);
+//                                        }
+//                                    });
+                                        }
+                                    }
+                                }
+                                @Override
+                                public void onCancelled(@NonNull DatabaseError error) {
+
+                                }
+                            })));
+                }
+            }
+            if (ROOMS.get(i).getSWITCH6_B() != null && ROOMS.get(i).getSWITCH6() != null) {
+                if (ROOMS.get(i).getSWITCH6_B().dps.get("1") != null) {
+                    RoomsDevicesReferencesListeners.add(new DatabaseReference_ValueEventListener(ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH6_B().name).child("1"),
+                            ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH6_B().name).child("1").addValueEventListener(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                    if (snapshot.getValue() != null) {
+                                        if (Integer.parseInt(snapshot.getValue().toString()) == 1) {
+                                            turnSwitchButtonOn(ROOMS.get(finalI).getSWITCH6_B(), "1", new CallbackResult() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH6_B().name).child("1").setValue(3);
+                                                }
+
+                                                @Override
+                                                public void onFail(String error) {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH6_B().name).child("1").setValue(0);
+                                                    Toast.makeText(act,error,Toast.LENGTH_LONG).show();
+                                                }
+                                            });
+//                                    ROOMS.get(finalI).getSWITCH4().publishDps("{\" 1\":true}", new IResultCallback() {
+//                                        @Override
+//                                        public void onError(String code, String error) {
+//
+//                                        }
+//                                        @Override
+//                                        public void onSuccess() {
+//                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("1").setValue(3);
+//                                        }
+//                                    });
+                                        }
+                                        if (Integer.parseInt(snapshot.getValue().toString()) == 2) {
+                                            turnSwitchButtonOff(ROOMS.get(finalI).getSWITCH6_B(), "1", new CallbackResult() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH6_B().name).child("1").setValue(0);
+                                                }
+
+                                                @Override
+                                                public void onFail(String error) {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH6_B().name).child("1").setValue(3);
+                                                    Toast.makeText(act,error,Toast.LENGTH_LONG).show();
+                                                }
+                                            });
+//                                    ROOMS.get(finalI).getSWITCH4().publishDps("{\" 1\":false}", new IResultCallback() {
+//                                        @Override
+//                                        public void onError(String code, String error) {
+//
+//                                        }
+//                                        @Override
+//                                        public void onSuccess() {
+//                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("1").setValue(0);
+//                                        }
+//                                    });
+                                        }
+                                    }
+                                }
+                                @Override
+                                public void onCancelled(@NonNull DatabaseError error) {
+
+                                }
+                            })));
+                }
+                if (ROOMS.get(i).getSWITCH6_B().dps.get("2") != null) {
+                    RoomsDevicesReferencesListeners.add(new DatabaseReference_ValueEventListener(ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH6_B().name).child("2"),
+                            ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH6_B().name).child("2").addValueEventListener(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                    if (snapshot.getValue() != null) {
+                                        if (Integer.parseInt(snapshot.getValue().toString()) == 1) {
+                                            turnSwitchButtonOn(ROOMS.get(finalI).getSWITCH6_B(), "2", new CallbackResult() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH6_B().name).child("2").setValue(3);
+                                                }
+
+                                                @Override
+                                                public void onFail(String error) {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH6_B().name).child("2").setValue(0);
+                                                    Toast.makeText(act,error,Toast.LENGTH_LONG).show();
+                                                }
+                                            });
+//                                    ROOMS.get(finalI).getSWITCH4().publishDps("{\" 2\":true}", new IResultCallback() {
+//                                        @Override
+//                                        public void onError(String code, String error) {
+//
+//                                        }
+//                                        @Override
+//                                        public void onSuccess() {
+//                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("2").setValue(3);
+//                                        }
+//                                    });
+                                        }
+                                        if (Integer.parseInt(snapshot.getValue().toString()) == 2) {
+                                            turnSwitchButtonOff(ROOMS.get(finalI).getSWITCH6_B(), "2", new CallbackResult() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH6_B().name).child("2").setValue(0);
+                                                }
+
+                                                @Override
+                                                public void onFail(String error) {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH6_B().name).child("2").setValue(3);
+                                                    Toast.makeText(act,error,Toast.LENGTH_LONG).show();
+                                                }
+                                            });
+                                            ROOMS.get(finalI).getSWITCH6().publishDps("{\" 2\":false}", new IResultCallback() {
+                                                @Override
+                                                public void onError(String code, String error) {
+
+                                                }
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH6_B().name).child("2").setValue(0);
+                                                }
+                                            });
+                                        }
+                                    }
+                                }
+                                @Override
+                                public void onCancelled(@NonNull DatabaseError error) {
+
+                                }
+                            })));
+                }
+                if (ROOMS.get(i).getSWITCH6_B().dps.get("3") != null) {
+                    RoomsDevicesReferencesListeners.add(new DatabaseReference_ValueEventListener(ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH6_B().name).child("3"),
+                            ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH6_B().name).child("3").addValueEventListener(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                    if (snapshot.getValue() != null) {
+                                        if (Integer.parseInt(snapshot.getValue().toString()) == 1) {
+                                            turnSwitchButtonOn(ROOMS.get(finalI).getSWITCH6_B(), "3", new CallbackResult() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH6_B().name).child("3").setValue(3);
+                                                }
+
+                                                @Override
+                                                public void onFail(String error) {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH6_B().name).child("3").setValue(0);
+                                                    Toast.makeText(act,error,Toast.LENGTH_LONG).show();
+                                                }
+                                            });
+//                                    ROOMS.get(finalI).getSWITCH4().publishDps("{\" 3\":true}", new IResultCallback() {
+//                                        @Override
+//                                        public void onError(String code, String error) {
+//
+//                                        }
+//                                        @Override
+//                                        public void onSuccess() {
+//                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("3").setValue(3);
+//                                        }
+//                                    });
+                                        }
+                                        if (Integer.parseInt(snapshot.getValue().toString()) == 2) {
+                                            turnSwitchButtonOff(ROOMS.get(finalI).getSWITCH6_B(), "3", new CallbackResult() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH6_B().name).child("3").setValue(0);
+                                                }
+
+                                                @Override
+                                                public void onFail(String error) {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH6_B().name).child("3").setValue(3);
+                                                    Toast.makeText(act,error,Toast.LENGTH_LONG).show();
+                                                }
+                                            });
+//                                    ROOMS.get(finalI).getSWITCH4().publishDps("{\" 3\":false}", new IResultCallback() {
+//                                        @Override
+//                                        public void onError(String code, String error) {
+//
+//                                        }
+//                                        @Override
+//                                        public void onSuccess() {
+//                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("3").setValue(0);
+//                                        }
+//                                    });
+                                        }
+                                    }
+                                }
+                                @Override
+                                public void onCancelled(@NonNull DatabaseError error) {
+
+                                }
+                            }) ));
+                }
+                if (ROOMS.get(i).getSWITCH6_B().dps.get("4") != null) {
+                    RoomsDevicesReferencesListeners.add(new DatabaseReference_ValueEventListener(ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH6_B().name).child("4"),
+                            ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH6_B().name).child("4").addValueEventListener(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                    if (snapshot.getValue() != null) {
+                                        if (Integer.parseInt(snapshot.getValue().toString()) == 1) {
+                                            turnSwitchButtonOn(ROOMS.get(finalI).getSWITCH6_B(), "4", new CallbackResult() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH6_B().name).child("4").setValue(3);
+                                                }
+
+                                                @Override
+                                                public void onFail(String error) {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH6_B().name).child("4").setValue(0);
+                                                    Toast.makeText(act,error,Toast.LENGTH_LONG).show();
+                                                }
+                                            });
+//                                    ROOMS.get(finalI).getSWITCH3().publishDps("{\" 4\":true}", new IResultCallback() {
+//                                        @Override
+//                                        public void onError(String code, String error) {
+//
+//                                        }
+//                                        @Override
+//                                        public void onSuccess() {
+//                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("4").setValue(3);
+//                                        }
+//                                    });
+                                        }
+                                        if (Integer.parseInt(snapshot.getValue().toString()) == 2) {
+                                            turnSwitchButtonOff(ROOMS.get(finalI).getSWITCH6_B(), "4", new CallbackResult() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH6_B().name).child("4").setValue(0);
+                                                }
+
+                                                @Override
+                                                public void onFail(String error) {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH6_B().name).child("4").setValue(3);
+                                                    Toast.makeText(act,error,Toast.LENGTH_LONG).show();
+                                                }
+                                            });
+//                                    ROOMS.get(finalI).getSWITCH3().publishDps("{\" 4\":false}", new IResultCallback() {
+//                                        @Override
+//                                        public void onError(String code, String error) {
+//
+//                                        }
+//                                        @Override
+//                                        public void onSuccess() {
+//                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("4").setValue(0);
+//                                        }
+//                                    });
+                                        }
+                                    }
+                                }
+                                @Override
+                                public void onCancelled(@NonNull DatabaseError error) {
+
+                                }
+                            })));
+                }
+            }
+            if (ROOMS.get(i).getSWITCH7_B() != null && ROOMS.get(i).getSWITCH7() != null) {
+                if (ROOMS.get(i).getSWITCH7_B().dps.get("1") != null) {
+                    RoomsDevicesReferencesListeners.add(new DatabaseReference_ValueEventListener(ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH7_B().name).child("1"),
+                            ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH7_B().name).child("1").addValueEventListener(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                    if (snapshot.getValue() != null) {
+                                        if (Integer.parseInt(snapshot.getValue().toString()) == 1) {
+                                            turnSwitchButtonOn(ROOMS.get(finalI).getSWITCH7_B(), "1", new CallbackResult() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH7_B().name).child("1").setValue(3);
+                                                }
+
+                                                @Override
+                                                public void onFail(String error) {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH7_B().name).child("1").setValue(0);
+                                                    Toast.makeText(act,error,Toast.LENGTH_LONG).show();
+                                                }
+                                            });
+//                                    ROOMS.get(finalI).getSWITCH4().publishDps("{\" 1\":true}", new IResultCallback() {
+//                                        @Override
+//                                        public void onError(String code, String error) {
+//
+//                                        }
+//                                        @Override
+//                                        public void onSuccess() {
+//                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("1").setValue(3);
+//                                        }
+//                                    });
+                                        }
+                                        if (Integer.parseInt(snapshot.getValue().toString()) == 2) {
+                                            turnSwitchButtonOff(ROOMS.get(finalI).getSWITCH7_B(), "1", new CallbackResult() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH7_B().name).child("1").setValue(0);
+                                                }
+
+                                                @Override
+                                                public void onFail(String error) {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH7_B().name).child("1").setValue(3);
+                                                    Toast.makeText(act,error,Toast.LENGTH_LONG).show();
+                                                }
+                                            });
+//                                    ROOMS.get(finalI).getSWITCH4().publishDps("{\" 1\":false}", new IResultCallback() {
+//                                        @Override
+//                                        public void onError(String code, String error) {
+//
+//                                        }
+//                                        @Override
+//                                        public void onSuccess() {
+//                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("1").setValue(0);
+//                                        }
+//                                    });
+                                        }
+                                    }
+                                }
+                                @Override
+                                public void onCancelled(@NonNull DatabaseError error) {
+
+                                }
+                            })));
+                }
+                if (ROOMS.get(i).getSWITCH7_B().dps.get("2") != null) {
+                    RoomsDevicesReferencesListeners.add(new DatabaseReference_ValueEventListener(ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH7_B().name).child("2"),
+                            ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH7_B().name).child("2").addValueEventListener(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                    if (snapshot.getValue() != null) {
+                                        if (Integer.parseInt(snapshot.getValue().toString()) == 1) {
+                                            turnSwitchButtonOn(ROOMS.get(finalI).getSWITCH7_B(), "2", new CallbackResult() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH7_B().name).child("2").setValue(3);
+                                                }
+
+                                                @Override
+                                                public void onFail(String error) {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH7_B().name).child("2").setValue(0);
+                                                    Toast.makeText(act,error,Toast.LENGTH_LONG).show();
+                                                }
+                                            });
+//                                    ROOMS.get(finalI).getSWITCH4().publishDps("{\" 2\":true}", new IResultCallback() {
+//                                        @Override
+//                                        public void onError(String code, String error) {
+//
+//                                        }
+//                                        @Override
+//                                        public void onSuccess() {
+//                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("2").setValue(3);
+//                                        }
+//                                    });
+                                        }
+                                        if (Integer.parseInt(snapshot.getValue().toString()) == 2) {
+                                            turnSwitchButtonOff(ROOMS.get(finalI).getSWITCH7_B(), "2", new CallbackResult() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH7_B().name).child("2").setValue(0);
+                                                }
+
+                                                @Override
+                                                public void onFail(String error) {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH7_B().name).child("2").setValue(3);
+                                                    Toast.makeText(act,error,Toast.LENGTH_LONG).show();
+                                                }
+                                            });
+                                            ROOMS.get(finalI).getSWITCH7().publishDps("{\" 2\":false}", new IResultCallback() {
+                                                @Override
+                                                public void onError(String code, String error) {
+
+                                                }
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH7_B().name).child("2").setValue(0);
+                                                }
+                                            });
+                                        }
+                                    }
+                                }
+                                @Override
+                                public void onCancelled(@NonNull DatabaseError error) {
+
+                                }
+                            })));
+                }
+                if (ROOMS.get(i).getSWITCH7_B().dps.get("3") != null) {
+                    RoomsDevicesReferencesListeners.add(new DatabaseReference_ValueEventListener(ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH7_B().name).child("3"),
+                            ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH7_B().name).child("3").addValueEventListener(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                    if (snapshot.getValue() != null) {
+                                        if (Integer.parseInt(snapshot.getValue().toString()) == 1) {
+                                            turnSwitchButtonOn(ROOMS.get(finalI).getSWITCH7_B(), "3", new CallbackResult() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH7_B().name).child("3").setValue(3);
+                                                }
+
+                                                @Override
+                                                public void onFail(String error) {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH7_B().name).child("3").setValue(0);
+                                                    Toast.makeText(act,error,Toast.LENGTH_LONG).show();
+                                                }
+                                            });
+//                                    ROOMS.get(finalI).getSWITCH4().publishDps("{\" 3\":true}", new IResultCallback() {
+//                                        @Override
+//                                        public void onError(String code, String error) {
+//
+//                                        }
+//                                        @Override
+//                                        public void onSuccess() {
+//                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("3").setValue(3);
+//                                        }
+//                                    });
+                                        }
+                                        if (Integer.parseInt(snapshot.getValue().toString()) == 2) {
+                                            turnSwitchButtonOff(ROOMS.get(finalI).getSWITCH7_B(), "3", new CallbackResult() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH7_B().name).child("3").setValue(0);
+                                                }
+
+                                                @Override
+                                                public void onFail(String error) {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH7_B().name).child("3").setValue(3);
+                                                    Toast.makeText(act,error,Toast.LENGTH_LONG).show();
+                                                }
+                                            });
+//                                    ROOMS.get(finalI).getSWITCH4().publishDps("{\" 3\":false}", new IResultCallback() {
+//                                        @Override
+//                                        public void onError(String code, String error) {
+//
+//                                        }
+//                                        @Override
+//                                        public void onSuccess() {
+//                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("3").setValue(0);
+//                                        }
+//                                    });
+                                        }
+                                    }
+                                }
+                                @Override
+                                public void onCancelled(@NonNull DatabaseError error) {
+
+                                }
+                            })));
+                }
+                if (ROOMS.get(i).getSWITCH7_B().dps.get("4") != null) {
+                    RoomsDevicesReferencesListeners.add(new DatabaseReference_ValueEventListener(ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH7_B().name).child("4"),
+                            ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH7_B().name).child("4").addValueEventListener(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                    if (snapshot.getValue() != null) {
+                                        if (Integer.parseInt(snapshot.getValue().toString()) == 1) {
+                                            turnSwitchButtonOn(ROOMS.get(finalI).getSWITCH7_B(), "4", new CallbackResult() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH7_B().name).child("4").setValue(3);
+                                                }
+
+                                                @Override
+                                                public void onFail(String error) {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH7_B().name).child("4").setValue(0);
+                                                    Toast.makeText(act,error,Toast.LENGTH_LONG).show();
+                                                }
+                                            });
+//                                    ROOMS.get(finalI).getSWITCH3().publishDps("{\" 4\":true}", new IResultCallback() {
+//                                        @Override
+//                                        public void onError(String code, String error) {
+//
+//                                        }
+//                                        @Override
+//                                        public void onSuccess() {
+//                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("4").setValue(3);
+//                                        }
+//                                    });
+                                        }
+                                        if (Integer.parseInt(snapshot.getValue().toString()) == 2) {
+                                            turnSwitchButtonOff(ROOMS.get(finalI).getSWITCH7_B(), "4", new CallbackResult() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH7_B().name).child("4").setValue(0);
+                                                }
+
+                                                @Override
+                                                public void onFail(String error) {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH7_B().name).child("4").setValue(3);
+                                                    Toast.makeText(act,error,Toast.LENGTH_LONG).show();
+                                                }
+                                            });
+//                                    ROOMS.get(finalI).getSWITCH3().publishDps("{\" 4\":false}", new IResultCallback() {
+//                                        @Override
+//                                        public void onError(String code, String error) {
+//
+//                                        }
+//                                        @Override
+//                                        public void onSuccess() {
+//                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("4").setValue(0);
+//                                        }
+//                                    });
+                                        }
+                                    }
+                                }
+                                @Override
+                                public void onCancelled(@NonNull DatabaseError error) {
+
+                                }
+                            })));
+                }
+            }
+            if (ROOMS.get(i).getSWITCH8_B() != null && ROOMS.get(i).getSWITCH8() != null) {
+                if (ROOMS.get(i).getSWITCH8_B().dps.get("1") != null) {
+                    RoomsDevicesReferencesListeners.add(new DatabaseReference_ValueEventListener(ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH8_B().name).child("1"),
+                            ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH8_B().name).child("1").addValueEventListener(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                    if (snapshot.getValue() != null) {
+                                        if (Integer.parseInt(snapshot.getValue().toString()) == 1) {
+                                            turnSwitchButtonOn(ROOMS.get(finalI).getSWITCH8_B(), "1", new CallbackResult() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH8_B().name).child("1").setValue(3);
+                                                }
+
+                                                @Override
+                                                public void onFail(String error) {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH8_B().name).child("1").setValue(0);
+                                                    Toast.makeText(act,error,Toast.LENGTH_LONG).show();
+                                                }
+                                            });
+//                                    ROOMS.get(finalI).getSWITCH4().publishDps("{\" 1\":true}", new IResultCallback() {
+//                                        @Override
+//                                        public void onError(String code, String error) {
+//
+//                                        }
+//                                        @Override
+//                                        public void onSuccess() {
+//                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("1").setValue(3);
+//                                        }
+//                                    });
+                                        }
+                                        if (Integer.parseInt(snapshot.getValue().toString()) == 2) {
+                                            turnSwitchButtonOff(ROOMS.get(finalI).getSWITCH8_B(), "1", new CallbackResult() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH8_B().name).child("1").setValue(0);
+                                                }
+
+                                                @Override
+                                                public void onFail(String error) {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH8_B().name).child("1").setValue(3);
+                                                    Toast.makeText(act,error,Toast.LENGTH_LONG).show();
+                                                }
+                                            });
+//                                    ROOMS.get(finalI).getSWITCH4().publishDps("{\" 1\":false}", new IResultCallback() {
+//                                        @Override
+//                                        public void onError(String code, String error) {
+//
+//                                        }
+//                                        @Override
+//                                        public void onSuccess() {
+//                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("1").setValue(0);
+//                                        }
+//                                    });
+                                        }
+                                    }
+                                }
+                                @Override
+                                public void onCancelled(@NonNull DatabaseError error) {
+
+                                }
+                            })));
+                }
+                if (ROOMS.get(i).getSWITCH8_B().dps.get("2") != null) {
+                    RoomsDevicesReferencesListeners.add(new DatabaseReference_ValueEventListener(ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH8_B().name).child("2"),
+                            ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH8_B().name).child("2").addValueEventListener(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                    if (snapshot.getValue() != null) {
+                                        if (Integer.parseInt(snapshot.getValue().toString()) == 1) {
+                                            turnSwitchButtonOn(ROOMS.get(finalI).getSWITCH8_B(), "2", new CallbackResult() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH8_B().name).child("2").setValue(3);
+                                                }
+
+                                                @Override
+                                                public void onFail(String error) {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH8_B().name).child("2").setValue(0);
+                                                    Toast.makeText(act,error,Toast.LENGTH_LONG).show();
+                                                }
+                                            });
+//                                    ROOMS.get(finalI).getSWITCH4().publishDps("{\" 2\":true}", new IResultCallback() {
+//                                        @Override
+//                                        public void onError(String code, String error) {
+//
+//                                        }
+//                                        @Override
+//                                        public void onSuccess() {
+//                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("2").setValue(3);
+//                                        }
+//                                    });
+                                        }
+                                        if (Integer.parseInt(snapshot.getValue().toString()) == 2) {
+                                            turnSwitchButtonOff(ROOMS.get(finalI).getSWITCH8_B(), "2", new CallbackResult() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH8_B().name).child("2").setValue(0);
+                                                }
+
+                                                @Override
+                                                public void onFail(String error) {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH8_B().name).child("2").setValue(3);
+                                                    Toast.makeText(act,error,Toast.LENGTH_LONG).show();
+                                                }
+                                            });
+                                            ROOMS.get(finalI).getSWITCH8().publishDps("{\" 2\":false}", new IResultCallback() {
+                                                @Override
+                                                public void onError(String code, String error) {
+
+                                                }
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH8_B().name).child("2").setValue(0);
+                                                }
+                                            });
+                                        }
+                                    }
+                                }
+                                @Override
+                                public void onCancelled(@NonNull DatabaseError error) {
+
+                                }
+                            })));
+                }
+                if (ROOMS.get(i).getSWITCH8_B().dps.get("3") != null) {
+                    RoomsDevicesReferencesListeners.add(new DatabaseReference_ValueEventListener(ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH8_B().name).child("3"),
+                            ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH8_B().name).child("3").addValueEventListener(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                    if (snapshot.getValue() != null) {
+                                        if (Integer.parseInt(snapshot.getValue().toString()) == 1) {
+                                            turnSwitchButtonOn(ROOMS.get(finalI).getSWITCH8_B(), "3", new CallbackResult() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH8_B().name).child("3").setValue(3);
+                                                }
+
+                                                @Override
+                                                public void onFail(String error) {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH8_B().name).child("3").setValue(0);
+                                                    Toast.makeText(act,error,Toast.LENGTH_LONG).show();
+                                                }
+                                            });
+//                                    ROOMS.get(finalI).getSWITCH4().publishDps("{\" 3\":true}", new IResultCallback() {
+//                                        @Override
+//                                        public void onError(String code, String error) {
+//
+//                                        }
+//                                        @Override
+//                                        public void onSuccess() {
+//                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("3").setValue(3);
+//                                        }
+//                                    });
+                                        }
+                                        if (Integer.parseInt(snapshot.getValue().toString()) == 2) {
+                                            turnSwitchButtonOff(ROOMS.get(finalI).getSWITCH8_B(), "3", new CallbackResult() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH8_B().name).child("3").setValue(0);
+                                                }
+
+                                                @Override
+                                                public void onFail(String error) {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH8_B().name).child("3").setValue(3);
+                                                    Toast.makeText(act,error,Toast.LENGTH_LONG).show();
+                                                }
+                                            });
+//                                    ROOMS.get(finalI).getSWITCH4().publishDps("{\" 3\":false}", new IResultCallback() {
+//                                        @Override
+//                                        public void onError(String code, String error) {
+//
+//                                        }
+//                                        @Override
+//                                        public void onSuccess() {
+//                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("3").setValue(0);
+//                                        }
+//                                    });
+                                        }
+                                    }
+                                }
+                                @Override
+                                public void onCancelled(@NonNull DatabaseError error) {
+
+                                }
+                            })));
+                }
+                if (ROOMS.get(i).getSWITCH8_B().dps.get("4") != null) {
+                    RoomsDevicesReferencesListeners.add(new DatabaseReference_ValueEventListener(ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH8_B().name).child("4"),
+                            ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getSWITCH8_B().name).child("4").addValueEventListener(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                    if (snapshot.getValue() != null) {
+                                        if (Integer.parseInt(snapshot.getValue().toString()) == 1) {
+                                            turnSwitchButtonOn(ROOMS.get(finalI).getSWITCH8_B(), "4", new CallbackResult() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH8_B().name).child("4").setValue(3);
+                                                }
+
+                                                @Override
+                                                public void onFail(String error) {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH8_B().name).child("4").setValue(0);
+                                                    Toast.makeText(act,error,Toast.LENGTH_LONG).show();
+                                                }
+                                            });
+//                                    ROOMS.get(finalI).getSWITCH3().publishDps("{\" 4\":true}", new IResultCallback() {
+//                                        @Override
+//                                        public void onError(String code, String error) {
+//
+//                                        }
+//                                        @Override
+//                                        public void onSuccess() {
+//                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("4").setValue(3);
+//                                        }
+//                                    });
+                                        }
+                                        if (Integer.parseInt(snapshot.getValue().toString()) == 2) {
+                                            turnSwitchButtonOff(ROOMS.get(finalI).getSWITCH8_B(), "4", new CallbackResult() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH8_B().name).child("4").setValue(0);
+                                                }
+
+                                                @Override
+                                                public void onFail(String error) {
+                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH8_B().name).child("4").setValue(3);
+                                                    Toast.makeText(act,error,Toast.LENGTH_LONG).show();
+                                                }
+                                            });
+//                                    ROOMS.get(finalI).getSWITCH3().publishDps("{\" 4\":false}", new IResultCallback() {
+//                                        @Override
+//                                        public void onError(String code, String error) {
+//
+//                                        }
+//                                        @Override
+//                                        public void onSuccess() {
+//                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getSWITCH4_B().name).child("4").setValue(0);
+//                                        }
+//                                    });
+                                        }
+                                    }
+                                }
+                                @Override
+                                public void onCancelled(@NonNull DatabaseError error) {
+
+                                }
+                            })));
                 }
             }
             if (ROOMS.get(i).getAC_B() != null && ROOMS.get(i).getAC() != null) {
@@ -3657,99 +5642,102 @@ public class Rooms extends AppCompatActivity
                                 else {
                                     ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getAC_B().name).child(String.valueOf(PowerId)).setValue(0);
                                 }
-                                ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getAC_B().name).child(String.valueOf(PowerId)).addValueEventListener(new ValueEventListener() {
-                                    @Override
-                                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-                                        if (snapshot.getValue() != null) {
-                                            if (Integer.parseInt(snapshot.getValue().toString()) == 1) {
-                                                ROOMS.get(finalI).getAC().publishDps("{\" "+ finalPowerId +"\":true}", new IResultCallback() {
-                                                    @Override
-                                                    public void onError(String code, String error) {
-                                                        ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getAC_B().name).child(String.valueOf(finalPowerId)).setValue(0);
+                                RoomsDevicesReferencesListeners.add(new DatabaseReference_ValueEventListener(ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getAC_B().name).child(String.valueOf(PowerId)),
+                                        ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getAC_B().name).child(String.valueOf(PowerId)).addValueEventListener(new ValueEventListener() {
+                                            @Override
+                                            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                                if (snapshot.getValue() != null) {
+                                                    if (Integer.parseInt(snapshot.getValue().toString()) == 1) {
+                                                        ROOMS.get(finalI).getAC().publishDps("{\" "+ finalPowerId +"\":true}",TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
+                                                            @Override
+                                                            public void onError(String code, String error) {
+                                                                ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getAC_B().name).child(String.valueOf(finalPowerId)).setValue(0);
+                                                            }
+                                                            @Override
+                                                            public void onSuccess() {
+                                                                ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getAC_B().name).child(String.valueOf(finalPowerId)).setValue(3);
+                                                            }
+                                                        });
                                                     }
-                                                    @Override
-                                                    public void onSuccess() {
-                                                        ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getAC_B().name).child(String.valueOf(finalPowerId)).setValue(3);
+                                                    if (Integer.parseInt(snapshot.getValue().toString()) == 2) {
+                                                        ROOMS.get(finalI).getAC().publishDps("{\" "+finalPowerId+"\":false}",TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
+                                                            @Override
+                                                            public void onError(String code, String error) {
+                                                                ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getAC_B().name).child(String.valueOf(finalPowerId)).setValue(3);
+                                                            }
+                                                            @Override
+                                                            public void onSuccess() {
+                                                                ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getAC_B().name).child(String.valueOf(finalPowerId)).setValue(0);
+                                                            }
+                                                        });
                                                     }
-                                                });
+                                                }
                                             }
-                                            if (Integer.parseInt(snapshot.getValue().toString()) == 2) {
-                                                ROOMS.get(finalI).getAC().publishDps("{\" "+finalPowerId+"\":false}", new IResultCallback() {
-                                                    @Override
-                                                    public void onError(String code, String error) {
-                                                        ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getAC_B().name).child(String.valueOf(finalPowerId)).setValue(3);
-                                                    }
-                                                    @Override
-                                                    public void onSuccess() {
-                                                        ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getAC_B().name).child(String.valueOf(finalPowerId)).setValue(0);
-                                                    }
-                                                });
-                                            }
-                                        }
-                                    }
-                                    @Override
-                                    public void onCancelled(@NonNull DatabaseError error) {
+                                            @Override
+                                            public void onCancelled(@NonNull DatabaseError error) {
 
-                                    }
-                                });
+                                            }
+                                        })));
                             }
                         }
                         if (ROOMS.get(finalI).acVariables.TempSetDP != 0) {
                             if (ROOMS.get(finalI).getAC_B().dps.get(String.valueOf(SetId)) != null) {
                                 long finalSetId = SetId;
                                 ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getAC_B().name).child(String.valueOf(SetId)).setValue(Objects.requireNonNull(ROOMS.get(finalI).getAC_B().dps.get(String.valueOf(SetId))).toString());
-                                ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getAC_B().name).child(String.valueOf(SetId)).addValueEventListener(new ValueEventListener() {
-                                    @Override
-                                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-                                        if (snapshot.getValue() != null) {
-                                            Log.d("tempModify" , snapshot.getValue().toString());
-                                            int newTemp = Integer.parseInt(snapshot.getValue().toString());
-                                            ROOMS.get(finalI).getAC().publishDps("{\" "+ finalSetId +"\":"+newTemp+"}", new IResultCallback() {
-                                                @Override
-                                                public void onError(String code, String error) {
-                                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getAC_B().name).child(String.valueOf(finalSetId)).setValue(Integer.parseInt(Objects.requireNonNull(ROOMS.get(finalI).getAC_B().dps.get(String.valueOf(finalSetId))).toString()));
+                                RoomsDevicesReferencesListeners.add(new DatabaseReference_ValueEventListener(ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getAC_B().name).child(String.valueOf(SetId)),
+                                        ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getAC_B().name).child(String.valueOf(SetId)).addValueEventListener(new ValueEventListener() {
+                                            @Override
+                                            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                                if (snapshot.getValue() != null) {
+                                                    Log.d("tempModify" , snapshot.getValue().toString());
+                                                    int newTemp = Integer.parseInt(snapshot.getValue().toString());
+                                                    ROOMS.get(finalI).getAC().publishDps("{\" "+ finalSetId +"\":"+newTemp+"}",TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
+                                                        @Override
+                                                        public void onError(String code, String error) {
+                                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getAC_B().name).child(String.valueOf(finalSetId)).setValue(Integer.parseInt(Objects.requireNonNull(ROOMS.get(finalI).getAC_B().dps.get(String.valueOf(finalSetId))).toString()));
+                                                        }
+                                                        @Override
+                                                        public void onSuccess() {
+                                                        }
+                                                    });
                                                 }
-                                                @Override
-                                                public void onSuccess() {
-                                                }
-                                            });
-                                        }
-                                    }
-                                    @Override
-                                    public void onCancelled(@NonNull DatabaseError error) {
+                                            }
+                                            @Override
+                                            public void onCancelled(@NonNull DatabaseError error) {
 
-                                    }
-                                });
+                                            }
+                                        })));
                             }
                         }
                         if (ROOMS.get(finalI).acVariables.FanDP != 0) {
                             if (ROOMS.get(finalI).getAC_B().dps.get(String.valueOf(FanId)) != null) {
                                 long finalFanId = FanId;
-                                ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getAC_B().name).child(String.valueOf(FanId)).setValue(Objects.requireNonNull(ROOMS.get(finalI).getAC_B().dps.get(String.valueOf(FanId))).toString());
-                                ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getAC_B().name).child(String.valueOf(FanId)).addValueEventListener(new ValueEventListener() {
-                                    @Override
-                                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-                                        if (snapshot.getValue() != null) {
-                                            Log.d("fanModify" , snapshot.getValue().toString());
-                                            String value = snapshot.getValue().toString();
-                                            if (value.equals("high") || value.equals("med") || value.equals("low") || value.equals("auto") || value.equals("middle")) {
-                                                ROOMS.get(finalI).getAC().publishDps("{\" "+ finalFanId +"\":\""+value+"\"}", new IResultCallback() {
-                                                    @Override
-                                                    public void onError(String code, String error) {
-                                                        ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getAC_B().name).child(String.valueOf(finalFanId)).setValue(ROOMS.get(finalI).getAC_B().dps.get(String.valueOf(finalFanId)));
+                                RoomsDevicesReferencesListeners.add(new DatabaseReference_ValueEventListener(ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getAC_B().name).child(String.valueOf(FanId)),
+                                        ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getAC_B().name).child(String.valueOf(FanId)).addValueEventListener(new ValueEventListener() {
+                                            @Override
+                                            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                                if (snapshot.getValue() != null) {
+                                                    Log.d("fanModify" , snapshot.getValue().toString());
+                                                    String value = snapshot.getValue().toString();
+                                                    if (value.equals("high") || value.equals("med") || value.equals("low") || value.equals("auto") || value.equals("middle")) {
+                                                        ROOMS.get(finalI).getAC().publishDps("{\" "+ finalFanId +"\":\""+value+"\"}",TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
+                                                            @Override
+                                                            public void onError(String code, String error) {
+                                                                ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getAC_B().name).child(String.valueOf(finalFanId)).setValue(ROOMS.get(finalI).getAC_B().dps.get(String.valueOf(finalFanId)));
+                                                            }
+                                                            @Override
+                                                            public void onSuccess() {
+                                                            }
+                                                        });
                                                     }
-                                                    @Override
-                                                    public void onSuccess() {
-                                                    }
-                                                });
+                                                }
                                             }
-                                        }
-                                    }
-                                    @Override
-                                    public void onCancelled(@NonNull DatabaseError error) {
+                                            @Override
+                                            public void onCancelled(@NonNull DatabaseError error) {
 
-                                    }
-                                });
+                                            }
+                                        })));
+                                ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getAC_B().name).child(String.valueOf(FanId)).setValue(Objects.requireNonNull(ROOMS.get(finalI).getAC_B().dps.get(String.valueOf(FanId))).toString());
                             }
                         }
                     }
@@ -3761,36 +5749,46 @@ public class Rooms extends AppCompatActivity
                 });
             }
             if (ROOMS.get(i).getLOCK_B() != null && ROOMS.get(i).getLOCK() != null) {
-                ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getLOCK_B().name).child("1").addValueEventListener(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        if (snapshot.getValue() != null) {
-                            if (Integer.parseInt(snapshot.getValue().toString()) == 1) {
-                                OpenTheDoor(ROOMS.get(finalI), new RequestOrder() {
-                                    @Override
-                                    public void onSuccess(String token) {
-                                        ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getLOCK_B().name).child("1").setValue(0);
-                                    }
+                RoomsDevicesReferencesListeners.add(new DatabaseReference_ValueEventListener(ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getLOCK_B().name).child("1"),
+                        ProjectDevices.child(String.valueOf(ROOMS.get(i).RoomNumber)).child(ROOMS.get(i).getLOCK_B().name).child("1").addValueEventListener(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                if (snapshot.getValue() != null) {
+                                    if (Integer.parseInt(snapshot.getValue().toString()) == 1) {
+                                        OpenTheDoor(ROOMS.get(finalI), new RequestOrder() {
+                                            @Override
+                                            public void onSuccess(String token) {
+                                                ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getLOCK_B().name).child("1").setValue(0);
+                                            }
 
-                                    @Override
-                                    public void onFailed(String error) {
-                                        ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getLOCK_B().name).child("1").setValue(0);
+                                            @Override
+                                            public void onFailed(String error) {
+                                                ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getLOCK_B().name).child("1").setValue(0);
+                                            }
+                                        });
                                     }
-                                });
+                                }
                             }
-                        }
-                    }
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError error) {
+                            @Override
+                            public void onCancelled(@NonNull DatabaseError error) {
 
-                    }
-                });
+                            }
+                        })));
             }
         }
+        Log.d("refreshSystem","8 fire rooms listener");
+    }
+
+    static void removeFireRoomsDevicesListeners() {
+        for (DatabaseReference_ValueEventListener vel : RoomsDevicesReferencesListeners) {
+            vel.ref.removeEventListener(vel.listener);
+        }
+        Log.d("refreshSystem","2 remove fire rooms listener");
     }
 
     static void turnSwitchButtonOn(DeviceBean S,String B,CallbackResult c) {
-        TuyaHomeSdk.newDeviceInstance(S.devId).publishDps("{\"" + B + "\": true}", new IResultCallback() {
+        Log.d("powerActions",S.getIsOnline()+" "+S.getIsLocalOnline());
+        TuyaHomeSdk.newDeviceInstance(S.devId).publishDps("{\"" + B + "\": true}",TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
             @Override
             public void onError(String code, String error) {
                 c.onFail(error);
@@ -3804,7 +5802,7 @@ public class Rooms extends AppCompatActivity
     }
 
     static void turnSwitchButtonOff(DeviceBean S,String B,CallbackResult c) {
-        TuyaHomeSdk.newDeviceInstance(S.devId).publishDps("{\"" + B + "\": false}", new IResultCallback() {
+        TuyaHomeSdk.newDeviceInstance(S.devId).publishDps("{\"" + B + "\": false}",TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
             @Override
             public void onError(String code, String error) {
                 c.onFail(error);
@@ -3819,7 +5817,6 @@ public class Rooms extends AppCompatActivity
 
     public void setProjectVariablesListener() {
         Log.d("projectV","setListeners");
-        final int[] refreshCounter = {0};
         ProjectVariablesRef.child("CheckinModeActive").setValue(MyApp.ProjectVariables.CheckinModeActive);
         ProjectVariablesRef.child("CheckinModeActive").addValueEventListener(new ValueEventListener() {
             @Override
@@ -3998,7 +5995,6 @@ public class Rooms extends AppCompatActivity
         ProjectVariablesRef.child("RefreshSystemTime").addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-
                 if (snapshot.getValue() != null) {
                     Log.d("refreshSystem",snapshot.getValue().toString());
                     try {
@@ -4008,19 +6004,14 @@ public class Rooms extends AppCompatActivity
                         Log.d("refreshSystem",e.getMessage());
                     }
                 }
-                if (refreshCounter[0] > 0) {
-                    if (refreshSystemTime != 10) {
-                        refreshTimer.scheduleAtFixedRate(new TimerTask() {
-                            @Override
-                            public void run() {
-                                Log.d("refreshSystem","started");
-                                refreshSystem();
-                            }
-                        },0,1000*60*60*refreshSystemTime);
-                        Log.d("refreshSystem",refreshSystemTime+"");
+                refreshTimer.scheduleAtFixedRate(new TimerTask() {
+                    @Override
+                    public void run() {
+                        Log.d("refreshSystem","started");
+                        refreshSystem();
                     }
-                }
-                refreshCounter[0]++;
+                },1000*60*60*refreshSystemTime,1000*60*60*refreshSystemTime);
+                Log.d("refreshSystem",refreshSystemTime+"");
             }
 
             @Override
@@ -4034,6 +6025,7 @@ public class Rooms extends AppCompatActivity
         ServerDevice.child("roomsIds").addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
+                Log.d("rerunProblem" , Objects.requireNonNull(snapshot.getValue()).toString());
                 for (int i=0;i<ROOMS.size();i++) {
                     if (ROOMS.get(i).CleanupListener != null) {
                         ROOMS.get(i).getFireRoom().child("Cleanup").removeEventListener(ROOMS.get(i).CleanupListener);
@@ -4095,11 +6087,23 @@ public class Rooms extends AppCompatActivity
                     if (ROOMS.get(i).getSWITCH4() != null) {
                         ROOMS.get(i).getSWITCH4().unRegisterDevListener();
                     }
+                    if (ROOMS.get(i).getSWITCH5() != null) {
+                        ROOMS.get(i).getSWITCH5().unRegisterDevListener();
+                    }
+                    if (ROOMS.get(i).getSWITCH6() != null) {
+                        ROOMS.get(i).getSWITCH6().unRegisterDevListener();
+                    }
+                    if (ROOMS.get(i).getSWITCH7() != null) {
+                        ROOMS.get(i).getSWITCH7().unRegisterDevListener();
+                    }
+                    if (ROOMS.get(i).getSWITCH8() != null) {
+                        ROOMS.get(i).getSWITCH8().unRegisterDevListener();
+                    }
                     if (ROOMS.get(i).getCURTAIN() != null) {
                         ROOMS.get(i).getCURTAIN().unRegisterDevListener();
                     }
                 }
-                getRooms();
+                refreshSystem();
             }
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
@@ -4652,6 +6656,118 @@ public class Rooms extends AppCompatActivity
             REQ1.add(tabR);
     }
 
+    static void setSwitch5Status(String ids, String status) {
+        String url = MyApp.THE_PROJECT.url + "roomsManagement/modifyRoomsSwitch5Installed";
+        StringRequest tabR = new StringRequest(Request.Method.POST, url, response -> {
+            Log.e("switch5" , response);
+            try {
+                JSONObject res = new JSONObject(response);
+                if (res.getString("result").equals("success")) {
+                    Log.e("switch5" , "switch5 updated successfully");
+                }
+                else {
+                    Log.e("switch5" , "switch5 update failed "+res.getString("error"));
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+                Log.e("switch5" , "switch5 update failed "+ e);
+            }
+        }, error -> Log.e("switch5" , "switch5 update failed "+error.toString())) {
+            @Override
+            protected Map<String, String> getParams() {
+                Map<String,String> Params = new HashMap<>();
+                Params.put("room_ids", ids);
+                Params.put("room_status" , status);
+                return Params;
+            }
+        };
+        REQ1.add(tabR);
+    }
+
+    static void setSwitch6Status(String ids, String status) {
+        String url = MyApp.THE_PROJECT.url + "roomsManagement/modifyRoomsSwitch6Installed";
+        StringRequest tabR = new StringRequest(Request.Method.POST, url, response -> {
+            Log.e("switch6" , response);
+            try {
+                JSONObject res = new JSONObject(response);
+                if (res.getString("result").equals("success")) {
+                    Log.e("switch6" , "switch6 updated successfully");
+                }
+                else {
+                    Log.e("switch6" , "switch6 update failed "+res.getString("error"));
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+                Log.e("switch6" , "switch6 update failed "+ e);
+            }
+        }, error -> Log.e("switch6" , "switch6 update failed "+error.toString())) {
+            @Override
+            protected Map<String, String> getParams() {
+                Map<String,String> Params = new HashMap<>();
+                Params.put("room_ids", ids);
+                Params.put("room_status" , status);
+                return Params;
+            }
+        };
+        REQ1.add(tabR);
+    }
+
+    static void setSwitch7Status(String ids, String status) {
+        String url = MyApp.THE_PROJECT.url + "roomsManagement/modifyRoomsSwitch7Installed";
+        StringRequest tabR = new StringRequest(Request.Method.POST, url, response -> {
+            Log.e("switch7" , response);
+            try {
+                JSONObject res = new JSONObject(response);
+                if (res.getString("result").equals("success")) {
+                    Log.e("switch7" , "switch7 updated successfully");
+                }
+                else {
+                    Log.e("switch7" , "switch7 update failed "+res.getString("error"));
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+                Log.e("switch7" , "switch7 update failed "+ e);
+            }
+        }, error -> Log.e("switch7" , "switch7 update failed "+error.toString())) {
+            @Override
+            protected Map<String, String> getParams() {
+                Map<String,String> Params = new HashMap<>();
+                Params.put("room_ids", ids);
+                Params.put("room_status" , status);
+                return Params;
+            }
+        };
+        REQ1.add(tabR);
+    }
+
+    static void setSwitch8Status(String ids, String status) {
+        String url = MyApp.THE_PROJECT.url + "roomsManagement/modifyRoomsSwitch8Installed";
+        StringRequest tabR = new StringRequest(Request.Method.POST, url, response -> {
+            Log.e("switch8" , response);
+            try {
+                JSONObject res = new JSONObject(response);
+                if (res.getString("result").equals("success")) {
+                    Log.e("switch8" , "switch8 updated successfully");
+                }
+                else {
+                    Log.e("switch8" , "switch8 update failed "+res.getString("error"));
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+                Log.e("switch8" , "switch8 update failed "+ e);
+            }
+        }, error -> Log.e("switch8" , "switch8 update failed "+error.toString())) {
+            @Override
+            protected Map<String, String> getParams() {
+                Map<String,String> Params = new HashMap<>();
+                Params.put("room_ids", ids);
+                Params.put("room_status" , status);
+                return Params;
+            }
+        };
+        REQ1.add(tabR);
+    }
+
     static void setZBGatewayStatus(String ids , String status) {
             String url = MyApp.THE_PROJECT.url + "roomsManagement/modifyRoomsGatewayInstalled";
             StringRequest tabR = new StringRequest(Request.Method.POST, url, response -> {
@@ -4739,6 +6855,18 @@ public class Rooms extends AppCompatActivity
         if (S4UnInstalled != null) {
             setSwitch4Status(S4UnInstalled,"0");
         }
+        if (S5UnInstalled != null) {
+            setSwitch5Status(S5UnInstalled,"0");
+        }
+        if (S6UnInstalled != null) {
+            setSwitch6Status(S6UnInstalled,"0");
+        }
+        if (S7UnInstalled != null) {
+            setSwitch7Status(S7UnInstalled,"0");
+        }
+        if (S8UnInstalled != null) {
+            setSwitch8Status(S8UnInstalled,"0");
+        }
         if (CurtainUnInstalled != null) {
             setCurtainSwitchStatus(CurtainUnInstalled,"0");
         }
@@ -4775,6 +6903,18 @@ public class Rooms extends AppCompatActivity
         if (S4Installed != null) {
             setSwitch4Status(S4Installed,"1");
         }
+        if (S5Installed != null) {
+            setSwitch5Status(S5Installed,"1");
+        }
+        if (S6Installed != null) {
+            setSwitch6Status(S6Installed,"1");
+        }
+        if (S7Installed != null) {
+            setSwitch7Status(S7Installed,"1");
+        }
+        if (S8Installed != null) {
+            setSwitch8Status(S8Installed,"1");
+        }
         if (CurtainInstalled != null) {
             setCurtainSwitchStatus(CurtainInstalled,"1");
         }
@@ -4786,27 +6926,6 @@ public class Rooms extends AppCompatActivity
     static void setRoomOnlineOffline(ROOM room, String status) {
         room.getFireRoom().child("online").setValue(status);
         room.online = Integer.parseInt(status);
-//        String url = MyApp.THE_PROJECT.url + "reservations/setRoomOnlineOrOffline";
-//        StringRequest tabR = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
-//            @Override
-//            public void onResponse(String response) {
-//                Log.e("onlineChange" , response +" " + status);
-//            }
-//        }, new Response.ErrorListener() {
-//            @Override
-//            public void onErrorResponse(VolleyError error) {
-//                Log.e("onlineChange" , error.toString() +" " + status);
-//            }
-//        }) {
-//            @Override
-//            protected Map<String, String> getParams() throws AuthFailureError {
-//                Map<String,String> Params = new HashMap<>();
-//                Params.put("room_id", String.valueOf(room.id));
-//                Params.put("status" , status);
-//                return Params;
-//            }
-//        };
-//        Volley.newRequestQueue(act).add(tabR);
     }
 
     static void setClientInOrOut(ROOM room, String status) {
@@ -4874,7 +6993,7 @@ public class Rooms extends AppCompatActivity
             if (MyApp.checkInActions != null) {
                 if (MyApp.checkInActions.power) {
                     if (THE_ROOM.getPOWER_B() != null && THE_ROOM.getPOWER() != null) {
-                        THE_ROOM.getPOWER().publishDps("{\" 1\":true,\" 2\":true}", new IResultCallback() {
+                        THE_ROOM.getPOWER().publishDps("{\" 1\":true,\" 2\":true}",TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
                             @Override
                             public void onError(String code, String error) {
 
@@ -5088,7 +7207,7 @@ public class Rooms extends AppCompatActivity
                                 if (MyApp.checkInActions.curtain) {
                                     if (THE_ROOM.getCURTAIN_B() != null && THE_ROOM.getCURTAIN() != null) {
                                         if (THE_ROOM.getCURTAIN_B().dps.get("1") != null) {
-                                            THE_ROOM.getCURTAIN().publishDps("{\" 1\":true}", new IResultCallback() {
+                                            THE_ROOM.getCURTAIN().publishDps("{\" 1\":true}",TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
                                                 @Override
                                                 public void onError(String code, String error) {
 
@@ -5104,7 +7223,7 @@ public class Rooms extends AppCompatActivity
                                 if (MyApp.checkInActions.ac) {
                                     if (THE_ROOM.getAC_B() != null && THE_ROOM.getAC() != null) {
                                         if (THE_ROOM.getAC_B().dps.get("1") != null) {
-                                            THE_ROOM.getAC().publishDps("{\" 1\":true}", new IResultCallback() {
+                                            THE_ROOM.getAC().publishDps("{\" 1\":true}",TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
                                                 @Override
                                                 public void onError(String code, String error) {
 
@@ -5119,7 +7238,7 @@ public class Rooms extends AppCompatActivity
                                 }
                                 if (THE_ROOM.getPOWER_B().dps.get("8") != null) {
                                     int sec = MyApp.ProjectVariables.CheckinModeTime*60 ;
-                                    THE_ROOM.getPOWER().publishDps("{\" 8\":"+sec+"}", new IResultCallback() {
+                                    THE_ROOM.getPOWER().publishDps("{\" 8\":"+sec+"}",TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
                                         @Override
                                         public void onError(String code, String error) {
 
@@ -5132,7 +7251,7 @@ public class Rooms extends AppCompatActivity
                                 }
                                 else if (THE_ROOM.getPOWER_B().dps.get("10") != null) {
                                     int sec = MyApp.ProjectVariables.CheckinModeTime*60 ;
-                                    THE_ROOM.getPOWER().publishDps("{\" 10\":"+sec+"}", new IResultCallback() {
+                                    THE_ROOM.getPOWER().publishDps("{\" 10\":"+sec+"}",TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
                                         @Override
                                         public void onError(String code, String error) {
 
@@ -5158,7 +7277,7 @@ public class Rooms extends AppCompatActivity
                     if (THE_ROOM.getPOWER_B() != null && THE_ROOM.getPOWER() != null) {
                         if (MyApp.ProjectVariables.PoweroffAfterHK == 1) {
                             if (THE_ROOM.getPOWER_B().dps.get("8") != null) {
-                                THE_ROOM.getPOWER().publishDps("{\" 8\": "+(MyApp.ProjectVariables.CheckoutModeTime * 60)+"}", new IResultCallback() {
+                                THE_ROOM.getPOWER().publishDps("{\" 8\": "+(MyApp.ProjectVariables.CheckoutModeTime * 60)+"}",TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
                                     @Override
                                     public void onError(String code, String error) {
 
@@ -5171,7 +7290,7 @@ public class Rooms extends AppCompatActivity
                                 });
                             }
                             else if (THE_ROOM.getPOWER_B().dps.get("10") != null) {
-                                THE_ROOM.getPOWER().publishDps("{\" 10\": "+(MyApp.ProjectVariables.CheckoutModeTime * 60)+"}", new IResultCallback() {
+                                THE_ROOM.getPOWER().publishDps("{\" 10\": "+(MyApp.ProjectVariables.CheckoutModeTime * 60)+"}",TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
                                     @Override
                                     public void onError(String code, String error) {
 
@@ -5186,7 +7305,7 @@ public class Rooms extends AppCompatActivity
                         }
                         else if (MyApp.ProjectVariables.PoweroffAfterHK == 0) {
                             if (THE_ROOM.getPOWER_B().dps.get("8") != null) {
-                                THE_ROOM.getPOWER().publishDps("{\" 8\": "+(MyApp.ProjectVariables.CheckoutModeTime * 60)+" , \" 7\": "+(MyApp.ProjectVariables.CheckoutModeTime * 60)+"}", new IResultCallback() {
+                                THE_ROOM.getPOWER().publishDps("{\" 8\": "+(MyApp.ProjectVariables.CheckoutModeTime * 60)+" , \" 7\": "+(MyApp.ProjectVariables.CheckoutModeTime * 60)+"}",TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
                                     @Override
                                     public void onError(String code, String error) {
 
@@ -5199,7 +7318,7 @@ public class Rooms extends AppCompatActivity
                                 });
                             }
                             else if (THE_ROOM.getPOWER_B().dps.get("10") != null) {
-                                THE_ROOM.getPOWER().publishDps("{\" 10\": "+(MyApp.ProjectVariables.CheckoutModeTime * 60)+" , \" 9\": "+(MyApp.ProjectVariables.CheckoutModeTime * 60)+"}", new IResultCallback() {
+                                THE_ROOM.getPOWER().publishDps("{\" 10\": "+(MyApp.ProjectVariables.CheckoutModeTime * 60)+" , \" 9\": "+(MyApp.ProjectVariables.CheckoutModeTime * 60)+"}",TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
                                     @Override
                                     public void onError(String code, String error) {
 
@@ -5223,7 +7342,7 @@ public class Rooms extends AppCompatActivity
                                     if (MyApp.checkOutActions.lights) {
                                         if (THE_ROOM.getSWITCH1_B() != null && THE_ROOM.getSWITCH1() != null) {
                                             if (THE_ROOM.getSWITCH1_B().dps.get("1") != null) {
-                                                THE_ROOM.getSWITCH1().publishDps("{\" 1\":false}", new IResultCallback() {
+                                                THE_ROOM.getSWITCH1().publishDps("{\" 1\":false}",TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
                                                     @Override
                                                     public void onError(String code, String error) {
 
@@ -5235,7 +7354,7 @@ public class Rooms extends AppCompatActivity
                                                 });
                                             }
                                             if (THE_ROOM.getSWITCH1_B().dps.get("2") != null) {
-                                                THE_ROOM.getSWITCH1().publishDps("{\" 2\":false}", new IResultCallback() {
+                                                THE_ROOM.getSWITCH1().publishDps("{\" 2\":false}",TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
                                                     @Override
                                                     public void onError(String code, String error) {
 
@@ -5247,7 +7366,7 @@ public class Rooms extends AppCompatActivity
                                                 });
                                             }
                                             if (THE_ROOM.getSWITCH1_B().dps.get("3") != null) {
-                                                THE_ROOM.getSWITCH1().publishDps("{\" 3\":false}", new IResultCallback() {
+                                                THE_ROOM.getSWITCH1().publishDps("{\" 3\":false}",TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
                                                     @Override
                                                     public void onError(String code, String error) {
 
@@ -5259,7 +7378,7 @@ public class Rooms extends AppCompatActivity
                                                 });
                                             }
                                             if (THE_ROOM.getSWITCH1_B().dps.get("4") != null) {
-                                                THE_ROOM.getSWITCH1().publishDps("{\" 4\":false}", new IResultCallback() {
+                                                THE_ROOM.getSWITCH1().publishDps("{\" 4\":false}",TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
                                                     @Override
                                                     public void onError(String code, String error) {
 
@@ -5273,7 +7392,7 @@ public class Rooms extends AppCompatActivity
                                         }
                                         if (THE_ROOM.getSWITCH2_B() != null && THE_ROOM.getSWITCH2() != null) {
                                             if (THE_ROOM.getSWITCH2_B().dps.get("1") != null) {
-                                                THE_ROOM.getSWITCH2().publishDps("{\" 1\":false}", new IResultCallback() {
+                                                THE_ROOM.getSWITCH2().publishDps("{\" 1\":false}",TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
                                                     @Override
                                                     public void onError(String code, String error) {
 
@@ -5285,7 +7404,7 @@ public class Rooms extends AppCompatActivity
                                                 });
                                             }
                                             if (THE_ROOM.getSWITCH2_B().dps.get("2") != null) {
-                                                THE_ROOM.getSWITCH2().publishDps("{\" 2\":false}", new IResultCallback() {
+                                                THE_ROOM.getSWITCH2().publishDps("{\" 2\":false}",TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
                                                     @Override
                                                     public void onError(String code, String error) {
 
@@ -5297,7 +7416,7 @@ public class Rooms extends AppCompatActivity
                                                 });
                                             }
                                             if (THE_ROOM.getSWITCH2_B().dps.get("3") != null) {
-                                                THE_ROOM.getSWITCH2().publishDps("{\" 3\":false}", new IResultCallback() {
+                                                THE_ROOM.getSWITCH2().publishDps("{\" 3\":false}",TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
                                                     @Override
                                                     public void onError(String code, String error) {
 
@@ -5309,7 +7428,7 @@ public class Rooms extends AppCompatActivity
                                                 });
                                             }
                                             if (THE_ROOM.getSWITCH2_B().dps.get("4") != null) {
-                                                THE_ROOM.getSWITCH2().publishDps("{\" 4\":false}", new IResultCallback() {
+                                                THE_ROOM.getSWITCH2().publishDps("{\" 4\":false}",TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
                                                     @Override
                                                     public void onError(String code, String error) {
 
@@ -5323,7 +7442,7 @@ public class Rooms extends AppCompatActivity
                                         }
                                         if (THE_ROOM.getSWITCH3_B() != null && THE_ROOM.getSWITCH3() != null) {
                                             if (THE_ROOM.getSWITCH3_B().dps.get("1") != null) {
-                                                THE_ROOM.getSWITCH3().publishDps("{\" 1\":false}", new IResultCallback() {
+                                                THE_ROOM.getSWITCH3().publishDps("{\" 1\":false}",TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
                                                     @Override
                                                     public void onError(String code, String error) {
 
@@ -5335,7 +7454,7 @@ public class Rooms extends AppCompatActivity
                                                 });
                                             }
                                             if (THE_ROOM.getSWITCH3_B().dps.get("2") != null) {
-                                                THE_ROOM.getSWITCH3().publishDps("{\" 2\":false}", new IResultCallback() {
+                                                THE_ROOM.getSWITCH3().publishDps("{\" 2\":false}",TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
                                                     @Override
                                                     public void onError(String code, String error) {
 
@@ -5347,7 +7466,7 @@ public class Rooms extends AppCompatActivity
                                                 });
                                             }
                                             if (THE_ROOM.getSWITCH3_B().dps.get("3") != null) {
-                                                THE_ROOM.getSWITCH3().publishDps("{\" 3\":false}", new IResultCallback() {
+                                                THE_ROOM.getSWITCH3().publishDps("{\" 3\":false}",TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
                                                     @Override
                                                     public void onError(String code, String error) {
 
@@ -5359,7 +7478,7 @@ public class Rooms extends AppCompatActivity
                                                 });
                                             }
                                             if (THE_ROOM.getSWITCH3_B().dps.get("4") != null) {
-                                                THE_ROOM.getSWITCH3().publishDps("{\" 4\":false}", new IResultCallback() {
+                                                THE_ROOM.getSWITCH3().publishDps("{\" 4\":false}",TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
                                                     @Override
                                                     public void onError(String code, String error) {
 
@@ -5373,7 +7492,7 @@ public class Rooms extends AppCompatActivity
                                         }
                                         if (THE_ROOM.getSWITCH4_B() != null && THE_ROOM.getSWITCH4() != null) {
                                             if (THE_ROOM.getSWITCH4_B().dps.get("1") != null) {
-                                                THE_ROOM.getSWITCH4().publishDps("{\" 1\":false}", new IResultCallback() {
+                                                THE_ROOM.getSWITCH4().publishDps("{\" 1\":false}",TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
                                                     @Override
                                                     public void onError(String code, String error) {
 
@@ -5385,7 +7504,7 @@ public class Rooms extends AppCompatActivity
                                                 });
                                             }
                                             if (THE_ROOM.getSWITCH4_B().dps.get("2") != null) {
-                                                THE_ROOM.getSWITCH4().publishDps("{\" 2\":false}", new IResultCallback() {
+                                                THE_ROOM.getSWITCH4().publishDps("{\" 2\":false}",TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
                                                     @Override
                                                     public void onError(String code, String error) {
 
@@ -5397,7 +7516,7 @@ public class Rooms extends AppCompatActivity
                                                 });
                                             }
                                             if (THE_ROOM.getSWITCH4_B().dps.get("3") != null) {
-                                                THE_ROOM.getSWITCH4().publishDps("{\" 3\":false}", new IResultCallback() {
+                                                THE_ROOM.getSWITCH4().publishDps("{\" 3\":false}",TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
                                                     @Override
                                                     public void onError(String code, String error) {
 
@@ -5409,7 +7528,207 @@ public class Rooms extends AppCompatActivity
                                                 });
                                             }
                                             if (THE_ROOM.getSWITCH4_B().dps.get("4") != null) {
-                                                THE_ROOM.getSWITCH4().publishDps("{\" 4\":false}", new IResultCallback() {
+                                                THE_ROOM.getSWITCH4().publishDps("{\" 4\":false}",TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
+                                                    @Override
+                                                    public void onError(String code, String error) {
+
+                                                    }
+                                                    @Override
+                                                    public void onSuccess() {
+
+                                                    }
+                                                });
+                                            }
+                                        }
+                                        if (THE_ROOM.getSWITCH5_B() != null && THE_ROOM.getSWITCH5() != null) {
+                                            if (THE_ROOM.getSWITCH5_B().dps.get("1") != null) {
+                                                THE_ROOM.getSWITCH5().publishDps("{\" 1\":false}",TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
+                                                    @Override
+                                                    public void onError(String code, String error) {
+
+                                                    }
+                                                    @Override
+                                                    public void onSuccess() {
+
+                                                    }
+                                                });
+                                            }
+                                            if (THE_ROOM.getSWITCH5_B().dps.get("2") != null) {
+                                                THE_ROOM.getSWITCH5().publishDps("{\" 2\":false}",TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
+                                                    @Override
+                                                    public void onError(String code, String error) {
+
+                                                    }
+                                                    @Override
+                                                    public void onSuccess() {
+
+                                                    }
+                                                });
+                                            }
+                                            if (THE_ROOM.getSWITCH5_B().dps.get("3") != null) {
+                                                THE_ROOM.getSWITCH5().publishDps("{\" 3\":false}",TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
+                                                    @Override
+                                                    public void onError(String code, String error) {
+
+                                                    }
+                                                    @Override
+                                                    public void onSuccess() {
+
+                                                    }
+                                                });
+                                            }
+                                            if (THE_ROOM.getSWITCH5_B().dps.get("4") != null) {
+                                                THE_ROOM.getSWITCH5().publishDps("{\" 4\":false}",TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
+                                                    @Override
+                                                    public void onError(String code, String error) {
+
+                                                    }
+                                                    @Override
+                                                    public void onSuccess() {
+
+                                                    }
+                                                });
+                                            }
+                                        }
+                                        if (THE_ROOM.getSWITCH6_B() != null && THE_ROOM.getSWITCH6() != null) {
+                                            if (THE_ROOM.getSWITCH6_B().dps.get("1") != null) {
+                                                THE_ROOM.getSWITCH6().publishDps("{\" 1\":false}",TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
+                                                    @Override
+                                                    public void onError(String code, String error) {
+
+                                                    }
+                                                    @Override
+                                                    public void onSuccess() {
+
+                                                    }
+                                                });
+                                            }
+                                            if (THE_ROOM.getSWITCH6_B().dps.get("2") != null) {
+                                                THE_ROOM.getSWITCH6().publishDps("{\" 2\":false}",TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
+                                                    @Override
+                                                    public void onError(String code, String error) {
+
+                                                    }
+                                                    @Override
+                                                    public void onSuccess() {
+
+                                                    }
+                                                });
+                                            }
+                                            if (THE_ROOM.getSWITCH6_B().dps.get("3") != null) {
+                                                THE_ROOM.getSWITCH6().publishDps("{\" 3\":false}",TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
+                                                    @Override
+                                                    public void onError(String code, String error) {
+
+                                                    }
+                                                    @Override
+                                                    public void onSuccess() {
+
+                                                    }
+                                                });
+                                            }
+                                            if (THE_ROOM.getSWITCH6_B().dps.get("4") != null) {
+                                                THE_ROOM.getSWITCH6().publishDps("{\" 4\":false}",TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
+                                                    @Override
+                                                    public void onError(String code, String error) {
+
+                                                    }
+                                                    @Override
+                                                    public void onSuccess() {
+
+                                                    }
+                                                });
+                                            }
+                                        }
+                                        if (THE_ROOM.getSWITCH7_B() != null && THE_ROOM.getSWITCH7() != null) {
+                                            if (THE_ROOM.getSWITCH7_B().dps.get("1") != null) {
+                                                THE_ROOM.getSWITCH7().publishDps("{\" 1\":false}",TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
+                                                    @Override
+                                                    public void onError(String code, String error) {
+
+                                                    }
+                                                    @Override
+                                                    public void onSuccess() {
+
+                                                    }
+                                                });
+                                            }
+                                            if (THE_ROOM.getSWITCH7_B().dps.get("2") != null) {
+                                                THE_ROOM.getSWITCH7().publishDps("{\" 2\":false}",TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
+                                                    @Override
+                                                    public void onError(String code, String error) {
+
+                                                    }
+                                                    @Override
+                                                    public void onSuccess() {
+
+                                                    }
+                                                });
+                                            }
+                                            if (THE_ROOM.getSWITCH7_B().dps.get("3") != null) {
+                                                THE_ROOM.getSWITCH7().publishDps("{\" 3\":false}",TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
+                                                    @Override
+                                                    public void onError(String code, String error) {
+
+                                                    }
+                                                    @Override
+                                                    public void onSuccess() {
+
+                                                    }
+                                                });
+                                            }
+                                            if (THE_ROOM.getSWITCH7_B().dps.get("4") != null) {
+                                                THE_ROOM.getSWITCH7().publishDps("{\" 4\":false}",TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
+                                                    @Override
+                                                    public void onError(String code, String error) {
+
+                                                    }
+                                                    @Override
+                                                    public void onSuccess() {
+
+                                                    }
+                                                });
+                                            }
+                                        }
+                                        if (THE_ROOM.getSWITCH8_B() != null && THE_ROOM.getSWITCH8() != null) {
+                                            if (THE_ROOM.getSWITCH8_B().dps.get("1") != null) {
+                                                THE_ROOM.getSWITCH8().publishDps("{\" 1\":false}",TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
+                                                    @Override
+                                                    public void onError(String code, String error) {
+
+                                                    }
+                                                    @Override
+                                                    public void onSuccess() {
+
+                                                    }
+                                                });
+                                            }
+                                            if (THE_ROOM.getSWITCH8_B().dps.get("2") != null) {
+                                                THE_ROOM.getSWITCH8().publishDps("{\" 2\":false}",TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
+                                                    @Override
+                                                    public void onError(String code, String error) {
+
+                                                    }
+                                                    @Override
+                                                    public void onSuccess() {
+
+                                                    }
+                                                });
+                                            }
+                                            if (THE_ROOM.getSWITCH8_B().dps.get("3") != null) {
+                                                THE_ROOM.getSWITCH8().publishDps("{\" 3\":false}",TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
+                                                    @Override
+                                                    public void onError(String code, String error) {
+
+                                                    }
+                                                    @Override
+                                                    public void onSuccess() {
+
+                                                    }
+                                                });
+                                            }
+                                            if (THE_ROOM.getSWITCH8_B().dps.get("4") != null) {
+                                                THE_ROOM.getSWITCH8().publishDps("{\" 4\":false}",TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
                                                     @Override
                                                     public void onError(String code, String error) {
 
@@ -5425,7 +7744,7 @@ public class Rooms extends AppCompatActivity
                                     if (MyApp.checkOutActions.ac) {
                                         if (THE_ROOM.getAC_B() != null && THE_ROOM.getAC() != null) {
                                             if (THE_ROOM.getAC_B().dps.get("1") != null) {
-                                                THE_ROOM.getAC().publishDps("{\" 1\":false}", new IResultCallback() {
+                                                THE_ROOM.getAC().publishDps("{\" 1\":false}",TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
                                                     @Override
                                                     public void onError(String code, String error) {
 
@@ -5441,7 +7760,7 @@ public class Rooms extends AppCompatActivity
                                     if (MyApp.checkOutActions.curtain) {
                                         if (THE_ROOM.getCURTAIN_B() != null && THE_ROOM.getCURTAIN() != null) {
                                             if (THE_ROOM.getCURTAIN_B().dps.get("1") != null) {
-                                                THE_ROOM.getCURTAIN().publishDps("{\" 1\":false}", new IResultCallback() {
+                                                THE_ROOM.getCURTAIN().publishDps("{\" 1\":false}",TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
                                                     @Override
                                                     public void onError(String code, String error) {
 
@@ -5936,7 +8255,10 @@ public class Rooms extends AppCompatActivity
                     return params;
                 }
             };
-            Volley.newRequestQueue(act).add(req);
+            if (REQ == null) {
+                REQ = Volley.newRequestQueue(act);
+            }
+            REQ.add(req);
         }
     }
 
@@ -6687,6 +9009,26 @@ public class Rooms extends AppCompatActivity
                         d = r.getSWITCH4_B() ;
                     }
                 }
+                if (r.getSWITCH5_B() != null) {
+                    if (s.getConditions().get(0).getEntityId().equals(r.getSWITCH5_B().devId)) {
+                        d = r.getSWITCH5_B() ;
+                    }
+                }
+                if (r.getSWITCH6_B() != null) {
+                    if (s.getConditions().get(0).getEntityId().equals(r.getSWITCH6_B().devId)) {
+                        d = r.getSWITCH6_B() ;
+                    }
+                }
+                if (r.getSWITCH7_B() != null) {
+                    if (s.getConditions().get(0).getEntityId().equals(r.getSWITCH7_B().devId)) {
+                        d = r.getSWITCH7_B() ;
+                    }
+                }
+                if (r.getSWITCH8_B() != null) {
+                    if (s.getConditions().get(0).getEntityId().equals(r.getSWITCH8_B().devId)) {
+                        d = r.getSWITCH8_B() ;
+                    }
+                }
             }
             else {
                 Log.d("checkinModeTest" , "cond 0 null");
@@ -6754,6 +9096,99 @@ public class Rooms extends AppCompatActivity
         String time = Calendar.getInstance(Locale.getDefault()).get(Calendar.YEAR)+"-"+month+"-"+Calendar.getInstance(Locale.getDefault()).get(Calendar.DAY_OF_MONTH)
                 +" "+Calendar.getInstance(Locale.getDefault()).get(Calendar.HOUR_OF_DAY)+":"+Calendar.getInstance(Locale.getDefault()).get(Calendar.MINUTE);
         TextView actionsNow = act.findViewById(R.id.textView26);
-        actionsNow.setText(action+" "+time);
+        actionsNow.setText(MessageFormat.format("{0}-{1}",action,time));
     }
+
+    void setServerDeviceRunningFunction() {
+        Handler h = new Handler();
+        Runnable r = new Runnable() {
+            @Override
+            public void run() {
+                h.postDelayed(this,1000*60);
+                long x = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
+                ServerDevice.child("working").setValue(x);
+            }
+        };
+        r.run();
+//        Timer T = new Timer();
+//        final long[] x = {0};
+//        T.scheduleAtFixedRate(new TimerTask() {
+//            @Override
+//            public void run() {
+//                ServerDevice.child("working").setValue(x[0]);
+//                x[0]++;
+//            }
+//        },0,1000*60);
+    }
+
+    static void logInFunction(PROJECT project,CallbackResult callback) {
+        String COUNTRY_CODE = "966";
+        TuyaHomeSdk.getUserInstance().loginWithEmail(COUNTRY_CODE,project.TuyaUser ,project.TuyaPassword , new ILoginCallback() {
+            @Override
+            public void onSuccess (User user) {
+                Log.d("tuyaLoginResp",project.projectName);
+                MyApp.TuyaUser = user ;
+                TuyaHomeSdk.getHomeManagerInstance().queryHomeList(new ITuyaGetHomeListCallback() {
+                    @Override
+                    public void onError(String errorCode, String error) {
+                        //Toast.makeText(act,"TUya Login Failed" + error,Toast.LENGTH_LONG).show();
+                        callback.onFail(error);
+                    }
+                    @Override
+                    public void onSuccess(List<HomeBean> homeBeans) {
+                        MyApp.homeBeans = homeBeans ;
+                        for(int i=0;i<MyApp.homeBeans.size();i++) {
+                            Log.d("tuyaLoginResp",MyApp.homeBeans.get(i).getName());
+                            if (MyApp.THE_PROJECT.projectName.equals("apiTest")) {
+                                if (MyApp.homeBeans.get(i).getName().equals("Test")) {
+                                    MyApp.HOME = MyApp.homeBeans.get(i) ;
+                                    break;
+                                }
+                            }
+                            else if (MyApp.THE_PROJECT.projectName.contains(MyApp.homeBeans.get(i).getName())) {
+                                MyApp.HOME = MyApp.homeBeans.get(i);
+                                break;
+                            }
+                        }
+                        callback.onSuccess();
+                    }
+                });
+            }
+
+            @Override
+            public void onError (String code, String error) {
+                Log.d("tuyaLoginResp",error+" "+code);
+                callback.onFail(error);
+            }
+        });
+    }
+
+    static void setTuyaApplication() {
+        Log.d("refreshSystem","1 app init");
+        TuyaHomeSdk.init(MyApp.app);
+        TuyaHomeSdk.setOnNeedLoginListener(context -> {
+            TuyaHomeSdk.init(MyApp.app);
+            logInFunction(MyApp.THE_PROJECT, new CallbackResult() {
+                @Override
+                public void onSuccess() {
+
+                }
+
+                @Override
+                public void onFail(String error) {
+
+                }
+            });
+        });
+    }
+}
+
+class DatabaseReference_ValueEventListener{
+    DatabaseReference ref;
+    ValueEventListener listener;
+    DatabaseReference_ValueEventListener(DatabaseReference ref,ValueEventListener listener) {
+        this.ref = ref;
+        this.listener = listener;
+    }
+
 }

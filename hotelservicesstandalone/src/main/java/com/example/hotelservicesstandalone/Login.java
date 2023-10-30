@@ -1,7 +1,6 @@
 package com.example.hotelservicesstandalone;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -12,26 +11,21 @@ import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
-import com.example.hotelservicesstandalone.TUYA.Tuya_Login;
 import com.tuya.smart.android.user.api.ILoginCallback;
 import com.tuya.smart.android.user.bean.User;
 import com.tuya.smart.home.sdk.TuyaHomeSdk;
 import com.tuya.smart.home.sdk.bean.HomeBean;
 import com.tuya.smart.home.sdk.callback.ITuyaGetHomeListCallback;
 import com.tuya.smart.home.sdk.callback.ITuyaHomeResultCallback;
-import com.tuya.smart.sdk.api.INeedLoginListener;
-import com.tuya.smart.sdk.api.IResultCallback;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -42,8 +36,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class Login extends AppCompatActivity
-{
+public class
+Login extends AppCompatActivity {
     private Spinner PROJECTS_SPINNER, homes;
     private String[] Names ;
     private Activity act = this ;
@@ -53,7 +47,7 @@ public class Login extends AppCompatActivity
     static HotelDB THEHOTELDB ;
     private List<HomeBean> Homs;
     public static HomeBean THEHOME ;
-    private String COUNTRY_CODE = "966";
+    private final String COUNTRY_CODE = "966";
     List<PROJECT> projects ;
     PROJECT THE_PROJECT ;
     SharedPreferences pref ;
@@ -64,7 +58,6 @@ public class Login extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.login);
-        setTuyaApplication();
         PROJECTS_SPINNER = findViewById(R.id.spinner);
         homes = findViewById(R.id.spinner2);
         pref = getSharedPreferences("MyProject", MODE_PRIVATE);
@@ -82,7 +75,6 @@ public class Login extends AppCompatActivity
                 Toast.makeText(act,"get projects failed",Toast.LENGTH_LONG).show();
             }
         });
-
     }
 
     private void getProjects(loginCallback callback) {
@@ -153,7 +145,9 @@ public class Login extends AppCompatActivity
                                 editor.putString("url" , THE_PROJECT.url);
                                 editor.apply();
                                 Device_ID = pref.getString("Device_Id", null);
+                                MyApp.Device_Id = Device_ID;
                                 Device_Name = pref.getString("Device_Name", null);
+                                MyApp.Device_Name = Device_Name;
                                 MyApp.my_token = resp.getString("token");
                                 if (Device_ID == null && Device_Name == null) {
                                     Log.d("deviceName" , "null");
@@ -191,9 +185,8 @@ public class Login extends AppCompatActivity
             })
             {
                 @Override
-                protected Map<String, String> getParams() throws AuthFailureError
-                {
-                    Map<String,String> par = new HashMap<String, String>();
+                protected Map<String, String> getParams() {
+                    Map<String,String> par = new HashMap<>();
                     par.put( "password" , pass ) ;
                     par.put( "project_name" , THE_PROJECT.projectName ) ;
                     return par;
@@ -221,7 +214,7 @@ public class Login extends AppCompatActivity
         }
         else {
             for (int i=0;i<projects.size();i++) {
-                Log.d("projects" , projects.get(i).projectName + " " +projectName);
+                //Log.d("projects" , projects.get(i).projectName + " " +projectName);
                 if (projectName.equals(projects.get(i).projectName)) {
                     THE_PROJECT = projects.get(i);
                     Log.d("projects" , THE_PROJECT.projectName +" here");
@@ -230,6 +223,7 @@ public class Login extends AppCompatActivity
                     Device_Name = pref.getString("Device_Name", null);
                     MyApp.Device_Name = Device_Name;
                     MyApp.THE_PROJECT = projects.get(i);
+                    Log.d("projects" , MyApp.Device_Id+" "+MyApp.Device_Name);
                     if (Device_ID == null && Device_Name == null) {
                         addControlDevice(new loginCallback() {
                             @Override
@@ -255,7 +249,7 @@ public class Login extends AppCompatActivity
             @Override
             public void onSuccess (User user) {
                 Log.d("tuyaLoginResp",project.projectName);
-                MyApp.TuyaUser = user ;
+                MyApp.TuyaUser = user;
                 TuyaHomeSdk.getHomeManagerInstance().queryHomeList(new ITuyaGetHomeListCallback() {
                     @Override
                     public void onError(String errorCode, String error) {
@@ -375,28 +369,6 @@ public class Login extends AppCompatActivity
             }
         });
         Volley.newRequestQueue(act).add(re);
-    }
-
-    void setTuyaApplication() {
-        TuyaHomeSdk.setDebugMode(true);
-        try {
-            TuyaHomeSdk.init(MyApp.app);
-            TuyaHomeSdk.setOnNeedLoginListener(new INeedLoginListener() {
-                @Override
-                public void onNeedLogin(Context context) {
-                    Intent intent = new Intent(context, Tuya_Login.class);
-                    if (!(context instanceof Activity)) {
-                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    }
-                    startActivity(intent);
-                }
-            });
-        }
-        catch (Exception e ) {
-            Log.d("TuyaError" , e.getMessage());
-        }
-
-
     }
 }
 

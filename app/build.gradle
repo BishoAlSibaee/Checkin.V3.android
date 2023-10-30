@@ -72,6 +72,7 @@ dependencies {
     implementation 'org.apache.commons:commons-collections4:4.4'
     implementation 'org.apache.commons:commons-lang3:3.9'
     implementation 'jakarta.xml.bind:jakarta.xml.bind-api:3.0.1'
+    implementation 'com.github.skydoves:balloon:1.2.9'
 }
 repositories {
     mavenLocal()

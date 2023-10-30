@@ -38,9 +38,9 @@ public class ScreenButtons extends AppCompatActivity {
         CurrentButtons = new ArrayList<>();
         Buttons = new ArrayList<>();
         Switches = new ArrayList<>();
-        CurrentButtonsRecycler = (RecyclerView) findViewById(R.id.currentButtonsRecycler);
-        SwitchesButtons = (RecyclerView) findViewById(R.id.buttonsRecycler);
-        SwitchesRecycler = (RecyclerView) findViewById(R.id.switchesRecycler);
+        CurrentButtonsRecycler = findViewById(R.id.currentButtonsRecycler);
+        SwitchesButtons = findViewById(R.id.buttonsRecycler);
+        SwitchesRecycler = findViewById(R.id.switchesRecycler);
         ButtonsManager = new LinearLayoutManager(act,RecyclerView.VERTICAL,false);
         CurrentManager = new LinearLayoutManager(act,RecyclerView.VERTICAL,false);
         SwitchesManager = new LinearLayoutManager(act,RecyclerView.VERTICAL,false);
@@ -63,6 +63,18 @@ public class ScreenButtons extends AppCompatActivity {
         }
         if (FullscreenActivity.THE_ROOM.getSWITCH4_B() != null ) {
             Switches.add(FullscreenActivity.THE_ROOM.getSWITCH4_B());
+        }
+        if (FullscreenActivity.THE_ROOM.getSWITCH5_B() != null ) {
+            Switches.add(FullscreenActivity.THE_ROOM.getSWITCH5_B());
+        }
+        if (FullscreenActivity.THE_ROOM.getSWITCH6_B() != null ) {
+            Switches.add(FullscreenActivity.THE_ROOM.getSWITCH6_B());
+        }
+        if (FullscreenActivity.THE_ROOM.getSWITCH7_B() != null ) {
+            Switches.add(FullscreenActivity.THE_ROOM.getSWITCH7_B());
+        }
+        if (FullscreenActivity.THE_ROOM.getSWITCH8_B() != null ) {
+            Switches.add(FullscreenActivity.THE_ROOM.getSWITCH8_B());
         }
         SwitchesAdapter = new ScreenButtonsSwitches_Adapter(Switches);
         SwitchesRecycler.setAdapter(SwitchesAdapter);

@@ -26,6 +26,7 @@ public class ROOMS extends AppCompatActivity {
         setContentView(R.layout.r_o_o_m_s);
         setActivity();
         setTheRooms();
+        Thread.setDefaultUncaughtExceptionHandler(new DefaultExceptionHandler(this));
     }
 
     void setActivity() {

@@ -23,7 +23,7 @@
                 android:paddingBottom="10dp"
                 android:text="Select Your Order"
                 android:textColor="@color/light_blue_A200"
-                android:textSize="18sp"
+                android:textSize="24sp"
                 android:textStyle="bold" />
 
             <LinearLayout
@@ -47,7 +47,7 @@
                         android:text="Slippers"
                         android:textAlignment="textStart"
                         android:textColor="@color/light_blue_A200"
-                        android:textSize="20sp"
+                        android:textSize="24sp"
                         android:textStyle="bold"
                         tools:ignore="TouchTargetSizeCheck" />
 
@@ -59,7 +59,7 @@
                         android:layout_weight="1"
                         android:text="Towels"
                         android:textColor="@color/light_blue_A200"
-                        android:textSize="20sp"
+                        android:textSize="24sp"
                         android:textStyle="bold"
                         tools:ignore="TouchTargetSizeCheck" />
                 </LinearLayout>
@@ -78,7 +78,7 @@
                         android:layout_weight="1"
                         android:text="Mini Bar"
                         android:textColor="@color/light_blue_A200"
-                        android:textSize="20sp"
+                        android:textSize="24sp"
                         android:textStyle="bold"
                         tools:ignore="TouchTargetSizeCheck" />
 
@@ -89,7 +89,7 @@
                         android:layout_weight="1"
                         android:text="Bathroom Set"
                         android:textColor="@color/light_blue_A200"
-                        android:textSize="20sp"
+                        android:textSize="24sp"
                         android:textStyle="bold"
                         tools:ignore="TouchTargetSizeCheck" />
                 </LinearLayout>
@@ -102,7 +102,7 @@
                     android:layout_marginTop="10dp"
                     android:text="Other"
                     android:textColor="@color/light_blue_A200"
-                    android:textSize="20sp"
+                    android:textSize="24sp"
                     android:textStyle="bold" />
 
             </LinearLayout>

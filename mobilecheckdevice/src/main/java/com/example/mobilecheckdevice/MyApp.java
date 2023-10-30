@@ -1,12 +1,10 @@
 package com.example.mobilecheckdevice;
 
-import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 
-import com.example.mobilecheckdevice.TUYA.Tuya_Login;
 import com.tuya.smart.android.user.bean.User;
 import com.tuya.smart.home.sdk.TuyaHomeSdk;
 import com.tuya.smart.home.sdk.bean.HomeBean;
@@ -30,7 +28,10 @@ public class MyApp  extends Application {
     public static CheckoutActions checkOutActions ;
     public static ClientBackActions clientBackActions ;
     public static List<ROOM> ROOMS ;
+    public static List<SceneBean> SCENES ;
     static String cloudClientId = "d9hyvtdshnm3uvaun59d" , cloudSecret = "825f9def941f456099798ccdc19112e9";
+    public static String ErrorsUrl = "https://ratco-solutions.com/Checkin/Test/php/insertError.php";
+    public static String applicationSide = "CheckApp";
 
     @Override
     public void onCreate() {

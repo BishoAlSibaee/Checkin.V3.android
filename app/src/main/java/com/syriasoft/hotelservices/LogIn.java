@@ -438,6 +438,10 @@ public class LogIn extends AppCompatActivity {
                     int switch2 = row.getInt("Switch2");
                     int switch3 = row.getInt("Switch3");
                     int switch4 = row.getInt("Switch4");
+                    int switch5 = row.getInt("Switch5");
+                    int switch6 = row.getInt("Switch6");
+                    int switch7 = row.getInt("Switch7");
+                    int switch8 = row.getInt("Switch8");
                     String lockGateway = row.getString("LockGateway");
                     String lockName = row.getString("LockName");
                     int powerStatus = row.getInt("powerStatus");
@@ -453,7 +457,7 @@ public class LogIn extends AppCompatActivity {
                     String logo = row.getString("Logo");
                     String token =row.getString("token");
                     ROOM room = new ROOM(id,roomNumber,status,hotel,building,building_id,floor,floor_id,roomType,suiteStatus,suiteNumber,suiteId,reservationNumber,roomStatus,clientIn,message,selected,load,tablet,dep,cleanup,laundry
-                            ,roomService,roomServiceText,checkout,restaurant,miniBarCheck,facility,SOS,DND,powerSwitch,doorSensor,motionSensor,thermostat,ZBGateway,online,curtainSwitch,serviceSwitch,lock,switch1,switch2,switch3,switch4,lockGateway
+                            ,roomService,roomServiceText,checkout,restaurant,miniBarCheck,facility,SOS,DND,powerSwitch,doorSensor,motionSensor,thermostat,ZBGateway,online,curtainSwitch,serviceSwitch,lock,switch1,switch2,switch3,switch4,switch5,switch6,switch7,switch8,lockGateway
                             ,lockName,powerStatus,curtainStatus,doorStatus,doorWarning,temp,tempSetPoint,setPointInterval,checkInModeTime,checkOutModeTime,welcomeMessage,logo,token);
                     room.setFireRoom(database.getReference(ProjectName+"/B"+room.Building+"/F"+room.Floor+"/R"+room.RoomNumber));
                     Rooms.add(room);
@@ -999,6 +1003,22 @@ public class LogIn extends AppCompatActivity {
                         else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"Switch4")) {
                             MyApp.Room.setSWITCH4_B(TheDevicesList.get(i));
                             MyApp.Room.setSWITCH4(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getSWITCH4_B().getDevId()));
+                        }
+                        else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"Switch5")) {
+                            MyApp.Room.setSWITCH5_B(TheDevicesList.get(i));
+                            MyApp.Room.setSWITCH5(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getSWITCH5_B().getDevId()));
+                        }
+                        else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"Switch6")) {
+                            MyApp.Room.setSWITCH6_B(TheDevicesList.get(i));
+                            MyApp.Room.setSWITCH6(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getSWITCH6_B().getDevId()));
+                        }
+                        else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"Switch7")) {
+                            MyApp.Room.setSWITCH7_B(TheDevicesList.get(i));
+                            MyApp.Room.setSWITCH7(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getSWITCH7_B().getDevId()));
+                        }
+                        else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"Switch8")) {
+                            MyApp.Room.setSWITCH8_B(TheDevicesList.get(i));
+                            MyApp.Room.setSWITCH8(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getSWITCH8_B().getDevId()));
                         }
                         else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"Lock")) {
                             MyApp.Room.setLOCK_B(TheDevicesList.get(i));

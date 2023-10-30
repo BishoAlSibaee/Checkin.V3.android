@@ -91,7 +91,7 @@ public class Tuya_Login extends AppCompatActivity {
                             Log.d("loginToya" , error );
                             Calendar c = Calendar.getInstance(Locale.getDefault());
                             long time = c.getTimeInMillis();
-                            ErrorRegister.rigestError( act , MyApp.THE_PROJECT.projectName,MyApp.Room.RoomNumber, time ,9,error,"error logging in to tuya account");
+                            ErrorRegister.insertError( act , MyApp.THE_PROJECT.projectName,MyApp.Room.RoomNumber, time ,9,error,"error logging in to tuya account");
                         }
                     });
 
@@ -138,7 +138,7 @@ public class Tuya_Login extends AppCompatActivity {
             {
                 Calendar c  = Calendar.getInstance(Locale.getDefault());
                 long time = c.getTimeInMillis();
-                ErrorRegister.rigestError(act ,MyApp.THE_PROJECT.projectName,MyApp.Room.RoomNumber, time ,8 ,error,"getting families from tuya");
+                ErrorRegister.insertError(act ,MyApp.THE_PROJECT.projectName,MyApp.Room.RoomNumber, time ,8 ,error,"getting families from tuya");
             }
             @Override
             public void onSuccess(List<HomeBean> homeBeans)

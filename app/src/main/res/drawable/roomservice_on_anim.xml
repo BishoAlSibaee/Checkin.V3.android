@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animation-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@drawable/roomservice_on_1" android:duration="1000"/>
+    <item android:drawable="@drawable/roomservice_on_2" android:duration="100"/>
+    <item android:drawable="@drawable/roomservice_on_3" android:duration="100"/>
+    <item android:drawable="@drawable/roomservice_on_4" android:duration="100"/>
+    <item android:drawable="@drawable/roomservice_on_5" android:duration="1000"/>
+</animation-list>

@@ -12,7 +12,9 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
+
 import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
 import com.android.volley.Response;
@@ -25,15 +27,15 @@ import com.tuya.smart.home.sdk.TuyaHomeSdk;
 import com.tuya.smart.home.sdk.bean.HomeBean;
 import com.tuya.smart.home.sdk.callback.ITuyaGetHomeListCallback;
 import com.tuya.smart.home.sdk.callback.ITuyaHomeResultCallback;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import com.*;
-import com.tuya.smart.sdk.api.IResultCallback;
 
 public class Login extends AppCompatActivity {
     private Spinner PROJECTS_SPINNER, homes;
@@ -231,7 +233,7 @@ public class Login extends AppCompatActivity {
 
     void logInFunction(PROJECT p) {
         Log.d("tuyaLoginResp", p.TuyaUser +" "+p.TuyaPassword);
-                TuyaHomeSdk.getUserInstance().loginWithEmail(COUNTRY_CODE,p.TuyaUser ,p.TuyaPassword , new ILoginCallback() {
+        TuyaHomeSdk.getUserInstance().loginWithEmail(COUNTRY_CODE,p.TuyaUser ,p.TuyaPassword , new ILoginCallback() {
             @Override
             public void onSuccess (User user) {
                 Log.d("tuyaLoginResp",user.getNickName());

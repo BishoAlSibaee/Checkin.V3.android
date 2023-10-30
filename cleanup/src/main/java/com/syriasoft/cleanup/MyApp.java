@@ -24,6 +24,8 @@ public class MyApp extends Application {
     public static String Token ;
     public static ProjectsVariablesClass ProjectVariables ;
     static String cloudClientId = "d9hyvtdshnm3uvaun59d" , cloudSecret = "825f9def941f456099798ccdc19112e9";
+    public static String ErrorsUrl = "https://ratco-solutions.com/Checkin/Test/php/insertError.php";
+    public static String applicationSide = "ServiceApp";
 
     @Override
     public void onCreate() {
@@ -47,4 +49,6 @@ public class MyApp extends Application {
             }
         });
     }
+
+
 }

@@ -14,15 +14,12 @@ public class messageDialog
      Context c ;
     Dialog d ;
 
-    public messageDialog(String message, String title, Context c)
-    {
+    public messageDialog(String message, String title, Context c) {
         this.message = message ;
         this.title = title ;
         this.c = c ;
-
         d = new Dialog(c);
         d.setContentView(R.layout.message_dialog);
-
         TextView t = (TextView) d.findViewById(R.id.messageDialog_title);
         t.setText(title);
         TextView m = (TextView) d.findViewById(R.id.messageDialog_message);
@@ -34,9 +31,6 @@ public class messageDialog
                 d.dismiss();
             }
         });
-
         d.show();
-
-
     }
 }

@@ -34,9 +34,12 @@ import com.tuya.smart.sdk.api.IDeviceListener;
 import com.tuya.smart.sdk.api.IResultCallback;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class ROOMS_ADAPTER extends RecyclerView.Adapter<ROOMS_ADAPTER.HOLDER> {
 
@@ -77,7 +80,7 @@ public class ROOMS_ADAPTER extends RecyclerView.Adapter<ROOMS_ADAPTER.HOLDER> {
                 Window w = d.getWindow();
                 w.setLayout(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
                 TextView text = d.findViewById(R.id.room_dialog_text);
-                text.setText(String.format("Room : %d", list.get(position).RoomNumber));
+                text.setText(MessageFormat.format("Room: {0}", list.get(position).RoomNumber));
                 Button door = d.findViewById(R.id.room_dialog_door);
                 door.setTextSize(holder.itemView.getContext().getResources().getDimension(R.dimen.roomDialogButtonsText));
                 Button power = d.findViewById(R.id.room_dialog_power);
@@ -106,14 +109,12 @@ public class ROOMS_ADAPTER extends RecyclerView.Adapter<ROOMS_ADAPTER.HOLDER> {
                                                     public void onControlLockSuccess(ControlLockResult controlLockResult) {
                                                         p.setVisibility(View.INVISIBLE);
                                                         Toast.makeText(holder.itemView.getContext(), "door opened", Toast.LENGTH_SHORT).show();
-                                                        ;
                                                     }
 
                                                     @Override
                                                     public void onFail(LockError error) {
                                                         p.setVisibility(View.INVISIBLE);
                                                         Toast.makeText(holder.itemView.getContext(), error.getErrorMsg(), Toast.LENGTH_SHORT).show();
-                                                        ;
                                                     }
                                                 });
                                             }
@@ -235,7 +236,7 @@ public class ROOMS_ADAPTER extends RecyclerView.Adapter<ROOMS_ADAPTER.HOLDER> {
                                                     @Override
                                                     public void onDpUpdate(String devId, Map<String, Object> dpStr) {
                                                         Log.d("powerLis" , dpStr.toString());
-                                                        if (Boolean.parseBoolean(list.get(position).getPOWER().dps.get("1").toString()) && Boolean.parseBoolean(list.get(position).getPOWER().dps.get("2").toString())) {
+                                                        if (Boolean.parseBoolean(Objects.requireNonNull(list.get(position).getPOWER().dps.get("1")).toString()) && Boolean.parseBoolean(Objects.requireNonNull(list.get(position).getPOWER().dps.get("2")).toString())) {
                                                             int Minutes = MyApp.ProjectVariables.HKCleanTime;
                                                             Minutes = Minutes * 60;
                                                             if (MyApp.ProjectVariables.PoweroffAfterHK == 1) {
@@ -321,7 +322,7 @@ public class ROOMS_ADAPTER extends RecyclerView.Adapter<ROOMS_ADAPTER.HOLDER> {
                                                 @Override
                                                 public void onDpUpdate(String devId, Map<String, Object> dpStr) {
                                                     Log.d("powerLis" , dpStr.toString());
-                                                    if (Boolean.parseBoolean(list.get(position).getPOWER().dps.get("1").toString()) && Boolean.parseBoolean(list.get(position).getPOWER().dps.get("2").toString())) {
+                                                    if (Boolean.parseBoolean(Objects.requireNonNull(list.get(position).getPOWER().dps.get("1")).toString()) && Boolean.parseBoolean(Objects.requireNonNull(list.get(position).getPOWER().dps.get("2")).toString())) {
                                                         int Minutes = MyApp.ProjectVariables.HKCleanTime;
                                                         Minutes = Minutes * 60;
                                                         if (MyApp.ProjectVariables.PoweroffAfterHK == 1) {
@@ -430,7 +431,7 @@ public class ROOMS_ADAPTER extends RecyclerView.Adapter<ROOMS_ADAPTER.HOLDER> {
                                                     @Override
                                                     public void onDpUpdate(String devId, Map<String, Object> dpStr) {
                                                         Log.d("powerLis" , dpStr.toString());
-                                                        if (Boolean.parseBoolean(list.get(position).getPOWER().getDps().get("1").toString()) && !Boolean.parseBoolean(list.get(position).getPOWER().getDps().get("2").toString())) {
+                                                        if (Boolean.parseBoolean(Objects.requireNonNull(list.get(position).getPOWER().getDps().get("1")).toString()) && !Boolean.parseBoolean(Objects.requireNonNull(list.get(position).getPOWER().getDps().get("2")).toString())) {
                                                             p.setVisibility(View.INVISIBLE);
                                                             new messageDialog("Power At Room " + list.get(position).RoomNumber + " is by card ", "Room " + list.get(position).RoomNumber + " Power by card", holder.itemView.getContext());
                                                             list.get(position).getPower().unRegisterDevListener();
@@ -467,16 +468,16 @@ public class ROOMS_ADAPTER extends RecyclerView.Adapter<ROOMS_ADAPTER.HOLDER> {
                                                     list.get(position).getPower().registerDeviceListener(new IDeviceListener() {
                                                         @Override
                                                         public void onDpUpdate(String devId, Map<String, Object> dpStr) {
-                                                            Log.d("powerLis" , list.get(position).getPOWER().getDps().get("1").toString()+" "+list.get(position).getPOWER().getDps().get("2").toString());
+                                                            Log.d("powerLis" , Objects.requireNonNull(list.get(position).getPOWER().getDps().get("1"))+" "+ Objects.requireNonNull(list.get(position).getPOWER().getDps().get("2")));
                                                             if (list.get(position).roomStatus == 2) {
-                                                                if (Boolean.parseBoolean(list.get(position).getPOWER().getDps().get("1").toString()) && !Boolean.parseBoolean(list.get(position).getPOWER().getDps().get("2").toString())) {
+                                                                if (Boolean.parseBoolean(Objects.requireNonNull(list.get(position).getPOWER().getDps().get("1")).toString()) && !Boolean.parseBoolean(Objects.requireNonNull(list.get(position).getPOWER().getDps().get("2")).toString())) {
                                                                     p.setVisibility(View.INVISIBLE);
                                                                     new messageDialog("Power At Room " + list.get(position).RoomNumber + " is Off ", "Room " + list.get(position).RoomNumber + " Power Off", holder.itemView.getContext());
                                                                     list.get(position).getPower().unRegisterDevListener();
                                                                 }
                                                             }
                                                             else {
-                                                                if (!Boolean.parseBoolean(list.get(position).getPOWER().getDps().get("1").toString()) && !Boolean.parseBoolean(list.get(position).getPOWER().getDps().get("2").toString())) {
+                                                                if (!Boolean.parseBoolean(Objects.requireNonNull(list.get(position).getPOWER().getDps().get("1")).toString()) && !Boolean.parseBoolean(Objects.requireNonNull(list.get(position).getPOWER().getDps().get("2")).toString())) {
                                                                     p.setVisibility(View.INVISIBLE);
                                                                     new messageDialog("Power At Room " + list.get(position).RoomNumber + " is Off ", "Room " + list.get(position).RoomNumber + " Power Off", holder.itemView.getContext());
                                                                     list.get(position).getPower().unRegisterDevListener();
@@ -511,16 +512,16 @@ public class ROOMS_ADAPTER extends RecyclerView.Adapter<ROOMS_ADAPTER.HOLDER> {
                                                     list.get(position).getPower().registerDeviceListener(new IDeviceListener() {
                                                         @Override
                                                         public void onDpUpdate(String devId, Map<String, Object> dpStr) {
-                                                            Log.d("powerLis" , list.get(position).getPOWER().getDps().get("1").toString()+" "+list.get(position).getPOWER().getDps().get("2").toString());
+                                                            Log.d("powerLis" , Objects.requireNonNull(list.get(position).getPOWER().getDps().get("1"))+" "+ Objects.requireNonNull(list.get(position).getPOWER().getDps().get("2")));
                                                             if (list.get(position).roomStatus == 2) {
-                                                                if (Boolean.parseBoolean(list.get(position).getPOWER().getDps().get("1").toString()) && !Boolean.parseBoolean(list.get(position).getPOWER().getDps().get("2").toString())) {
+                                                                if (Boolean.parseBoolean(Objects.requireNonNull(list.get(position).getPOWER().getDps().get("1")).toString()) && !Boolean.parseBoolean(Objects.requireNonNull(list.get(position).getPOWER().getDps().get("2")).toString())) {
                                                                     p.setVisibility(View.INVISIBLE);
                                                                     new messageDialog("Power At Room " + list.get(position).RoomNumber + " is Off ", "Room " + list.get(position).RoomNumber + " Power Off", holder.itemView.getContext());
                                                                     list.get(position).getPower().unRegisterDevListener();
                                                                 }
                                                             }
                                                             else {
-                                                                if (!Boolean.parseBoolean(list.get(position).getPOWER().getDps().get("1").toString()) && !Boolean.parseBoolean(list.get(position).getPOWER().getDps().get("2").toString())) {
+                                                                if (!Boolean.parseBoolean(Objects.requireNonNull(list.get(position).getPOWER().getDps().get("1")).toString()) && !Boolean.parseBoolean(Objects.requireNonNull(list.get(position).getPOWER().getDps().get("2")).toString())) {
                                                                     p.setVisibility(View.INVISIBLE);
                                                                     new messageDialog("Power At Room " + list.get(position).RoomNumber + " is Off ", "Room " + list.get(position).RoomNumber + " Power Off", holder.itemView.getContext());
                                                                     list.get(position).getPower().unRegisterDevListener();
@@ -557,16 +558,16 @@ public class ROOMS_ADAPTER extends RecyclerView.Adapter<ROOMS_ADAPTER.HOLDER> {
                                                     list.get(position).getPower().registerDeviceListener(new IDeviceListener() {
                                                         @Override
                                                         public void onDpUpdate(String devId, Map<String, Object> dpStr) {
-                                                            Log.d("powerLis" , list.get(position).getPOWER().getDps().get("1").toString()+" "+list.get(position).getPOWER().getDps().get("2").toString());
+                                                            Log.d("powerLis" , Objects.requireNonNull(list.get(position).getPOWER().getDps().get("1"))+" "+ Objects.requireNonNull(list.get(position).getPOWER().getDps().get("2")));
                                                             if (list.get(position).roomStatus == 2) {
-                                                                if (Boolean.parseBoolean(list.get(position).getPOWER().getDps().get("1").toString()) && !Boolean.parseBoolean(list.get(position).getPOWER().getDps().get("2").toString())) {
+                                                                if (Boolean.parseBoolean(Objects.requireNonNull(list.get(position).getPOWER().getDps().get("1")).toString()) && !Boolean.parseBoolean(Objects.requireNonNull(list.get(position).getPOWER().getDps().get("2")).toString())) {
                                                                     p.setVisibility(View.INVISIBLE);
                                                                     new messageDialog("Power At Room " + list.get(position).RoomNumber + " is Off ", "Room " + list.get(position).RoomNumber + " Power Off", holder.itemView.getContext());
                                                                     list.get(position).getPower().unRegisterDevListener();
                                                                 }
                                                             }
                                                             else {
-                                                                if (!Boolean.parseBoolean(list.get(position).getPOWER().getDps().get("1").toString()) && !Boolean.parseBoolean(list.get(position).getPOWER().getDps().get("2").toString())) {
+                                                                if (!Boolean.parseBoolean(Objects.requireNonNull(list.get(position).getPOWER().getDps().get("1")).toString()) && !Boolean.parseBoolean(Objects.requireNonNull(list.get(position).getPOWER().getDps().get("2")).toString())) {
                                                                     p.setVisibility(View.INVISIBLE);
                                                                     new messageDialog("Power At Room " + list.get(position).RoomNumber + " is Off ", "Room " + list.get(position).RoomNumber + " Power Off", holder.itemView.getContext());
                                                                     list.get(position).getPower().unRegisterDevListener();
@@ -601,16 +602,16 @@ public class ROOMS_ADAPTER extends RecyclerView.Adapter<ROOMS_ADAPTER.HOLDER> {
                                                     list.get(position).getPower().registerDeviceListener(new IDeviceListener() {
                                                         @Override
                                                         public void onDpUpdate(String devId, Map<String, Object> dpStr) {
-                                                            Log.d("powerLis" , list.get(position).getPOWER().getDps().get("1").toString()+" "+list.get(position).getPOWER().getDps().get("2").toString());
+                                                            Log.d("powerLis" , Objects.requireNonNull(list.get(position).getPOWER().getDps().get("1"))+" "+list.get(position).getPOWER().getDps().get("2"));
                                                             if (list.get(position).roomStatus == 2) {
-                                                                if (Boolean.parseBoolean(list.get(position).getPOWER().getDps().get("1").toString()) && !Boolean.parseBoolean(list.get(position).getPOWER().getDps().get("2").toString())) {
+                                                                if (Boolean.parseBoolean(Objects.requireNonNull(list.get(position).getPOWER().getDps().get("1")).toString()) && !Boolean.parseBoolean(Objects.requireNonNull(list.get(position).getPOWER().getDps().get("2")).toString())) {
                                                                     p.setVisibility(View.INVISIBLE);
                                                                     new messageDialog("Power At Room " + list.get(position).RoomNumber + " is Off ", "Room " + list.get(position).RoomNumber + " Power Off", holder.itemView.getContext());
                                                                     list.get(position).getPower().unRegisterDevListener();
                                                                 }
                                                             }
                                                             else {
-                                                                if (!Boolean.parseBoolean(list.get(position).getPOWER().getDps().get("1").toString()) && !Boolean.parseBoolean(list.get(position).getPOWER().getDps().get("2").toString())) {
+                                                                if (!Boolean.parseBoolean(Objects.requireNonNull(list.get(position).getPOWER().getDps().get("1")).toString()) && !Boolean.parseBoolean(Objects.requireNonNull(list.get(position).getPOWER().getDps().get("2")).toString())) {
                                                                     p.setVisibility(View.INVISIBLE);
                                                                     new messageDialog("Power At Room " + list.get(position).RoomNumber + " is Off ", "Room " + list.get(position).RoomNumber + " Power Off", holder.itemView.getContext());
                                                                     list.get(position).getPower().unRegisterDevListener();

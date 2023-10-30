@@ -301,6 +301,7 @@ public class Cart extends AppCompatActivity
         setLockButton();
         blink();
         setTotal(act);
+        Thread.setDefaultUncaughtExceptionHandler(new DefaultExceptionHandler(this));
     }
 
     @Override

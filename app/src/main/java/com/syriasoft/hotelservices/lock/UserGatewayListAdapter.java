@@ -134,7 +134,7 @@ public class UserGatewayListAdapter extends  RecyclerView.Adapter<UserGatewayLis
                 {
                     Calendar x = Calendar.getInstance(Locale.getDefault());
                     long time =  x.getTimeInMillis();
-                    ErrorRegister.rigestError(_holder.itemView.getContext() , MyApp.THE_PROJECT.projectName , MyApp.Room.RoomNumber,time ,005 ,e.getMessage() , "error setting lock gateway in roomDB");
+                    ErrorRegister.insertError(_holder.itemView.getContext() , MyApp.THE_PROJECT.projectName , MyApp.Room.RoomNumber,time ,005 ,e.getMessage() , "error setting lock gateway in roomDB");
                 }
             }
         });

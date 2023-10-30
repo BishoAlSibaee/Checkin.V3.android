@@ -22,6 +22,7 @@ import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.android.volley.Request;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
@@ -76,11 +77,46 @@ public class RestaurantActivity extends AppCompatActivity {
         else {
             setContentView(R.layout.activity_restaurant2);
         }
-        act = this ;
-        MyApp.restaurantActivities.add(act);
-        date = findViewById(R.id.mainDate);
-        time = findViewById(R.id.mainTime);
+        setActivity();
+        setFirebaseReferences();
         blink();
+        getRestaurantItems();
+        KeepScreenFull();
+        setLockButton();
+        windowInsetsController = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+        if (windowInsetsController != null) {
+            windowInsetsController.hide(WindowInsetsCompat.Type.systemBars());
+        }
+        if (windowInsetsController != null) {
+            windowInsetsController.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_BARS_BY_SWIPE);
+        }
+        backHomeThread = new Runnable() {
+            @Override
+            public void run() {
+                H = new Handler();
+                x = x+1000 ;
+                Log.d("backThread" , x+"");
+                H.postDelayed(this,1000);
+                if (x >= 60000){
+                    LinearLayout v = (LinearLayout) findViewById(R.id.home_Btn);
+                    runOnUiThread(() -> {
+                        backToMain(v);
+                        H.removeCallbacks(backHomeThread);
+                        x=0;
+                    });
+                }
+
+            }
+        };
+        backHomeThread.run();
+        Thread.setDefaultUncaughtExceptionHandler(new DefaultExceptionHandler(this));
+    }
+
+    void setActivity() {
+        act = this ;
+        defineViews();
+        MyApp.restaurantActivities.add(act);
+        FullscreenActivity.RestaurantActivities.add(act);
         Bundle b = getIntent().getExtras();
         menuId = b.getInt("id");
         menuName = b.getString("name");
@@ -88,20 +124,6 @@ public class RestaurantActivity extends AppCompatActivity {
         Hotel = b.getInt("Hotel");
         Facility = b.getInt("Facility");
         Type = b.getString("Type");
-        TextView CAPTION = findViewById(R.id.CAPTION);
-        CAPTION.setText(getResources().getString(R.string.restaurant));
-        FullscreenActivity.RestaurantActivities.add(act);
-        TextView caption = findViewById(R.id.menuName);
-        items = findViewById(R.id.items_quantity_incart);
-        if (FullscreenActivity.order.getItems().size() != 0 ) {
-            items.setText(String.valueOf(FullscreenActivity.order.getItems().size()));
-        }
-        caption.setText(menuNameArabic);
-        final GridLayoutManager layoutManagerDinner = new GridLayoutManager(this,1,RecyclerView.HORIZONTAL,false);
-        layoutManagerDinner.setOrientation(LinearLayoutManager.HORIZONTAL);
-        dinner = findViewById(R.id.Dinner);
-        dinner.setLayoutManager(layoutManagerDinner);
-        dinner.stopNestedScroll();
         final LoadingDialog l = new LoadingDialog(act);
         if (Type.equals("Restaurant")) {
             url = MyApp.ProjectURL + "facilitys/getRestaurantMenueMealsForRoom";
@@ -223,6 +245,29 @@ public class RestaurantActivity extends AppCompatActivity {
                 }
             };
         }
+        if (FullscreenActivity.order.getItems().size() != 0 ) {
+            items.setText(String.valueOf(FullscreenActivity.order.getItems().size()));
+        }
+    }
+
+    void defineViews() {
+        date = findViewById(R.id.mainDate);
+        time = findViewById(R.id.mainTime);
+        items = findViewById(R.id.items_quantity_incart);
+        TextView CAPTION = findViewById(R.id.CAPTION);
+        CAPTION.setText(getResources().getString(R.string.restaurant));
+        TextView caption = findViewById(R.id.menuName);
+        caption.setText(menuNameArabic);
+        LinearLayout mainLayout = findViewById(R.id.rightSlide);
+        mainLayout.setOnClickListener(v -> x=0);
+        final GridLayoutManager layoutManagerDinner = new GridLayoutManager(this,1,RecyclerView.HORIZONTAL,false);
+        layoutManagerDinner.setOrientation(LinearLayoutManager.HORIZONTAL);
+        dinner = findViewById(R.id.Dinner);
+        dinner.setLayoutManager(layoutManagerDinner);
+        dinner.stopNestedScroll();
+    }
+
+    void setFirebaseReferences() {
         DatabaseReference myRefDND = FullscreenActivity.myRefDND;
         myRefDND.addValueEventListener(new ValueEventListener() {
             @SuppressLint("ResourceAsColor")
@@ -325,37 +370,6 @@ public class RestaurantActivity extends AppCompatActivity {
 
             }
         });
-        windowInsetsController = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
-        if (windowInsetsController != null) {
-            windowInsetsController.hide(WindowInsetsCompat.Type.systemBars());
-        }
-        if (windowInsetsController != null) {
-            windowInsetsController.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_BARS_BY_SWIPE);
-        }
-        getRestaurantItems();
-        KeepScreenFull();
-        setLockButton();
-        LinearLayout mainLayout = findViewById(R.id.rightSlide);
-        mainLayout.setOnClickListener(v -> x=0);
-        backHomeThread = new Runnable() {
-            @Override
-            public void run() {
-                H = new Handler();
-                x = x+1000 ;
-                Log.d("backThread" , x+"");
-                H.postDelayed(this,1000);
-                if (x >= 60000){
-                    LinearLayout v = (LinearLayout) findViewById(R.id.home_Btn);
-                    runOnUiThread(() -> {
-                        backToMain(v);
-                        H.removeCallbacks(backHomeThread);
-                        x=0;
-                    });
-                }
-
-            }
-        };
-        backHomeThread.run();
     }
 
     @Override

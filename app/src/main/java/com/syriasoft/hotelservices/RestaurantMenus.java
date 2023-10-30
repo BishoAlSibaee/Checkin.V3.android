@@ -20,6 +20,7 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.android.volley.Request;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
@@ -72,22 +73,164 @@ public class RestaurantMenus extends AppCompatActivity {
         else {
             setContentView(R.layout.activity_restaurant_menues);
         }
+        setActivity();
+        setFirebaseReferences();
+        blink();
+        getMenus();
+        windowInsetsController = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+        if (windowInsetsController != null) {
+            windowInsetsController.hide(WindowInsetsCompat.Type.systemBars());
+        }
+        if (windowInsetsController != null) {
+            windowInsetsController.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_BARS_BY_SWIPE);
+        }
+        backHomeThread = new Runnable() {
+            @Override
+            public void run() {
+                H = new Handler();
+                x = x+1000 ;
+                Log.d("backThread" , x+"");
+                H.postDelayed(this,1000);
+                if (x >= 60000){
+                    LinearLayout v = (LinearLayout) findViewById(R.id.home_Btn);
+                    runOnUiThread(() -> {
+                        backToMain(v);
+                        H.removeCallbacks(backHomeThread);
+                        x=0;
+                    });
+                }
+
+            }
+        };
+        backHomeThread.run();
+        KeepScreenFull();
+        setLockButton();
+        Thread.setDefaultUncaughtExceptionHandler(new DefaultExceptionHandler(this));
+    }
+
+    void setActivity() {
         act = this ;
         MyApp.restaurantActivities.add(act);
-        date = findViewById(R.id.mainDate);
-        time = findViewById(R.id.mainTime);
-        blink();
-        Bundle b = getIntent().getExtras();
-        THE_RESTAURANT = new RESTAURANT_UNIT(b.getInt("id"),b.getInt("Hotel"),b.getInt("TypeId"),b.getString("TypeName"),b.getString("Name"),b.getInt("Control"),b.getString("photo"));
+        FullscreenActivity.RestaurantActivities.add(act);
         TextView RestaurantName = findViewById(R.id.RestaurantName);
         Type = getIntent().getExtras().getString("TypeName");
+        Bundle b = getIntent().getExtras();
+        RestaurantName.setText(b.getString("Name"));
+        THE_RESTAURANT = new RESTAURANT_UNIT(b.getInt("id"),b.getInt("Hotel"),b.getInt("TypeId"),b.getString("TypeName"),b.getString("Name"),b.getInt("Control"),b.getString("photo"));
+        if (Type.equals("Restaurant")) {
+            String menuesUrl = MyApp.ProjectURL + "facilitys/getRestaurantMenuesForRoom" ;
+            request = new StringRequest(Request.Method.POST, menuesUrl, response -> {
+                Log.d("gettingMenues" , response);
+                try {
+                    JSONObject result = new JSONObject(response);
+                    if (result.getString("result").equals("success")) {
+                        JSONArray arr = result.getJSONArray("menues");
+                        for (int i =0;i<arr.length();i++) {
+                            JSONObject row = arr.getJSONObject(i);
+                            Menu m = new Menu(row.getInt("id") , row.getString("photo"),row.getString("name"),row.getString("arabicName"),row.getInt("Hotel"),row.getInt("FacilityId"));
+                            list.add(m);
+                        }
+                        Adapter = new RESTAURANT_MENUS_ADAPTER(list);
+                        menus.setAdapter(Adapter);
+                        if (list.size() < 7) {
+                            ImageView previous , next ;
+                            previous = findViewById(R.id.leftSlide3);
+                            next = findViewById(R.id.imageView22);
+                            previous.setVisibility(View.GONE);
+                            next.setVisibility(View.GONE);
+                        }
+                        else {
+                            ImageView previous , next ;
+                            previous = findViewById(R.id.leftSlide3);
+                            next = findViewById(R.id.imageView22);
+                            previous.setVisibility(View.VISIBLE);
+                            next.setVisibility(View.VISIBLE);
+                        }
+                    }
+                    else {
+                        new messageDialog(result.getString("error"),"getting menues failed ",act);
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                    new messageDialog(e.getMessage(),"getting menues failed ",act);
+                }
+            }, error -> {
+                Log.d("gettingMenues" , error.toString());
+                new messageDialog(error.toString(),"getting menues failed ",act);
+            }){
+                @Override
+                protected Map<String, String> getParams() {
+                    Map<String, String> params = new HashMap<>();
+                    params.put("facility_id", String.valueOf(THE_RESTAURANT.id));
+                    return params;
+                }
+            };
+        }
+        else if (b.getString("TypeName").equals("CoffeeShop")) {
+            String menuesUrl = MyApp.ProjectURL + "facilitys/getCoffeeShopMenuesForRoom";
+            request = new StringRequest(Request.Method.POST, menuesUrl, response -> {
+                Log.d("gettingMenues" , response);
+                try {
+                    JSONObject result = new JSONObject(response);
+                    if (result.getString("result").equals("success")) {
+                        JSONArray arr = result.getJSONArray("menues");
+                        for (int i =0;i<arr.length();i++) {
+                            JSONObject row = arr.getJSONObject(i);
+                            Menu m = new Menu(row.getInt("id") , row.getString("photo"),row.getString("Name"),row.getString("arabicName"),row.getInt("Hotel"),row.getInt("facility_id"));
+                            list.add(m);
+                        }
+                        Adapter = new RESTAURANT_MENUS_ADAPTER(list);
+                        menus.setAdapter(Adapter);
+                        if (list.size() < 7) {
+                            ImageView previous , next ;
+                            previous = findViewById(R.id.leftSlide3);
+                            next = findViewById(R.id.imageView22);
+                            previous.setVisibility(View.GONE);
+                            next.setVisibility(View.GONE);
+                        }
+                        else {
+                            ImageView previous , next ;
+                            previous = findViewById(R.id.leftSlide3);
+                            next = findViewById(R.id.imageView22);
+                            previous.setVisibility(View.VISIBLE);
+                            next.setVisibility(View.VISIBLE);
+                        }
+                    }
+                    else {
+                        new messageDialog(result.getString("error"),"getting menues failed ",act);
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                    new messageDialog(e.getMessage(),"getting menues failed ",act);
+                }
+            }, error -> {
+                Log.d("gettingMenues" , error.toString());
+                new messageDialog(error.toString(),"getting menues failed ",act);
+            }){
+                @Override
+                protected Map<String, String> getParams() {
+                    Map<String, String> params = new HashMap<>();
+                    params.put("facility_id",String.valueOf(THE_RESTAURANT.id));
+                    return params;
+                }
+            };
+        }
+        defineViews();
+    }
+
+    void defineViews() {
+        date = findViewById(R.id.mainDate);
+        time = findViewById(R.id.mainTime);
         TextView CAPTION = findViewById(R.id.CAPTION3);
         CAPTION.setText(getResources().getString(R.string.restaurant));
-        FullscreenActivity.RestaurantActivities.add(act);
-        RestaurantName.setText(b.getString("Name"));
         menus = findViewById(R.id.recycler_menus);
         GridLayoutManager manager = new GridLayoutManager(act, 3, RecyclerView.HORIZONTAL, false);
         menus.setLayoutManager(manager);
+        LinearLayout mainLayout = findViewById(R.id.main_layout);
+        mainLayout.setOnClickListener(v -> x=0);
+    }
+
+    void setFirebaseReferences() {
         DatabaseReference myRefRestaurant = FullscreenActivity.myRefRestaurant;
         myRefRestaurant.addValueEventListener(new ValueEventListener() {
             @Override
@@ -208,135 +351,6 @@ public class RestaurantMenus extends AppCompatActivity {
 
             }
         });
-        if (Type.equals("Restaurant")) {
-            String menuesUrl = MyApp.ProjectURL + "facilitys/getRestaurantMenuesForRoom" ;
-            request = new StringRequest(Request.Method.POST, menuesUrl, response -> {
-                Log.d("gettingMenues" , response);
-                try {
-                    JSONObject result = new JSONObject(response);
-                    if (result.getString("result").equals("success")) {
-                        JSONArray arr = result.getJSONArray("menues");
-                        for (int i =0;i<arr.length();i++) {
-                            JSONObject row = arr.getJSONObject(i);
-                            Menu m = new Menu(row.getInt("id") , row.getString("photo"),row.getString("name"),row.getString("arabicName"),row.getInt("Hotel"),row.getInt("FacilityId"));
-                            list.add(m);
-                        }
-                        Adapter = new RESTAURANT_MENUS_ADAPTER(list);
-                        menus.setAdapter(Adapter);
-                        if (list.size() < 7) {
-                            ImageView previous , next ;
-                            previous = findViewById(R.id.leftSlide3);
-                            next = findViewById(R.id.imageView22);
-                            previous.setVisibility(View.GONE);
-                            next.setVisibility(View.GONE);
-                        }
-                        else {
-                            ImageView previous , next ;
-                            previous = findViewById(R.id.leftSlide3);
-                            next = findViewById(R.id.imageView22);
-                            previous.setVisibility(View.VISIBLE);
-                            next.setVisibility(View.VISIBLE);
-                        }
-                    }
-                    else {
-                        new messageDialog(result.getString("error"),"getting menues failed ",act);
-                    }
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                    new messageDialog(e.getMessage(),"getting menues failed ",act);
-                }
-            }, error -> {
-                Log.d("gettingMenues" , error.toString());
-                new messageDialog(error.toString(),"getting menues failed ",act);
-            }){
-                @Override
-                protected Map<String, String> getParams() {
-                    Map<String, String> params = new HashMap<>();
-                    params.put("facility_id", String.valueOf(THE_RESTAURANT.id));
-                    return params;
-                }
-            };
-        }
-        else if (b.getString("TypeName").equals("CoffeeShop")) {
-            String menuesUrl = MyApp.ProjectURL + "facilitys/getCoffeeShopMenuesForRoom";
-            request = new StringRequest(Request.Method.POST, menuesUrl, response -> {
-                Log.d("gettingMenues" , response);
-                try {
-                    JSONObject result = new JSONObject(response);
-                    if (result.getString("result").equals("success")) {
-                        JSONArray arr = result.getJSONArray("menues");
-                        for (int i =0;i<arr.length();i++) {
-                            JSONObject row = arr.getJSONObject(i);
-                            Menu m = new Menu(row.getInt("id") , row.getString("photo"),row.getString("Name"),row.getString("arabicName"),row.getInt("Hotel"),row.getInt("facility_id"));
-                            list.add(m);
-                        }
-                        Adapter = new RESTAURANT_MENUS_ADAPTER(list);
-                        menus.setAdapter(Adapter);
-                        if (list.size() < 7) {
-                            ImageView previous , next ;
-                            previous = findViewById(R.id.leftSlide3);
-                            next = findViewById(R.id.imageView22);
-                            previous.setVisibility(View.GONE);
-                            next.setVisibility(View.GONE);
-                        }
-                        else {
-                            ImageView previous , next ;
-                            previous = findViewById(R.id.leftSlide3);
-                            next = findViewById(R.id.imageView22);
-                            previous.setVisibility(View.VISIBLE);
-                            next.setVisibility(View.VISIBLE);
-                        }
-                    }
-                    else {
-                        new messageDialog(result.getString("error"),"getting menues failed ",act);
-                    }
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                    new messageDialog(e.getMessage(),"getting menues failed ",act);
-                }
-            }, error -> {
-                Log.d("gettingMenues" , error.toString());
-                new messageDialog(error.toString(),"getting menues failed ",act);
-            }){
-                @Override
-                protected Map<String, String> getParams() {
-                    Map<String, String> params = new HashMap<>();
-                    params.put("facility_id",String.valueOf(THE_RESTAURANT.id));
-                    return params;
-                }
-            };
-        }
-        getMenus();
-        windowInsetsController = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
-        if (windowInsetsController != null) {
-            windowInsetsController.hide(WindowInsetsCompat.Type.systemBars());
-        }
-        if (windowInsetsController != null) {
-            windowInsetsController.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_BARS_BY_SWIPE);
-        }
-        LinearLayout mainLayout = findViewById(R.id.main_layout);
-        mainLayout.setOnClickListener(v -> x=0);
-        backHomeThread = new Runnable() {
-            @Override
-            public void run() {
-                H = new Handler();
-                x = x+1000 ;
-                Log.d("backThread" , x+"");
-                H.postDelayed(this,1000);
-                if (x >= 60000){
-                    LinearLayout v = (LinearLayout) findViewById(R.id.home_Btn);
-                    runOnUiThread(() -> {
-                        backToMain(v);
-                        H.removeCallbacks(backHomeThread);
-                        x=0;
-                    });
-                }
-
-            }
-        };
-        backHomeThread.run();
-        KeepScreenFull();
-        setLockButton();
     }
 
     @Override

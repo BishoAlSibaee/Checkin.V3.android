@@ -105,6 +105,8 @@
             </intent-filter>
         </service>
 
+        <service android:name=".ErrorService"/>
+
         <activity
             android:name=".LogIn"
             android:configChanges="orientation|keyboardHidden|screenSize"

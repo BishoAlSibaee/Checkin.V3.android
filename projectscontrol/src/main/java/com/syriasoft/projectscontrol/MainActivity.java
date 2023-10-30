@@ -1,0 +1,285 @@
+package com.syriasoft.projectscontrol;
+
+import android.app.Activity;
+import android.content.Intent;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.Spinner;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+import com.syriasoft.projectscontrol.Adapters.DevicesAdapter;
+import com.syriasoft.projectscontrol.RequestCallBacks.BuildingsCallback;
+import com.syriasoft.projectscontrol.RequestCallBacks.FloorsCallback;
+import com.syriasoft.projectscontrol.RequestCallBacks.RequestCallback;
+import com.syriasoft.projectscontrol.RequestCallBacks.RoomsCallback;
+import com.syriasoft.projectscontrol.RequestCallBacks.ServerDevicesCallBack;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
+import java.util.Locale;
+import java.util.Timer;
+import java.util.TimerTask;
+
+
+public class MainActivity extends AppCompatActivity {
+
+    Activity act ;
+    List<PROJECT> Projects ;
+    PROJECT THE_PROJECT ;
+    String getDevicesUrl ;
+    RequestQueue Q;
+    List<ServerDevice> AllServerDevices ;
+    RecyclerView DevicesRecycler;
+    LoadingDialog loadingDialog;
+    FirebaseDatabase FirebaseDB;
+    DevicesAdapter Adapter;
+    public static List<ServerDevice> SelectedDevicesList ;
+    public static PROJECT SelectedProject;
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        setActivity();
+        getActiveProjects();
+        Thread.setDefaultUncaughtExceptionHandler(new DefaultExceptionHandler(this));
+    }
+
+    void setActivity() {
+        act = this;
+        Projects = new ArrayList<>();
+        AllServerDevices = new ArrayList<>();
+        SelectedDevicesList = AllServerDevices;
+        Q = Volley.newRequestQueue(act);
+        DevicesRecycler = findViewById(R.id.devicesRecycler);
+        DevicesRecycler.setLayoutManager(new LinearLayoutManager(act,RecyclerView.VERTICAL,false));
+        getDevicesUrl = "roomsManagement/getServerDevices";
+        loadingDialog = new LoadingDialog(act);
+        FirebaseDB = FirebaseDatabase.getInstance("https://hotelservices-ebe66.firebaseio.com/");
+        Adapter = new DevicesAdapter(AllServerDevices);
+    }
+
+    void getActiveProjects() {
+        AllServerDevices.clear();
+        loadingDialog.show();
+        String projectsUrl = "https://ratco-solutions.com/Checkin/getProjects.php";
+        StringRequest re = new StringRequest(Request.Method.POST, projectsUrl, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                Log.d("getProjectsResp" , response);
+                if (response != null ) {
+                    try {
+                        JSONArray arr = new JSONArray(response);
+                        String[] Names = new String[arr.length()+1];
+                        Names[0] = "all";
+                        for(int i=0;i<arr.length();i++) {
+                            JSONObject row = arr.getJSONObject(i);
+                            PROJECT p = new PROJECT(row.getInt("id"),row.getString("projectName"),row.getString("city"),row.getString("salesman"),row.getString("TuyaUser"),row.getString("TuyaPassword"),row.getString("LockUser"),row.getString("LockPassword"),row.getString("url"));
+                            Projects.add(p);
+                            Names[i+1] = row.getString("projectName");
+                        }
+                        MyApp.Projects = Projects;
+                        for (PROJECT p :Projects) {
+                            p.getProjectBuildings(Q, new BuildingsCallback() {
+                                @Override
+                                public void onSuccess(List<BUILDING> buildings) {
+                                    p.getProjectFloors(Q, new FloorsCallback() {
+                                        @Override
+                                        public void onSuccess(List<FLOOR> floors) {
+                                            p.getProjectRooms(Q, new RoomsCallback() {
+                                                @Override
+                                                public void onSuccess(List<ROOM> rooms) {
+                                                    p.getProjectServerDevices(Q, new ServerDevicesCallBack() {
+                                                        @Override
+                                                        public void onSuccess(List<ServerDevice> devices) {
+                                                            loadingDialog.close();
+                                                            AllServerDevices.addAll(devices);
+                                                            p.ServerDevices = devices;
+                                                            if (Projects.indexOf(p) == Projects.size()-1) {
+                                                                ArrayAdapter<String> adapter = new ArrayAdapter<>(act,R.layout.support_simple_spinner_dropdown_item,Names);
+                                                                Spinner PROJECTS_SPINNER = findViewById(R.id.spinner);
+                                                                PROJECTS_SPINNER.setAdapter(adapter);
+                                                                PROJECTS_SPINNER.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                                                                    @Override
+                                                                    public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                                                                        if (Names[i].equals("all")) {
+                                                                            SelectedDevicesList = AllServerDevices;
+                                                                            Adapter = new DevicesAdapter(AllServerDevices);
+                                                                            DevicesRecycler.setAdapter(Adapter);
+                                                                        }
+                                                                        else {
+                                                                            THE_PROJECT = Projects.get(PROJECTS_SPINNER.getSelectedItemPosition()-1);
+                                                                            SelectedDevicesList = THE_PROJECT.ServerDevices;
+                                                                            Adapter = new DevicesAdapter(THE_PROJECT.ServerDevices);
+                                                                            DevicesRecycler.setAdapter(Adapter);
+                                                                        }
+                                                                    }
+
+                                                                    @Override
+                                                                    public void onNothingSelected(AdapterView<?> adapterView) {
+
+                                                                    }
+                                                                });
+                                                            }
+                                                            setWorkingFirebaseListeners(p);
+                                                        }
+
+                                                        @Override
+                                                        public void onFailed(String error) {
+                                                            loadingDialog.close();
+                                                            new MessageDialog("error getting devices "+error, p.projectName+" error",act);
+                                                        }
+                                                    });
+                                                }
+
+                                                @Override
+                                                public void onFail(String error) {
+                                                    new MessageDialog("error getting rooms "+error, p.projectName+" error",act);
+                                                }
+                                            });
+                                        }
+
+                                        @Override
+                                        public void onFail(String error) {
+                                            new MessageDialog("error getting floors "+error, p.projectName+" error",act);
+                                        }
+                                    });
+                                }
+
+                                @Override
+                                public void onFail(String error) {
+                                    new MessageDialog("error getting buildings "+error, p.projectName+" error",act);
+                                }
+                            });
+                        }
+                    }
+                    catch (JSONException e) {
+                        loadingDialog.close();
+                        e.printStackTrace();
+                        Log.d("getProjectsResp" , e.toString());
+                    }
+                }
+                else {
+                    loadingDialog.close();
+                }
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                loadingDialog.close();
+                Log.d("getProjectsResp" , error.toString());
+            }
+        });
+        Q.add(re);
+    }
+
+    void setWorkingFirebaseListeners(PROJECT p) {
+        LoadingDialog l = new LoadingDialog(act,"checking devices");
+        l.show();
+        Timer t = new Timer();
+        t.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                l.close();
+                t.cancel();
+            }
+        },1000*60*2,1000*60*2);
+            for (ServerDevice sd : p.ServerDevices) {
+                DatabaseReference ref = FirebaseDB.getReference(p.projectName+"ServerDevices/"+sd.name);
+                setDeviceWorkingListener(sd,ref);
+                setDeviceWorkingTimer(sd);
+            }
+    }
+
+    void setDeviceWorkingListener(ServerDevice device,DatabaseReference workingReference) {
+        workingReference.child("working").addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (snapshot.getValue() != null) {
+                    device.checkValue = Long.parseLong(snapshot.getValue().toString());
+                    Log.d("workingTimer",device.checkValue+" "+device.ProjectName+" "+device.name);
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+    }
+
+    void setDeviceWorkingTimer(ServerDevice device) {
+        device.task =new TimerTask() {
+            @Override
+            public void run() {
+                Log.d("workingTimer","checking value "+device.ProjectName+" "+device.name);
+                long now = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
+                long interval = 1000*60*device.taskInterval;
+                long nowInterval = now - device.checkValue ;
+                Log.d("workingTimer",nowInterval+" "+interval);
+                if (nowInterval >= interval) {
+                    device.working = false ;
+                    if (device.checkValue > 0) {
+                        CloudMessageController.rerunDevice(device, Q, new RequestCallback() {
+                            @Override
+                            public void onSuccess(String result) {
+                                Log.d("workingTimer","rerun message response "+result);
+                            }
+
+                            @Override
+                            public void onFailed(String error) {
+                                Log.d("workingTimer","rerun message error "+error);
+                            }
+                        });
+                        CloudMessageController.makeDeviceOffWarningNotification(device);
+                    }
+                }
+                else {
+                    device.working = true;
+                }
+                Log.d("workingTimer",device.ProjectName+" "+device.name+" result "+device.working);
+                if (Adapter != null) {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Adapter.notifyDataSetChanged();
+                        }
+                    });
+                }
+                else {
+                    Log.d("workingTimer","adapter null");
+                }
+            }
+        };
+        device.timer.scheduleAtFixedRate(device.task,0, 1000*60*device.taskInterval);
+    }
+
+    public void goToProjects(View view) {
+        Intent i = new Intent(act,Projects.class);
+        startActivity(i);
+    }
+}

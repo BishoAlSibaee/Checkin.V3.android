@@ -65,6 +65,7 @@ public class RESTAURANTS extends AppCompatActivity {
             setContentView(R.layout.restaurants);
         }
         setActivity();
+        Thread.setDefaultUncaughtExceptionHandler(new DefaultExceptionHandler(this));
     }
 
     @Override
@@ -78,20 +79,41 @@ public class RESTAURANTS extends AppCompatActivity {
     void setActivity() {
         act = this ;
         MyApp.restaurantActivities.add(act);
-        list = FullscreenActivity.Restaurants;
-        date = (TextView) findViewById(R.id.mainDate);
-        time = (TextView) findViewById(R.id.mainTime);
-        dndImage = findViewById(R.id.DND_Image);
-        dndIcon = findViewById(R.id.DND_Icon);
-        dndText = findViewById(R.id.DND_Text);
-        restaurantIcon = findViewById(R.id.imageView2);
-        leftArrow = findViewById(R.id.leftSlide2);
-        rightArrow = findViewById(R.id.imageView12);
-        LinearLayoutManager manager = new LinearLayoutManager(act, RecyclerView.HORIZONTAL, false);
-        rests = findViewById(R.id.restaurants_recycler);
-        rests.setLayoutManager(manager);
-        TextView CAPTION = findViewById(R.id.CAPTION2);
-        CAPTION.setText(getResources().getString(R.string.restaurant));
+        FullscreenActivity.RestaurantActivities.add(act);
+        blink();
+        defineViews();
+        setFirebaseReferences();
+        KeepScreenFull();
+        setLockButton();
+        windowInsetsController = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+        if (windowInsetsController != null) {
+            windowInsetsController.hide(WindowInsetsCompat.Type.systemBars());
+        }
+        if (windowInsetsController != null) {
+            windowInsetsController.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_BARS_BY_SWIPE);
+        }
+        backHomeThread = new Runnable() {
+            @Override
+            public void run() {
+                H = new Handler();
+                x = x+1000 ;
+                Log.d("backThread" , x+"");
+                H.postDelayed(this,1000);
+                if (x >= 60000){
+                    LinearLayout v = (LinearLayout) findViewById(R.id.home_Btn);
+                    runOnUiThread(() -> {
+                        backToMain(v);
+                        H.removeCallbacks(backHomeThread);
+                        x=0;
+                    });
+                }
+
+            }
+        };
+        backHomeThread.run();
+    }
+
+    void setFirebaseReferences() {
         DatabaseReference myRefRestaurant = FullscreenActivity.myRefRestaurant;
         myRefRestaurant.addValueEventListener(new ValueEventListener() {
             @Override
@@ -224,36 +246,25 @@ public class RESTAURANTS extends AppCompatActivity {
 
             }
         });
-        windowInsetsController = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
-        if (windowInsetsController != null) {
-            windowInsetsController.hide(WindowInsetsCompat.Type.systemBars());
-        }
-        if (windowInsetsController != null) {
-            windowInsetsController.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_BARS_BY_SWIPE);
-        }
-        blink();
-        FullscreenActivity.RestaurantActivities.add(act);
+    }
+
+    void defineViews() {
+        list = FullscreenActivity.Restaurants;
+        date = findViewById(R.id.mainDate);
+        time = findViewById(R.id.mainTime);
+        dndImage = findViewById(R.id.DND_Image);
+        dndIcon = findViewById(R.id.DND_Icon);
+        dndText = findViewById(R.id.DND_Text);
+        restaurantIcon = findViewById(R.id.imageView2);
+        leftArrow = findViewById(R.id.leftSlide2);
+        rightArrow = findViewById(R.id.imageView12);
+        rests = findViewById(R.id.restaurants_recycler);
+        TextView CAPTION = findViewById(R.id.CAPTION2);
+        CAPTION.setText(getResources().getString(R.string.restaurant));
         LinearLayout mainLayout = findViewById(R.id.main_layout);
         mainLayout.setOnClickListener(v -> x=0);
-        backHomeThread = new Runnable() {
-            @Override
-            public void run() {
-                H = new Handler();
-                x = x+1000 ;
-                Log.d("backThread" , x+"");
-                H.postDelayed(this,1000);
-                if (x >= 60000){
-                    LinearLayout v = (LinearLayout) findViewById(R.id.home_Btn);
-                    runOnUiThread(() -> {
-                        backToMain(v);
-                        H.removeCallbacks(backHomeThread);
-                        x=0;
-                    });
-                }
-
-            }
-        };
-        backHomeThread.run();
+        LinearLayoutManager manager = new LinearLayoutManager(act, RecyclerView.HORIZONTAL, false);
+        rests.setLayoutManager(manager);
         RESTAURANTS_ADAPTER adapter = new RESTAURANTS_ADAPTER(list);
         rests.setAdapter(adapter);
         rests.setOnScrollChangeListener((v, scrollX, scrollY, oldScrollX, oldScrollY) -> {
@@ -279,8 +290,6 @@ public class RESTAURANTS extends AppCompatActivity {
             }
 
         });
-        KeepScreenFull();
-        setLockButton();
     }
 
     public void backToMain(View view) {

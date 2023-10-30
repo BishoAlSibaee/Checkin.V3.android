@@ -1,3 +1,19 @@
 <resources>
     <string name="app_name">MobileCheckDevice</string>
+    <string name="cleanup">Cleanup</string>
+    <string name="laundry">Laundry</string>
+    <string name="dnd">DND</string>
+    <string name="checkout">Checkout</string>
+    <string name="roomService">RoomService</string>
+    <string name="roomsTemplate">Room Templates</string>
+
+    <!--    Messages -->
+
+    <string name="physicalButtonMessage">please turn on this switch if there is Physical Mood Button and select it first </string>
+
+    <string name="selectButtons">Select Buttons</string>
+    <string name="pleaseSelectButtons">please select buttons</string>
+
+    <string name="selectOtherButtons">Select Other Buttons</string>
+    <string name="pleaseSelectOtherButtonsInMultiControl">please select other buttons in multi control</string>
 </resources>

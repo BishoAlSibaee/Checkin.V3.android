@@ -3,7 +3,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_weight="1"
     android:background="@color/dark_gray"
     android:orientation="vertical"
     tools:context=".Rooms">
@@ -147,13 +148,22 @@
             android:textSize="12sp" />
 
         <Button
+            android:id="@+id/templatesButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Templates"
+            android:onClick="goToTemplates"
+            android:textAllCaps="false" />
+
+        <Button
             android:id="@+id/button26"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
             android:layout_weight="1"
-            android:text="logout"
             android:onClick="logOut"
+            android:text="logout"
             android:textAllCaps="false" />
     </LinearLayout>
 

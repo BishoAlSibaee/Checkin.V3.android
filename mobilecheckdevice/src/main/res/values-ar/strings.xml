@@ -1,0 +1,20 @@
+<resources>
+    <string name="app_name">MobileCheckDevice</string>
+    <string name="cleanup">Cleanup</string>
+    <string name="laundry">Laundry</string>
+    <string name="dnd">DND</string>
+    <string name="checkout">Checkout</string>
+    <string name="roomService">RoomService</string>
+    <string name="roomsTemplate">Room Templates</string>
+
+
+<!--    Messages -->
+
+    <string name="physicalButtonMessage">يجب تشغيل هذا الزر اذا كان هناك زر مود فعلي ضمن الازرار وثم يجب اختيار هذا الزر اولا</string>
+
+    <string name="selectButtons">اختر الازرار</string>
+    <string name="pleaseSelectButtons">يرجى اختيار الازرار</string>
+
+    <string name="selectOtherButtons">اختر الازرار الاخرى</string>
+    <string name="pleaseSelectOtherButtonsInMultiControl">يرجى اختيار الازرار الاخرى في التحكم المتعدد</string>
+</resources>

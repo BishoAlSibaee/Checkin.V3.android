@@ -72,6 +72,10 @@ public class ROOM {
     public int Switch2 ;
     public int Switch3 ;
     public int Switch4 ;
+    public int Switch5 ;
+    public int Switch6 ;
+    public int Switch7 ;
+    public int Switch8 ;
     public String LockGateway ;
     public String LockName ;
     public int powerStatus ;
@@ -99,6 +103,10 @@ public class ROOM {
     private DeviceBean SWITCH2_B;
     private DeviceBean SWITCH3_B;
     private DeviceBean SWITCH4_B;
+    private DeviceBean SWITCH5_B;
+    private DeviceBean SWITCH6_B;
+    private DeviceBean SWITCH7_B;
+    private DeviceBean SWITCH8_B;
     private DeviceBean LOCK_B ;
     private ITuyaDevice POWER;
     private ITuyaDevice AC;
@@ -112,13 +120,17 @@ public class ROOM {
     private ITuyaDevice SWITCH2;
     private ITuyaDevice SWITCH3;
     private ITuyaDevice SWITCH4;
+    private ITuyaDevice SWITCH5;
+    private ITuyaDevice SWITCH6;
+    private ITuyaDevice SWITCH7;
+    private ITuyaDevice SWITCH8;
     private ITuyaDevice LOCK ;
     private ITuyaGateway WiredZBGateway ;
     private LockObj Lock ;
     ValueEventListener CleanupListener , LaundryListener , CheckoutListener , DNDListener , SetPointIntervalListener , DoorWarningListener , roomStatusListener , CheckInModeTimeListener , CheckOutModeTimeListener , ClientInListener ;
 
 
-    public ROOM(int id, int roomNumber, int status, int hotel, int building, int building_id, int floor, int floor_id, String roomType, int suiteStatus, int suiteNumber, int suiteId, int reservationNumber, int roomStatus, int clientIn, String message, int selected, int loading, int tablet, String dep, int cleanup, int laundry, int roomService, String roomServiceText, int checkout, int restaurant, int miniBarCheck, int facility, int SOS, int DND, int powerSwitch, int doorSensor, int motionSensor, int thermostat, int ZBGateway, int online, int curtainSwitch, int serviceSwitch, int lock, int switch1, int switch2, int switch3, int switch4, String lockGateway, String lockName, int powerStatus, int curtainStatus, int doorStatus, int doorWarning, int temp, int tempSetPoint, int setPointInterval, int checkInModeTime, int checkOutModeTime, String welcomeMessage, String logo, String token) {
+    public ROOM(int id, int roomNumber, int status, int hotel, int building, int building_id, int floor, int floor_id, String roomType, int suiteStatus, int suiteNumber, int suiteId, int reservationNumber, int roomStatus, int clientIn, String message, int selected, int loading, int tablet, String dep, int cleanup, int laundry, int roomService, String roomServiceText, int checkout, int restaurant, int miniBarCheck, int facility, int SOS, int DND, int powerSwitch, int doorSensor, int motionSensor, int thermostat, int ZBGateway, int online, int curtainSwitch, int serviceSwitch, int lock, int switch1, int switch2, int switch3, int switch4,int switch5, int switch6, int switch7, int switch8, String lockGateway, String lockName, int powerStatus, int curtainStatus, int doorStatus, int doorWarning, int temp, int tempSetPoint, int setPointInterval, int checkInModeTime, int checkOutModeTime, String welcomeMessage, String logo, String token) {
         this.id = id;
         RoomNumber = roomNumber;
         Status = status;
@@ -162,6 +174,10 @@ public class ROOM {
         Switch2 = switch2;
         Switch3 = switch3;
         Switch4 = switch4;
+        Switch5 = switch5;
+        Switch6 = switch6;
+        Switch7 = switch7;
+        Switch8 = switch8;
         LockGateway = lockGateway;
         LockName = lockName;
         this.powerStatus = powerStatus;
@@ -228,6 +244,38 @@ public class ROOM {
 
     public void setSWITCH4_B(DeviceBean SWITCH4_B) {
         this.SWITCH4_B = SWITCH4_B;
+    }
+
+    public void setSWITCH5_B(DeviceBean SWITCH5_B) {
+        this.SWITCH5_B = SWITCH5_B;
+    }
+
+    public void setSWITCH6_B(DeviceBean SWITCH6_B) {
+        this.SWITCH6_B = SWITCH6_B;
+    }
+
+    public void setSWITCH7_B(DeviceBean SWITCH7_B) {
+        this.SWITCH7_B = SWITCH7_B;
+    }
+
+    public void setSWITCH8_B(DeviceBean SWITCH8_B) {
+        this.SWITCH8_B = SWITCH8_B;
+    }
+
+    public void setSWITCH5(ITuyaDevice SWITCH5) {
+        this.SWITCH5 = SWITCH5;
+    }
+
+    public void setSWITCH6(ITuyaDevice SWITCH6) {
+        this.SWITCH6 = SWITCH6;
+    }
+
+    public void setSWITCH7(ITuyaDevice SWITCH7) {
+        this.SWITCH7 = SWITCH7;
+    }
+
+    public void setSWITCH8(ITuyaDevice SWITCH8) {
+        this.SWITCH8 = SWITCH8;
     }
 
     public void setLOCK_B(DeviceBean LOCK_B) {
@@ -336,6 +384,38 @@ public class ROOM {
 
     public DeviceBean getSWITCH4_B() {
         return SWITCH4_B;
+    }
+
+    public DeviceBean getSWITCH5_B() {
+        return SWITCH5_B;
+    }
+
+    public DeviceBean getSWITCH6_B() {
+        return SWITCH6_B;
+    }
+
+    public DeviceBean getSWITCH7_B() {
+        return SWITCH7_B;
+    }
+
+    public DeviceBean getSWITCH8_B() {
+        return SWITCH8_B;
+    }
+
+    public ITuyaDevice getSWITCH5() {
+        return SWITCH5;
+    }
+
+    public ITuyaDevice getSWITCH6() {
+        return SWITCH6;
+    }
+
+    public ITuyaDevice getSWITCH7() {
+        return SWITCH7;
+    }
+
+    public ITuyaDevice getSWITCH8() {
+        return SWITCH8;
     }
 
     public DeviceBean getLOCK_B() {
@@ -747,6 +827,150 @@ public class ROOM {
     }
 
     void setSwitch4Status(String id,String status,Context c) {
+        String url = MyApp.THE_PROJECT.url + "roomsManagement/modifyRoomSwitch4Installed";
+        StringRequest tabR = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                Log.e("switch4" , response);
+                try {
+                    JSONObject res = new JSONObject(response);
+                    if (res.getString("result").equals("success")) {
+                        Log.e("switch4" , "switch4 updated successfully");
+                    }
+                    else {
+                        Log.e("switch4" , "switch4 update failed "+res.getString("error"));
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                    Log.e("switch4" , "switch4 update failed "+e.toString());
+                }
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.e("switch4" , "switch4 update failed "+error.toString());
+            }
+        }) {
+            @Override
+            protected Map<String, String> getParams() throws AuthFailureError {
+                Map<String,String> Params = new HashMap<String,String>();
+                Params.put("room_id", id);
+                Params.put("room_status" , status);
+                return Params;
+            }
+        };
+        Volley.newRequestQueue(c).add(tabR);
+    }
+
+    void setSwitch5Status(String id,String status,Context c) {
+        String url = MyApp.THE_PROJECT.url + "roomsManagement/modifyRoomSwitch5Installed";
+        StringRequest tabR = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                Log.e("switch5" , response);
+                try {
+                    JSONObject res = new JSONObject(response);
+                    if (res.getString("result").equals("success")) {
+                        Log.e("switch5" , "switch5 updated successfully");
+                    }
+                    else {
+                        Log.e("switch5" , "switch5 update failed "+res.getString("error"));
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                    Log.e("switch5" , "switch5 update failed "+e.toString());
+                }
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.e("switch5" , "switch5 update failed "+error.toString());
+            }
+        }) {
+            @Override
+            protected Map<String, String> getParams() throws AuthFailureError {
+                Map<String,String> Params = new HashMap<String,String>();
+                Params.put("room_id", id);
+                Params.put("room_status" , status);
+                return Params;
+            }
+        };
+        Volley.newRequestQueue(c).add(tabR);
+    }
+
+    void setSwitch6Status(String id,String status,Context c) {
+        String url = MyApp.THE_PROJECT.url + "roomsManagement/modifyRoomSwitch4Installed";
+        StringRequest tabR = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                Log.e("switch4" , response);
+                try {
+                    JSONObject res = new JSONObject(response);
+                    if (res.getString("result").equals("success")) {
+                        Log.e("switch4" , "switch4 updated successfully");
+                    }
+                    else {
+                        Log.e("switch4" , "switch4 update failed "+res.getString("error"));
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                    Log.e("switch4" , "switch4 update failed "+e.toString());
+                }
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.e("switch4" , "switch4 update failed "+error.toString());
+            }
+        }) {
+            @Override
+            protected Map<String, String> getParams() throws AuthFailureError {
+                Map<String,String> Params = new HashMap<String,String>();
+                Params.put("room_id", id);
+                Params.put("room_status" , status);
+                return Params;
+            }
+        };
+        Volley.newRequestQueue(c).add(tabR);
+    }
+
+    void setSwitch7Status(String id,String status,Context c) {
+        String url = MyApp.THE_PROJECT.url + "roomsManagement/modifyRoomSwitch4Installed";
+        StringRequest tabR = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                Log.e("switch4" , response);
+                try {
+                    JSONObject res = new JSONObject(response);
+                    if (res.getString("result").equals("success")) {
+                        Log.e("switch4" , "switch4 updated successfully");
+                    }
+                    else {
+                        Log.e("switch4" , "switch4 update failed "+res.getString("error"));
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                    Log.e("switch4" , "switch4 update failed "+e.toString());
+                }
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.e("switch4" , "switch4 update failed "+error.toString());
+            }
+        }) {
+            @Override
+            protected Map<String, String> getParams() throws AuthFailureError {
+                Map<String,String> Params = new HashMap<String,String>();
+                Params.put("room_id", id);
+                Params.put("room_status" , status);
+                return Params;
+            }
+        };
+        Volley.newRequestQueue(c).add(tabR);
+    }
+
+    void setSwitch8Status(String id,String status,Context c) {
         String url = MyApp.THE_PROJECT.url + "roomsManagement/modifyRoomSwitch4Installed";
         StringRequest tabR = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
             @Override

@@ -1,14 +1,14 @@
 package com.syriasoft.hotelservices;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.LinearLayout;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.tuya.smart.sdk.bean.DeviceBean;
 
@@ -35,6 +35,7 @@ public class LightingDoubleControl extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_lighting_double_control);
         setActivity();
+        Thread.setDefaultUncaughtExceptionHandler(new DefaultExceptionHandler(this));
     }
 
     void setActivity() {
@@ -68,6 +69,22 @@ public class LightingDoubleControl extends AppCompatActivity {
         if (FullscreenActivity.THE_ROOM.getSWITCH4_B() != null) {
             FirstDeviceList.add(FullscreenActivity.THE_ROOM.getSWITCH4_B());
             SecondDeviceList.add(FullscreenActivity.THE_ROOM.getSWITCH4_B());
+        }
+        if (FullscreenActivity.THE_ROOM.getSWITCH5_B() != null) {
+            FirstDeviceList.add(FullscreenActivity.THE_ROOM.getSWITCH5_B());
+            SecondDeviceList.add(FullscreenActivity.THE_ROOM.getSWITCH5_B());
+        }
+        if (FullscreenActivity.THE_ROOM.getSWITCH6_B() != null) {
+            FirstDeviceList.add(FullscreenActivity.THE_ROOM.getSWITCH6_B());
+            SecondDeviceList.add(FullscreenActivity.THE_ROOM.getSWITCH6_B());
+        }
+        if (FullscreenActivity.THE_ROOM.getSWITCH7_B() != null) {
+            FirstDeviceList.add(FullscreenActivity.THE_ROOM.getSWITCH7_B());
+            SecondDeviceList.add(FullscreenActivity.THE_ROOM.getSWITCH7_B());
+        }
+        if (FullscreenActivity.THE_ROOM.getSWITCH8_B() != null) {
+            FirstDeviceList.add(FullscreenActivity.THE_ROOM.getSWITCH8_B());
+            SecondDeviceList.add(FullscreenActivity.THE_ROOM.getSWITCH8_B());
         }
         if (FullscreenActivity.THE_ROOM.getSERVICE1_B() != null) {
             FirstDeviceList.add(FullscreenActivity.THE_ROOM.getSERVICE1_B());

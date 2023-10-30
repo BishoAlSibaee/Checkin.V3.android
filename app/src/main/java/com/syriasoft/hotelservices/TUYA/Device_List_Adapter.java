@@ -13,7 +13,6 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.syriasoft.hotelservices.ErrorRegister;
-import com.syriasoft.hotelservices.LogIn;
 import com.syriasoft.hotelservices.MyApp;
 import com.syriasoft.hotelservices.R;
 import com.syriasoft.hotelservices.ToastMaker;
@@ -112,7 +111,7 @@ public class Device_List_Adapter  extends RecyclerView.Adapter<Device_List_Adapt
                                 //ToastMaker.MakeToast(errorMsg , holder.itemView.getContext());
                                 Calendar c = Calendar.getInstance(Locale.getDefault());
                                 long time =c.getTimeInMillis() ;
-                                ErrorRegister.rigestError(holder.itemView.getContext(),MyApp.THE_PROJECT.projectName,MyApp.Room.RoomNumber,time,18,errorMsg,"Error Deleting Tuya Device");
+                                ErrorRegister.insertError(holder.itemView.getContext(),MyApp.THE_PROJECT.projectName,MyApp.Room.RoomNumber,time,18,errorMsg,"Error Deleting Tuya Device");
                             }
                             @Override
                             public void onSuccess()

@@ -11,6 +11,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.Color;
+import android.graphics.drawable.AnimationDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
 import android.os.Bundle;
@@ -47,6 +48,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.messaging.FirebaseMessaging;
+import com.squareup.picasso.Picasso;
 import com.ttlock.bl.sdk.api.TTLockClient;
 import com.ttlock.bl.sdk.callback.ControlLockCallback;
 import com.ttlock.bl.sdk.constant.ControlAction;
@@ -62,13 +64,18 @@ import com.tuya.smart.home.sdk.bean.scene.dev.TaskListBean;
 import com.tuya.smart.home.sdk.callback.ITuyaGetHomeListCallback;
 import com.tuya.smart.home.sdk.callback.ITuyaHomeResultCallback;
 import com.tuya.smart.home.sdk.callback.ITuyaResultCallback;
+import com.tuya.smart.sdk.api.IDeviceListener;
 import com.tuya.smart.sdk.api.IResultCallback;
 import com.tuya.smart.sdk.api.ITuyaDevice;
 import com.tuya.smart.sdk.bean.DeviceBean;
+import com.tuya.smart.sdk.enums.TYDevicePublishModeEnum;
 import com.wang.avi.AVLoadingIndicatorView;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -79,11 +86,6 @@ import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
 
-
-/**
- * An example full-screen activity that shows and hides the system UI (i.e.
- * status bar and navigation/system bar) with user interaction.
- */
 public class FullscreenActivity extends AppCompatActivity {
 
     public Activity act  ;
@@ -92,7 +94,7 @@ public class FullscreenActivity extends AppCompatActivity {
     static boolean DNDStatus=false,LaundryStatus=false,CleanupStatus=false,RoomServiceStatus,SosStatus,RestaurantStatus,CheckoutStatus = false;
     static String roomServiceOrder ="";
     static int  RoomOrSuite =1 , ID ,CURRENT_ROOM_STATUS=0 ,RESERVATION =0 ;
-    static  boolean  Switch1Status=false,Switch2Status=false ,Switch3Status=false , Switch4Status=false  ;
+    static  boolean  Switch1Status=false,Switch2Status=false,Switch3Status=false,Switch4Status=false,Switch5Status=false,Switch6Status=false,Switch7Status=false,Switch8Status=false;
     static RESERVATION THE_RESERVATION;
     static OrderDB order ;
     RecyclerView LAUNDRY_MENU, MINIBAR_MENU;
@@ -120,6 +122,9 @@ public class FullscreenActivity extends AppCompatActivity {
     DeviceBean Living,Sleep,Work,Romance,Read,MasterOff;
     boolean isPaused;
     public static List<String> IMAGES ;
+    static boolean BigScreen = true;
+    Timer serviceButtonsTimer;
+    int serviceButtonsTimerIndex = 0;
 
 
     @SuppressLint("InvalidWakeLockTag")
@@ -128,45 +133,20 @@ public class FullscreenActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         if (Build.MODEL.equals("YC-55P") || Build.MODEL.equals("YS4B")) {
             setContentView(R.layout.fullscreen_small);
+            BigScreen = false ;
         }
         else {
             setContentView(R.layout.activity_fullscreen);
+            BigScreen = true;
         }
         TTLockClient.getDefault().prepareBTService(getApplicationContext());
         setActivity();
         order = new OrderDB(act);
         order.removeOrder();
-        FirebaseMessaging.getInstance().getToken().addOnCompleteListener(task -> {
-            if (!task.isSuccessful()) {
-                return;
-            }
-            String token = task.getResult();
-            sendRegistrationToServer(token);
-            myRefToken.setValue(token);
-        });
-        Timer t = new Timer() ;
-        t.scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
-                Log.d("registerToken", "token timer started");
-                FirebaseMessaging.getInstance().getToken().addOnCompleteListener(task -> {
-                    if (!task.isSuccessful()) {
-                        return;
-                    }
-                    String token = task.getResult();
-                    sendRegistrationToServer(token);
-                    myRefToken.setValue(token);
-                });
-            }},1000*60,1000*60*60*12);
-        Timer refreshTimer = new Timer() ;
-        refreshTimer.scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
-                Log.d("refreshDevices","timer started");
-                refreshDevices();
-            }
-        },1000*60,1000*60*60*6);
+        getFirebaseToken();
+        setRefreshDevices();
         act.startLockTask();
+        Thread.setDefaultUncaughtExceptionHandler(new DefaultExceptionHandler(this));
     }
 
     @Override
@@ -235,22 +215,6 @@ public class FullscreenActivity extends AppCompatActivity {
         THE_ROOM = MyApp.Room ;
         pref = getSharedPreferences("MyProject", MODE_PRIVATE);
         editor = getSharedPreferences("MyProject", MODE_PRIVATE).edit();
-        Facilities = new ArrayList<>();
-        RestaurantActivities = new ArrayList<>();
-        EmpS = new ArrayList<>();
-        Restaurants = new ArrayList<>();
-        Minibar = new ArrayList<>();
-        RESOURCES = getResources();
-        Laundries = new ArrayList<>();
-        IMAGES = new ArrayList<>();
-        SCENES = new ArrayList<>();
-        MY_SCENES = new ArrayList<>();
-        LivingMood = new ArrayList<>();
-        SleepMood = new ArrayList<>();
-        WorkMood = new ArrayList<>();
-        RomanceMood = new ArrayList<>();
-        ReadMood = new ArrayList<>();
-        MasterOffMood = new ArrayList<>();
         RestaurantBtn = findViewById(R.id.Restaurant);
         GymBtn = findViewById(R.id.button6);
         LaundryBtn = findViewById(R.id.laundry_btn);
@@ -270,6 +234,7 @@ public class FullscreenActivity extends AppCompatActivity {
         mainLayout = findViewById(R.id.main_layout);
         LAUNDRY_MENU = findViewById(R.id.laundryMenu_recycler);
         MINIBAR_MENU = findViewById(R.id.minibar_recycler);
+        setArrayLists();
         LinearLayoutManager laundryManager = new LinearLayoutManager(act, RecyclerView.HORIZONTAL, false);
         final GridLayoutManager manager1 = new GridLayoutManager(this,4);
         manager1.setOrientation(LinearLayoutManager.VERTICAL);
@@ -280,6 +245,201 @@ public class FullscreenActivity extends AppCompatActivity {
         minibarPriceList = findViewById(R.id.minibar_priceList);
         laundryPriceList = findViewById(R.id.laundry_pricelist);
         ShowMiniBar = findViewById(R.id.hideShowMinibarLayout);
+        setFirebaseReferences();
+        TextView RoomNumber = findViewById(R.id.RoomNumber_MainScreen);
+        RoomNumber.setText(String.valueOf(MyApp.Room.RoomNumber));
+        iTuyaDeviceMultiControl = TuyaHomeSdk.getDeviceMultiControlInstance();
+        lightsDB = new LightingDB(act) ;
+        backHomeThread = new Runnable() {
+            @Override
+            public void run() {
+                H = new Handler();
+                x = x+1000 ;
+                Log.d("backThread" , x+"");
+                H.postDelayed(this,1000);
+                if (x >= 20000){
+                    LinearLayout v = findViewById(R.id.home_Btn);
+                    runOnUiThread(() -> {
+                        backToMain(v);
+                        H.removeCallbacks(backHomeThread);
+                        x=0;
+                    });
+                }
+            }
+        };
+        windowInsetsController = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+        if (windowInsetsController != null) {
+            windowInsetsController.hide(WindowInsetsCompat.Type.systemBars());
+        }
+        if (windowInsetsController != null) {
+            windowInsetsController.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_BARS_BY_SWIPE);
+        }
+        if (BigScreen) {
+            setServiceButtonImage();
+        }
+        getServiceUsersFromFirebase();
+        getFacilities();
+        setActivityActions();
+        setFireRoomListeners();
+        blink();
+        KeepScreenFull();
+        setTheAcLayout();
+        setLockButton();
+        setBalloons();
+    }
+
+    void getFirebaseToken() {
+        FirebaseMessaging.getInstance().getToken().addOnCompleteListener(task -> {
+            if (!task.isSuccessful()) {
+                return;
+            }
+            String token = task.getResult();
+            sendRegistrationToServer(token);
+            myRefToken.setValue(token);
+        });
+        Timer t = new Timer() ;
+        t.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                Log.d("registerToken", "token timer started");
+                FirebaseMessaging.getInstance().getToken().addOnCompleteListener(task -> {
+                    if (!task.isSuccessful()) {
+                        return;
+                    }
+                    String token = task.getResult();
+                    sendRegistrationToServer(token);
+                    myRefToken.setValue(token);
+                });
+            }},1000*60, 1000 * 60 * 60);
+    }
+
+    void setRefreshDevices() {
+        Timer refreshTimer = new Timer() ;
+        refreshTimer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                Log.d("refreshDevices","timer started");
+                refreshDevices();
+            }
+        },1000*60,1000*60*60*6);
+    }
+
+    void setBalloons() {
+//        ServicesBalloon = new Balloon.Builder(getApplicationContext())
+//                .setArrowSize(30)
+//                .setArrowOrientation(ArrowOrientation.BOTTOM)
+//                .setIsVisibleArrow(true)
+//                .setArrowPosition(0.5f)
+//                .setWidthRatio(0.2f)
+//                .setHeight(200)
+//                .setTextSize(30f)
+//                .setCornerRadius(8f)
+//                .setAlpha(0.8f)
+//                .setText("طلب الخدمات \nServices")
+//                .setTextColor(act.getColor(R.color.colorPrimary))
+//                .setBackgroundColor(act.getColor(R.color.light_blue_A200))
+//                .setBalloonAnimation(BalloonAnimation.FADE)
+//                .setAutoDismissDuration(3000)
+//                .build();
+//        LightsBalloon = new Balloon.Builder(getApplicationContext())
+//                .setArrowSize(30)
+//                .setArrowOrientation(ArrowOrientation.BOTTOM)
+//                .setIsVisibleArrow(true)
+//                .setArrowPosition(0.5f)
+//                .setWidthRatio(0.2f)
+//                .setHeight(200)
+//                .setTextSize(30f)
+//                .setCornerRadius(8f)
+//                .setAlpha(0.8f)
+//                .setText("تشغيل واغلاق الاضاءة \n Turn Lights On/Off")
+//                .setTextColor(act.getColor(R.color.colorPrimary))
+//                .setBackgroundColor(act.getColor(R.color.light_blue_A200))
+//                .setBalloonAnimation(BalloonAnimation.FADE)
+//                .setAutoDismissDuration(3000)
+//                .build();
+//        ACBalloon = new Balloon.Builder(getApplicationContext())
+//                .setArrowSize(30)
+//                .setArrowOrientation(ArrowOrientation.BOTTOM)
+//                .setIsVisibleArrow(true)
+//                .setArrowPosition(0.5f)
+//                .setWidthRatio(0.2f)
+//                .setHeight(200)
+//                .setTextSize(30f)
+//                .setCornerRadius(8f)
+//                .setAlpha(0.8f)
+//                .setText("التحكم بالمكيف \n Control AC")
+//                .setTextColor(act.getColor(R.color.colorPrimary))
+//                .setBackgroundColor(act.getColor(R.color.light_blue_A200))
+//                .setBalloonAnimation(BalloonAnimation.FADE)
+//                .setAutoDismissDuration(3000)
+//                .build();
+//        RestaurantBalloon = new Balloon.Builder(getApplicationContext())
+//                .setArrowSize(30)
+//                .setArrowOrientation(ArrowOrientation.BOTTOM)
+//                .setIsVisibleArrow(true)
+//                .setArrowPosition(0.5f)
+//                .setWidthRatio(0.2f)
+//                .setHeight(200)
+//                .setTextSize(30f)
+//                .setCornerRadius(8f)
+//                .setAlpha(0.8f)
+//                .setText("للطلب من المطعم \nRestaurant")
+//                .setTextColor(act.getColor(R.color.colorPrimary))
+//                .setBackgroundColor(act.getColor(R.color.light_blue_A200))
+//                .setBalloonAnimation(BalloonAnimation.FADE)
+//                .setAutoDismissDuration(3000)
+//                .build();
+//        SOSBalloon = new Balloon.Builder(getApplicationContext())
+//                .setArrowSize(30)
+//                .setArrowOrientation(ArrowOrientation.BOTTOM)
+//                .setIsVisibleArrow(true)
+//                .setArrowPosition(0.5f)
+//                .setWidthRatio(0.2f)
+//                .setHeight(200)
+//                .setTextSize(30f)
+//                .setCornerRadius(8f)
+//                .setAlpha(0.8f)
+//                .setText("لحالات الطوارئ \n Emergency")
+//                .setTextColor(act.getColor(R.color.colorPrimary))
+//                .setBackgroundColor(act.getColor(R.color.light_blue_A200))
+//                .setBalloonAnimation(BalloonAnimation.FADE)
+//                .setAutoDismissDuration(3000)
+//                .build();
+//        DNDBalloon = new Balloon.Builder(getApplicationContext())
+//                .setArrowSize(30)
+//                .setArrowOrientation(ArrowOrientation.BOTTOM)
+//                .setIsVisibleArrow(true)
+//                .setArrowPosition(0.5f)
+//                .setWidthRatio(0.2f)
+//                .setHeight(200)
+//                .setTextSize(30f)
+//                .setCornerRadius(8f)
+//                .setAlpha(0.8f)
+//                .setText("وضع عدم الازعاج \n Don't Disturb ")
+//                .setTextColor(act.getColor(R.color.colorPrimary))
+//                .setBackgroundColor(act.getColor(R.color.light_blue_A200))
+//                .setBalloonAnimation(BalloonAnimation.FADE)
+//                .setAutoDismissDuration(3000)
+//                .build();
+//        DoorBalloon = new Balloon.Builder(getApplicationContext())
+//                .setArrowSize(30)
+//                .setArrowOrientation(ArrowOrientation.BOTTOM)
+//                .setIsVisibleArrow(true)
+//                .setArrowPosition(0.5f)
+//                .setWidthRatio(0.2f)
+//                .setHeight(200)
+//                .setTextSize(30f)
+//                .setCornerRadius(8f)
+//                .setAlpha(0.8f)
+//                .setText("فتح قفل باب الغرفة \n Open Door Lock")
+//                .setTextColor(act.getColor(R.color.colorPrimary))
+//                .setBackgroundColor(act.getColor(R.color.light_blue_A200))
+//                .setBalloonAnimation(BalloonAnimation.FADE)
+//                .setAutoDismissDuration(3000)
+//                .build();
+    }
+
+    void setFirebaseReferences() {
         FirebaseDatabase database = FirebaseDatabase.getInstance("https://hotelservices-ebe66.firebaseio.com/");
         ServiceUsers = database.getReference(MyApp.ProjectName+"ServiceUsers");
         Room = database.getReference(MyApp.ProjectName+"/B"+MyApp.Room.Building+"/F"+MyApp.Room.Floor+"/R"+MyApp.Room.RoomNumber);
@@ -322,47 +482,40 @@ public class FullscreenActivity extends AppCompatActivity {
         myRefLogo = Room.child("Logo");
         myRefToken = Room.child("token");
         RoomDevicesRef = database.getReference(MyApp.ProjectName+"Devices").child(String.valueOf(THE_ROOM.RoomNumber));
-        TextView RoomNumber = findViewById(R.id.RoomNumber_MainScreen);
-        RoomNumber.setText(String.valueOf(MyApp.Room.RoomNumber));
-        iTuyaDeviceMultiControl = TuyaHomeSdk.getDeviceMultiControlInstance();
-        lightsDB = new LightingDB(act) ;
-        backHomeThread = new Runnable() {
-            @Override
-            public void run() {
-                H = new Handler();
-                x = x+1000 ;
-                Log.d("backThread" , x+"");
-                H.postDelayed(this,1000);
-                if (x >= 20000){
-                    LinearLayout v = findViewById(R.id.home_Btn);
-                    runOnUiThread(() -> {
-                        backToMain(v);
-                        H.removeCallbacks(backHomeThread);
-                        x=0;
-                    });
-                }
-            }
-        };
-        windowInsetsController = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
-        if (windowInsetsController != null) {
-            windowInsetsController.hide(WindowInsetsCompat.Type.systemBars());
-        }
-        if (windowInsetsController != null) {
-            windowInsetsController.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_BARS_BY_SWIPE);
-        }
-        getServiceUsersFromFirebase();
-        getFacilities();
-        setActivityActions();
-        setFireRoomListeners();
-        blink();
-        KeepScreenFull();
-        setTheAcLayout();
-        setLockButton();
+    }
+
+    void setArrayLists() {
+        Facilities = new ArrayList<>();
+        RestaurantActivities = new ArrayList<>();
+        EmpS = new ArrayList<>();
+        Restaurants = new ArrayList<>();
+        Minibar = new ArrayList<>();
+        RESOURCES = getResources();
+        Laundries = new ArrayList<>();
+        IMAGES = new ArrayList<>();
+        SCENES = new ArrayList<>();
+        MY_SCENES = new ArrayList<>();
+        LivingMood = new ArrayList<>();
+        SleepMood = new ArrayList<>();
+        WorkMood = new ArrayList<>();
+        RomanceMood = new ArrayList<>();
+        ReadMood = new ArrayList<>();
+        MasterOffMood = new ArrayList<>();
     }
 
     void setActivityActions() {
         TextView roomNumber = findViewById(R.id.RoomNumber_MainScreen);
-        ServicesBtn.setOnClickListener(v -> hideMainBtnS());
+        ServicesBtn.setOnClickListener(v -> {
+            hideMainBtnS();
+            ImageView cleanupImage = findViewById(R.id.imageView19);
+            ImageView laundryImage = findViewById(R.id.imageView16);
+            ImageView roomserviceImage = findViewById(R.id.imageView8);
+            if (BigScreen) {
+                cleanupImage.setImageAlpha(1);
+                laundryImage.setImageAlpha(1);
+                roomserviceImage.setImageAlpha(1);
+            }
+        });
         serviceLayout.setOnClickListener(v -> x=0);
         lightsLayout.setOnClickListener(v -> x=0);
         mainLayout.setOnClickListener(v -> x=0);
@@ -709,6 +862,11 @@ public class FullscreenActivity extends AppCompatActivity {
             dd.show();
             return false;
         });
+        TextView text = findViewById(R.id.textView36);
+        text.setOnLongClickListener(view -> {
+            executeCommand();
+            return false;
+        });
     }
 
     public void setFireRoomListeners() {
@@ -780,6 +938,7 @@ public class FullscreenActivity extends AppCompatActivity {
                         laundryOff(act);
                     }
                 }
+                xxx();
             }
 
             @Override
@@ -800,6 +959,7 @@ public class FullscreenActivity extends AppCompatActivity {
                         CleanupStatus = false ;
                     }
                 }
+                xxx();
             }
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
@@ -819,6 +979,7 @@ public class FullscreenActivity extends AppCompatActivity {
                         CheckoutStatus = false ;
                     }
                 }
+                xxx();
             }
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
@@ -838,6 +999,7 @@ public class FullscreenActivity extends AppCompatActivity {
                         roomServiceOff(act);
                     }
                 }
+                xxx();
             }
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
@@ -984,39 +1146,184 @@ public class FullscreenActivity extends AppCompatActivity {
     }
 
     public void getReservation() {
-        String url = MyApp.ProjectURL + "reservations/getRoomReservation";
-        StringRequest getReservationRe = new StringRequest(Request.Method.POST, url, response -> {
-            Log.d("reservationResp",response);
-            try {
-                JSONObject result = new JSONObject(response);
-                if (result.getString("result").equals("success")) {
-                    JSONObject row = result.getJSONObject("reservation");
-                    THE_RESERVATION = new RESERVATION(row.getInt("id"),row.getInt("RoomNumber"),row.getInt("ClientId"),row.getInt("Status"),
-                            row.getInt("RoomOrSuite"),row.getInt("MultiRooms"),row.getString("AddRoomNumber"),row.getString("AddRoomId"),row.getString("StartDate"),
-                            row.getInt("Nights"),row.getString("EndDate"),row.getInt("Hotel"),row.getInt("BuildingNo"),row.getInt("Floor"),row.getString("ClientFirstName"),row.getString("ClientLastName"),row.getString("IdType"),
-                            row.getInt("IdNumber"),row.getInt("MobileNumber"),row.getString("Email"),row.getInt("Rating"));
-                    TextView fName = findViewById(R.id.client_Name);
-                    TextView checkIn = findViewById(R.id.check_In_Date);
-                    TextView checkout = findViewById(R.id.check_out_Date);
-                    fName.setText(String.format("%s %s", THE_RESERVATION.ClientFirstName, THE_RESERVATION.ClientLastName));
-                    checkIn.setText(String.format("in:%s", THE_RESERVATION.StartDate));
-                    checkout.setText(String.format("out:%s", THE_RESERVATION.EndDate));
+        if (RoomOrSuite == 1) {
+            String url = MyApp.ProjectURL + "reservations/getRoomReservation";
+            StringRequest getReservationRe = new StringRequest(Request.Method.POST, url, response -> {
+                Log.d("reservationResp",response);
+                try {
+                    JSONObject result = new JSONObject(response);
+                    if (result.getString("result").equals("success")) {
+                        JSONObject row = result.getJSONObject("reservation");
+                        THE_RESERVATION = new RESERVATION(row.getInt("id"),row.getInt("RoomNumber"),row.getInt("ClientId"),row.getInt("Status"),
+                                row.getInt("RoomOrSuite"),row.getInt("MultiRooms"),row.getString("AddRoomNumber"),row.getString("AddRoomId"),row.getString("StartDate"),
+                                row.getInt("Nights"),row.getString("EndDate"),row.getInt("Hotel"),row.getInt("BuildingNo"),row.getInt("Floor"),row.getString("ClientFirstName"),row.getString("ClientLastName"),row.getString("IdType"),
+                                row.getInt("IdNumber"),row.getInt("MobileNumber"),row.getString("Email"),row.getInt("Rating"));
+                        TextView fName = findViewById(R.id.client_Name);
+                        TextView checkIn = findViewById(R.id.check_In_Date);
+                        TextView checkout = findViewById(R.id.check_out_Date);
+                        fName.setText(String.format("%s %s", THE_RESERVATION.ClientFirstName, THE_RESERVATION.ClientLastName));
+                        checkIn.setText(String.format("in:%s", THE_RESERVATION.StartDate));
+                        checkout.setText(String.format("out:%s", THE_RESERVATION.EndDate));
+                    }
+                }
+                catch (JSONException e) {
+                    e.printStackTrace();
+                    new messageDialog(e.getMessage(),"Failed to get reservation",act);
+                }
+            }, error -> new messageDialog(error.toString(),"Failed to get reservation",act)) {
+                @Override
+                protected Map<String, String> getParams() {
+                    Map<String,String> Params = new HashMap<>();
+                    Params.put("reservation_id", String.valueOf(RESERVATION));
+                    Params.put("room_number" , String.valueOf(THE_ROOM.RoomNumber));
+                    return Params;
+                }
+            };
+            if (FirebaseTokenRegister == null) {
+                FirebaseTokenRegister = Volley.newRequestQueue(act) ;
+            }
+            FirebaseTokenRegister.add(getReservationRe);
+        }
+        else {
+            String url = MyApp.ProjectURL + "reservations/getSuiteReservation";
+            StringRequest getReservationRe = new StringRequest(Request.Method.POST, url, response -> {
+                Log.d("reservationResp",response);
+                try {
+                    JSONObject result = new JSONObject(response);
+                    if (result.getString("result").equals("success")) {
+                        JSONObject row = result.getJSONObject("reservation");
+                        THE_RESERVATION = new RESERVATION(row.getInt("id"),row.getInt("RoomNumber"),row.getInt("ClientId"),row.getInt("Status"),
+                                row.getInt("RoomOrSuite"),row.getInt("MultiRooms"),row.getString("AddRoomNumber"),row.getString("AddRoomId"),row.getString("StartDate"),
+                                row.getInt("Nights"),row.getString("EndDate"),row.getInt("Hotel"),row.getInt("BuildingNo"),row.getInt("Floor"),row.getString("ClientFirstName"),row.getString("ClientLastName"),row.getString("IdType"),
+                                row.getInt("IdNumber"),row.getInt("MobileNumber"),row.getString("Email"),row.getInt("Rating"));
+                        TextView fName = findViewById(R.id.client_Name);
+                        TextView checkIn = findViewById(R.id.check_In_Date);
+                        TextView checkout = findViewById(R.id.check_out_Date);
+                        fName.setText(String.format("%s %s", THE_RESERVATION.ClientFirstName, THE_RESERVATION.ClientLastName));
+                        checkIn.setText(String.format("in:%s", THE_RESERVATION.StartDate));
+                        checkout.setText(String.format("out:%s", THE_RESERVATION.EndDate));
+                    }
+                }
+                catch (JSONException e) {
+                    e.printStackTrace();
+                    new messageDialog(e.getMessage(),"Failed to get reservation",act);
+                }
+            }, error -> new messageDialog(error.toString(),"Failed to get reservation",act)) {
+                @Override
+                protected Map<String, String> getParams() {
+                    Map<String,String> Params = new HashMap<>();
+                    Params.put("reservation_id", String.valueOf(RESERVATION));
+                    Params.put("suite_number" , String.valueOf(THE_ROOM.SuiteNumber));
+                    return Params;
+                }
+            };
+            if (FirebaseTokenRegister == null) {
+                FirebaseTokenRegister = Volley.newRequestQueue(act) ;
+            }
+            FirebaseTokenRegister.add(getReservationRe);
+        }
+    }
+
+    void setServiceButtonImage() {
+        if (serviceButtonsTimer != null) {
+            serviceButtonsTimer.cancel();
+        }
+        serviceButtonsTimer = new Timer();
+        ImageView servicesImage = findViewById(R.id.imageView13);
+        serviceButtonsTimer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                Log.d("serviceButtons" , serviceButtonsTimerIndex+" ");
+                if (serviceButtonsTimerIndex == 0) {
+                    runOnUiThread(() -> {
+                        if (CleanupStatus) {
+                            servicesImage.setBackgroundResource(R.drawable.cleanup_on_anim);
+                        }
+                        else {
+                            servicesImage.setBackgroundResource(R.drawable.cleanup_anim);
+                        }
+                        serviceButtonsTimerIndex++;
+                    });
+                }
+                else if (serviceButtonsTimerIndex == 1) {
+                    runOnUiThread(() -> {
+                        if (LaundryStatus) {
+                            servicesImage.setBackgroundResource(R.drawable.laundry_on_anim);
+                        }
+                        else {
+                            servicesImage.setBackgroundResource(R.drawable.laundry_anim);
+                        }
+                        serviceButtonsTimerIndex++;
+                    });
+                }
+                else if (serviceButtonsTimerIndex == 2) {
+                    runOnUiThread(() -> {
+                        if (RoomServiceStatus) {
+                            servicesImage.setBackgroundResource(R.drawable.roomservice_on_3);
+                        }
+                        else {
+                            servicesImage.setBackgroundResource(R.drawable.roomservice_3);
+                        }
+                        serviceButtonsTimerIndex++;
+                    });
+                }
+                else if (serviceButtonsTimerIndex == 3) {
+                    runOnUiThread(() -> {
+                        if (CheckoutStatus) {
+                            servicesImage.setBackgroundResource(R.drawable.checkout_on_2);
+                        }
+                        else {
+                            servicesImage.setBackgroundResource(R.drawable.checkout_2);
+                        }
+                        serviceButtonsTimerIndex = 0;
+                    });
                 }
             }
-            catch (JSONException e) {
-                e.printStackTrace();
-                new messageDialog(e.getMessage(),"Failed to get reservation",act);
-            }
-        }, error -> new messageDialog(error.toString(),"Failed to get reservation",act)) {
-            @Override
-            protected Map<String, String> getParams() {
-                Map<String,String> Params = new HashMap<>();
-                Params.put("reservation_id", String.valueOf(RESERVATION));
-                Params.put("room_number" , String.valueOf(THE_ROOM.RoomNumber));
-                return Params;
-            }
-        };
-        Volley.newRequestQueue(act).add(getReservationRe);
+        },0,20000);
+    }
+
+    void xxx() {
+        ImageView servicesImage = findViewById(R.id.imageView13);
+        if (serviceButtonsTimerIndex == 0) {
+            runOnUiThread(() -> {
+                if (CleanupStatus) {
+                    servicesImage.setBackgroundResource(R.drawable.cleanup_on_anim);
+                }
+                else {
+                    servicesImage.setBackgroundResource(R.drawable.cleanup_anim);
+                }
+            });
+        }
+        else if (serviceButtonsTimerIndex == 1) {
+            runOnUiThread(() -> {
+                if (LaundryStatus) {
+                    servicesImage.setBackgroundResource(R.drawable.laundry_on_anim);
+                }
+                else {
+                    servicesImage.setBackgroundResource(R.drawable.laundry_anim);
+                }
+            });
+        }
+        else if (serviceButtonsTimerIndex == 2) {
+            runOnUiThread(() -> {
+                if (RoomServiceStatus) {
+                    servicesImage.setBackgroundResource(R.drawable.roomservice_on_3);
+                }
+                else {
+                    servicesImage.setBackgroundResource(R.drawable.roomservice_3);
+                }
+            });
+        }
+        else if (serviceButtonsTimerIndex == 3) {
+            runOnUiThread(() -> {
+                if (CheckoutStatus) {
+                    servicesImage.setBackgroundResource(R.drawable.checkout_on_2);
+                }
+                else {
+                    servicesImage.setBackgroundResource(R.drawable.checkout_2);
+                }
+            });
+        }
     }
 
 //-------------------------------------------------------------
@@ -1046,6 +1353,10 @@ public class FullscreenActivity extends AppCompatActivity {
         Button fanSpeed = findViewById(R.id.fanSpeedBtn);
         Button tempUp = findViewById(R.id.tempUpBtn);
         Button tempDown = findViewById(R.id.tempDownBtn);
+        ImageView acImage = findViewById(R.id.imageView30);
+        acImage.setBackgroundResource(R.drawable.ac_animation);
+        AnimationDrawable ad = (AnimationDrawable) acImage.getBackground();
+        ad.start();
         if (THE_ROOM.getAC_B() != null) {
             TuyaHomeSdk.getSceneManagerInstance().getDeviceConditionOperationList(THE_ROOM.getAC_B().devId, new ITuyaResultCallback<List<TaskListBean>>() {
                 @Override
@@ -1293,6 +1604,41 @@ public class FullscreenActivity extends AppCompatActivity {
                             }
                         });
                     }
+                    long finalPowerId1 = PowerId;
+                    TuyaHomeSdk.newDeviceInstance(THE_ROOM.getAC_B().devId).registerDeviceListener(new IDeviceListener() {
+                        @Override
+                        public void onDpUpdate(String devId, Map<String, Object> dpStr) {
+                            if (THE_ROOM.getAC_B().dps.get(String.valueOf(finalPowerId1)) != null) {
+                                Log.d("acListener", Objects.requireNonNull(THE_ROOM.getAC_B().dps.get(String.valueOf(finalPowerId1))).toString());
+                                if (Objects.requireNonNull(THE_ROOM.getAC_B().dps.get(String.valueOf(finalPowerId1))).toString().equals("true")) {
+                                    acImage.setVisibility(View.VISIBLE);
+                                }
+                                else {
+                                    acImage.setVisibility(View.INVISIBLE);
+                                }
+                            }
+                        }
+
+                        @Override
+                        public void onRemoved(String devId) {
+
+                        }
+
+                        @Override
+                        public void onStatusChanged(String devId, boolean online) {
+
+                        }
+
+                        @Override
+                        public void onNetworkStatusChanged(String devId, boolean status) {
+
+                        }
+
+                        @Override
+                        public void onDevInfoUpdate(String devId) {
+
+                        }
+                    });
                 }
                 @Override
                 public void onError(String errorCode, String errorMessage) {
@@ -1344,6 +1690,10 @@ public class FullscreenActivity extends AppCompatActivity {
             d.setContentView(R.layout.reception_message_dialog);
             TextView m = d.findViewById(R.id.receptionMessage);
             m.setText(message);
+            if (MyApp.ProjectVariables.Logo != null) {
+                ImageView im = d.findViewById(R.id.imageView3);
+                Picasso.get().load(MyApp.ProjectVariables.Logo).into(im);
+            }
             Button b = d.findViewById(R.id.closeReceptionMessage);
             b.setOnClickListener(v -> d.dismiss());
             d.show();
@@ -1355,7 +1705,7 @@ public class FullscreenActivity extends AppCompatActivity {
         View v = LayoutInflater.from(act).inflate(R.layout.room_service_dialog,null );
         d.setContentView(v);
         Window w = d.getWindow();
-        w.setLayout(LinearLayout.LayoutParams.MATCH_PARENT,LinearLayout.LayoutParams.MATCH_PARENT);
+        w.setLayout(LinearLayout.LayoutParams.MATCH_PARENT,LinearLayout.LayoutParams.WRAP_CONTENT);
         w.setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
         final EditText orderEditeText = d.findViewById(R.id.RoomServiceDialog_Text);
         Button cancel = d.findViewById(R.id.RoomServiceDialog_Cancel);
@@ -1641,6 +1991,16 @@ public class FullscreenActivity extends AppCompatActivity {
             }
         }
         if (Restaurants.size() > 0) {
+            if (BigScreen) {
+                ImageView restaurantImage = findViewById(R.id.imageView15);
+                restaurantImage.setBackgroundResource(R.drawable.restaurant_anim);
+                AnimationDrawable ad = (AnimationDrawable) restaurantImage.getBackground();
+                ad.start();
+                ImageView smokeImage = findViewById(R.id.imageView5);
+                smokeImage.setBackgroundResource(R.drawable.smoke_anim);
+                //AnimationDrawable sad = (AnimationDrawable) smokeImage.getBackground();
+                //sad.start();
+            }
             for (int i=0;i<Restaurants.size();i++) {
                 Log.d("restaurantsAre", Restaurants.get(i).Name +" "+Restaurants.get(i).TypeName );
             }
@@ -1745,7 +2105,19 @@ public class FullscreenActivity extends AppCompatActivity {
         if (THE_ROOM.getSWITCH4_B() != null) {
             Switch4Status = true ;
         }
-        if (!Switch1Status && !Switch2Status && !Switch3Status && !Switch4Status) {
+        if (THE_ROOM.getSWITCH5_B() != null) {
+            Switch5Status = true ;
+        }
+        if (THE_ROOM.getSWITCH6_B() != null) {
+            Switch6Status = true ;
+        }
+        if (THE_ROOM.getSWITCH7_B() != null) {
+            Switch7Status = true ;
+        }
+        if (THE_ROOM.getSWITCH8_B() != null) {
+            Switch8Status = true ;
+        }
+        if (!Switch1Status && !Switch2Status && !Switch3Status && !Switch4Status && !Switch5Status && !Switch6Status && !Switch7Status && !Switch8Status) {
             ShowLighting.setVisibility(View.GONE);
         }
         else {
@@ -2286,7 +2658,537 @@ public class FullscreenActivity extends AppCompatActivity {
                             }
                         }
                     }
+                    if (THE_ROOM.getSWITCH5_B() != null ) {
+                        String s = THE_ROOM.getSWITCH5_B().getName().split("Switch")[1];
+                        if (lightsDB.getScreenButtons().get(i).Switch == Integer.parseInt(s)) {
+                            LinearLayout LightButton = new LinearLayout(act);
+                            LightButton.setOrientation(LinearLayout.VERTICAL);
+                            TextView text = new TextView(act);
+                            Button image = new Button(act);
+                            if (Build.MODEL.equals("YS4B")) {
+                                image.setLayoutParams(new LinearLayout.LayoutParams(100, 100));
+                            }
+                            image.setBackgroundResource(R.drawable.light_off_new);
+                            LightButton.addView(text);
+                            LightButton.addView(image);
+                            text.setGravity(Gravity.CENTER);
+                            text.setText(lightsDB.getScreenButtons().get(i).name);
+                            text.setTextColor(Color.LTGRAY);
+                            text.setTextSize(20);
+                            LightButton.setGravity(Gravity.CENTER);
+                            LightButton.setPadding(2,2,2,2);
+                            lightsLayout.addView(LightButton);
+                            int finalI = i;
+                            if (lightsDB.getScreenButtons().get(i).button == 1) {
+                                if (THE_ROOM.getSWITCH5_B().dps.get("1") != null) {
+                                    RoomDevicesRef.child(THE_ROOM.getSWITCH5_B().getName()).child("1").addValueEventListener(new ValueEventListener() {
+                                        @Override
+                                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                            if (snapshot.getValue() != null) {
+                                                if (Integer.parseInt(snapshot.getValue().toString()) == 3 || Integer.parseInt(snapshot.getValue().toString()) == 1) {
+                                                    THE_ROOM.S5B1 = true;
+                                                    makeSwitchOn(text,image);
+                                                }
+                                                else if (Integer.parseInt(snapshot.getValue().toString()) == 0 || Integer.parseInt(snapshot.getValue().toString()) == 2) {
+                                                    THE_ROOM.S5B1 = false;
+                                                    makeSwitchOff(text,image);
+                                                }
+                                            }
+                                        }
+                                        @Override
+                                        public void onCancelled(@NonNull DatabaseError error) {
+
+                                        }
+                                    });
+                                }
+                                image.setOnClickListener(v -> {
+                                    clickSwitchButton(THE_ROOM.getSWITCH5(), String.valueOf(lightsDB.getScreenButtons().get(finalI).button), !THE_ROOM.S5B1);
+                                    x=0;
+                                });
+                            }
+                            if (lightsDB.getScreenButtons().get(i).button == 2) {
+                                if (THE_ROOM.getSWITCH5_B().dps.get("2") != null) {
+                                    RoomDevicesRef.child(THE_ROOM.getSWITCH5_B().getName()).child("2").addValueEventListener(new ValueEventListener() {
+                                        @Override
+                                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                            if (snapshot.getValue() != null) {
+                                                if (Integer.parseInt(snapshot.getValue().toString()) == 3 || Integer.parseInt(snapshot.getValue().toString()) == 1) {
+                                                    THE_ROOM.S5B2 = true;
+                                                    makeSwitchOn(text,image);
+                                                }
+                                                else if (Integer.parseInt(snapshot.getValue().toString()) == 0 || Integer.parseInt(snapshot.getValue().toString()) == 2) {
+                                                    THE_ROOM.S5B2 = false;
+                                                    makeSwitchOff(text,image);
+                                                }
+                                            }
+                                        }
+                                        @Override
+                                        public void onCancelled(@NonNull DatabaseError error) {
+
+                                        }
+                                    });
+                                }
+                                image.setOnClickListener(v -> {
+                                    clickSwitchButton(THE_ROOM.getSWITCH5(), String.valueOf(lightsDB.getScreenButtons().get(finalI).button), !THE_ROOM.S5B2);
+                                    x=0;
+                                });
+                            }
+                            if (lightsDB.getScreenButtons().get(i).button == 3) {
+                                if (THE_ROOM.getSWITCH5_B().dps.get("3") != null) {
+                                    RoomDevicesRef.child(THE_ROOM.getSWITCH4_B().getName()).child("3").addValueEventListener(new ValueEventListener() {
+                                        @Override
+                                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                            if (snapshot.getValue() != null) {
+                                                if (Integer.parseInt(snapshot.getValue().toString()) == 3 || Integer.parseInt(snapshot.getValue().toString()) == 1) {
+                                                    THE_ROOM.S5B3 = true;
+                                                    makeSwitchOn(text,image);
+                                                }
+                                                else if (Integer.parseInt(snapshot.getValue().toString()) == 0 || Integer.parseInt(snapshot.getValue().toString()) == 2) {
+                                                    THE_ROOM.S5B3 = false;
+                                                    makeSwitchOff(text,image);
+                                                }
+                                            }
+                                        }
+                                        @Override
+                                        public void onCancelled(@NonNull DatabaseError error) {
+
+                                        }
+                                    });
+                                }
+                                image.setOnClickListener(v -> {
+                                    clickSwitchButton(THE_ROOM.getSWITCH5(), String.valueOf(lightsDB.getScreenButtons().get(finalI).button), !THE_ROOM.S5B3);
+                                    x=0;
+                                });
+                            }
+                            if (lightsDB.getScreenButtons().get(i).button == 4) {
+                                if (THE_ROOM.getSWITCH5_B().dps.get("4") != null) {
+                                    RoomDevicesRef.child(THE_ROOM.getSWITCH5_B().getName()).child("4").addValueEventListener(new ValueEventListener() {
+                                        @Override
+                                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                            if (snapshot.getValue() != null) {
+                                                if (Integer.parseInt(snapshot.getValue().toString()) == 3 || Integer.parseInt(snapshot.getValue().toString()) == 1) {
+                                                    THE_ROOM.S5B4 = true;
+                                                    makeSwitchOn(text,image);
+                                                }
+                                                else if (Integer.parseInt(snapshot.getValue().toString()) == 0 || Integer.parseInt(snapshot.getValue().toString()) == 2) {
+                                                    THE_ROOM.S5B4= false;
+                                                    makeSwitchOff(text,image);
+                                                }
+                                            }
+                                        }
+                                        @Override
+                                        public void onCancelled(@NonNull DatabaseError error) {
+
+                                        }
+                                    });
+                                }
+                                image.setOnClickListener(v -> {
+                                    clickSwitchButton(THE_ROOM.getSWITCH5(), String.valueOf(lightsDB.getScreenButtons().get(finalI).button), !THE_ROOM.S5B4);
+                                    x=0;
+                                });
+                            }
+                        }
+                    }
+                    if (THE_ROOM.getSWITCH6_B() != null ) {
+                        String s = THE_ROOM.getSWITCH6_B().getName().split("Switch")[1];
+                        if (lightsDB.getScreenButtons().get(i).Switch == Integer.parseInt(s)) {
+                            LinearLayout LightButton = new LinearLayout(act);
+                            LightButton.setOrientation(LinearLayout.VERTICAL);
+                            TextView text = new TextView(act);
+                            Button image = new Button(act);
+                            if (Build.MODEL.equals("YS4B")) {
+                                image.setLayoutParams(new LinearLayout.LayoutParams(100, 100));
+                            }
+                            image.setBackgroundResource(R.drawable.light_off_new);
+                            LightButton.addView(text);
+                            LightButton.addView(image);
+                            text.setGravity(Gravity.CENTER);
+                            text.setText(lightsDB.getScreenButtons().get(i).name);
+                            text.setTextColor(Color.LTGRAY);
+                            text.setTextSize(20);
+                            LightButton.setGravity(Gravity.CENTER);
+                            LightButton.setPadding(2,2,2,2);
+                            lightsLayout.addView(LightButton);
+                            int finalI = i;
+                            if (lightsDB.getScreenButtons().get(i).button == 1) {
+                                if (THE_ROOM.getSWITCH6_B().dps.get("1") != null) {
+                                    RoomDevicesRef.child(THE_ROOM.getSWITCH6_B().getName()).child("1").addValueEventListener(new ValueEventListener() {
+                                        @Override
+                                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                            if (snapshot.getValue() != null) {
+                                                if (Integer.parseInt(snapshot.getValue().toString()) == 3 || Integer.parseInt(snapshot.getValue().toString()) == 1) {
+                                                    THE_ROOM.S6B1 = true;
+                                                    makeSwitchOn(text,image);
+                                                }
+                                                else if (Integer.parseInt(snapshot.getValue().toString()) == 0 || Integer.parseInt(snapshot.getValue().toString()) == 2) {
+                                                    THE_ROOM.S6B1 = false;
+                                                    makeSwitchOff(text,image);
+                                                }
+                                            }
+                                        }
+                                        @Override
+                                        public void onCancelled(@NonNull DatabaseError error) {
+
+                                        }
+                                    });
+                                }
+                                image.setOnClickListener(v -> {
+                                    clickSwitchButton(THE_ROOM.getSWITCH6(), String.valueOf(lightsDB.getScreenButtons().get(finalI).button), !THE_ROOM.S6B1);
+                                    x=0;
+                                });
+                            }
+                            if (lightsDB.getScreenButtons().get(i).button == 2) {
+                                if (THE_ROOM.getSWITCH6_B().dps.get("2") != null) {
+                                    RoomDevicesRef.child(THE_ROOM.getSWITCH6_B().getName()).child("2").addValueEventListener(new ValueEventListener() {
+                                        @Override
+                                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                            if (snapshot.getValue() != null) {
+                                                if (Integer.parseInt(snapshot.getValue().toString()) == 3 || Integer.parseInt(snapshot.getValue().toString()) == 1) {
+                                                    THE_ROOM.S6B2 = true;
+                                                    makeSwitchOn(text,image);
+                                                }
+                                                else if (Integer.parseInt(snapshot.getValue().toString()) == 0 || Integer.parseInt(snapshot.getValue().toString()) == 2) {
+                                                    THE_ROOM.S6B2 = false;
+                                                    makeSwitchOff(text,image);
+                                                }
+                                            }
+                                        }
+                                        @Override
+                                        public void onCancelled(@NonNull DatabaseError error) {
+
+                                        }
+                                    });
+                                }
+                                image.setOnClickListener(v -> {
+                                    clickSwitchButton(THE_ROOM.getSWITCH6(), String.valueOf(lightsDB.getScreenButtons().get(finalI).button), !THE_ROOM.S6B2);
+                                    x=0;
+                                });
+                            }
+                            if (lightsDB.getScreenButtons().get(i).button == 3) {
+                                if (THE_ROOM.getSWITCH6_B().dps.get("3") != null) {
+                                    RoomDevicesRef.child(THE_ROOM.getSWITCH6_B().getName()).child("3").addValueEventListener(new ValueEventListener() {
+                                        @Override
+                                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                            if (snapshot.getValue() != null) {
+                                                if (Integer.parseInt(snapshot.getValue().toString()) == 3 || Integer.parseInt(snapshot.getValue().toString()) == 1) {
+                                                    THE_ROOM.S6B3 = true;
+                                                    makeSwitchOn(text,image);
+                                                }
+                                                else if (Integer.parseInt(snapshot.getValue().toString()) == 0 || Integer.parseInt(snapshot.getValue().toString()) == 2) {
+                                                    THE_ROOM.S6B3 = false;
+                                                    makeSwitchOff(text,image);
+                                                }
+                                            }
+                                        }
+                                        @Override
+                                        public void onCancelled(@NonNull DatabaseError error) {
+
+                                        }
+                                    });
+                                }
+                                image.setOnClickListener(v -> {
+                                    clickSwitchButton(THE_ROOM.getSWITCH6(), String.valueOf(lightsDB.getScreenButtons().get(finalI).button), !THE_ROOM.S6B3);
+                                    x=0;
+                                });
+                            }
+                            if (lightsDB.getScreenButtons().get(i).button == 4) {
+                                if (THE_ROOM.getSWITCH6_B().dps.get("4") != null) {
+                                    RoomDevicesRef.child(THE_ROOM.getSWITCH6_B().getName()).child("4").addValueEventListener(new ValueEventListener() {
+                                        @Override
+                                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                            if (snapshot.getValue() != null) {
+                                                if (Integer.parseInt(snapshot.getValue().toString()) == 3 || Integer.parseInt(snapshot.getValue().toString()) == 1) {
+                                                    THE_ROOM.S6B4 = true;
+                                                    makeSwitchOn(text,image);
+                                                }
+                                                else if (Integer.parseInt(snapshot.getValue().toString()) == 0 || Integer.parseInt(snapshot.getValue().toString()) == 2) {
+                                                    THE_ROOM.S6B4= false;
+                                                    makeSwitchOff(text,image);
+                                                }
+                                            }
+                                        }
+                                        @Override
+                                        public void onCancelled(@NonNull DatabaseError error) {
+
+                                        }
+                                    });
+                                }
+                                image.setOnClickListener(v -> {
+                                    clickSwitchButton(THE_ROOM.getSWITCH6(), String.valueOf(lightsDB.getScreenButtons().get(finalI).button), !THE_ROOM.S6B4);
+                                    x=0;
+                                });
+                            }
+                        }
+                    }
+                    if (THE_ROOM.getSWITCH7_B() != null ) {
+                        String s = THE_ROOM.getSWITCH7_B().getName().split("Switch")[1];
+                        if (lightsDB.getScreenButtons().get(i).Switch == Integer.parseInt(s)) {
+                            LinearLayout LightButton = new LinearLayout(act);
+                            LightButton.setOrientation(LinearLayout.VERTICAL);
+                            TextView text = new TextView(act);
+                            Button image = new Button(act);
+                            if (Build.MODEL.equals("YS4B")) {
+                                image.setLayoutParams(new LinearLayout.LayoutParams(100, 100));
+                            }
+                            image.setBackgroundResource(R.drawable.light_off_new);
+                            LightButton.addView(text);
+                            LightButton.addView(image);
+                            text.setGravity(Gravity.CENTER);
+                            text.setText(lightsDB.getScreenButtons().get(i).name);
+                            text.setTextColor(Color.LTGRAY);
+                            text.setTextSize(20);
+                            LightButton.setGravity(Gravity.CENTER);
+                            LightButton.setPadding(2,2,2,2);
+                            lightsLayout.addView(LightButton);
+                            int finalI = i;
+                            if (lightsDB.getScreenButtons().get(i).button == 1) {
+                                if (THE_ROOM.getSWITCH7_B().dps.get("1") != null) {
+                                    RoomDevicesRef.child(THE_ROOM.getSWITCH7_B().getName()).child("1").addValueEventListener(new ValueEventListener() {
+                                        @Override
+                                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                            if (snapshot.getValue() != null) {
+                                                if (Integer.parseInt(snapshot.getValue().toString()) == 3 || Integer.parseInt(snapshot.getValue().toString()) == 1) {
+                                                    THE_ROOM.S7B1 = true;
+                                                    makeSwitchOn(text,image);
+                                                }
+                                                else if (Integer.parseInt(snapshot.getValue().toString()) == 0 || Integer.parseInt(snapshot.getValue().toString()) == 2) {
+                                                    THE_ROOM.S7B1 = false;
+                                                    makeSwitchOff(text,image);
+                                                }
+                                            }
+                                        }
+                                        @Override
+                                        public void onCancelled(@NonNull DatabaseError error) {
+
+                                        }
+                                    });
+                                }
+                                image.setOnClickListener(v -> {
+                                    clickSwitchButton(THE_ROOM.getSWITCH7(), String.valueOf(lightsDB.getScreenButtons().get(finalI).button), !THE_ROOM.S7B1);
+                                    x=0;
+                                });
+                            }
+                            if (lightsDB.getScreenButtons().get(i).button == 2) {
+                                if (THE_ROOM.getSWITCH7_B().dps.get("2") != null) {
+                                    RoomDevicesRef.child(THE_ROOM.getSWITCH7_B().getName()).child("2").addValueEventListener(new ValueEventListener() {
+                                        @Override
+                                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                            if (snapshot.getValue() != null) {
+                                                if (Integer.parseInt(snapshot.getValue().toString()) == 3 || Integer.parseInt(snapshot.getValue().toString()) == 1) {
+                                                    THE_ROOM.S7B2 = true;
+                                                    makeSwitchOn(text,image);
+                                                }
+                                                else if (Integer.parseInt(snapshot.getValue().toString()) == 0 || Integer.parseInt(snapshot.getValue().toString()) == 2) {
+                                                    THE_ROOM.S7B2 = false;
+                                                    makeSwitchOff(text,image);
+                                                }
+                                            }
+                                        }
+                                        @Override
+                                        public void onCancelled(@NonNull DatabaseError error) {
+
+                                        }
+                                    });
+                                }
+                                image.setOnClickListener(v -> {
+                                    clickSwitchButton(THE_ROOM.getSWITCH7(), String.valueOf(lightsDB.getScreenButtons().get(finalI).button), !THE_ROOM.S7B2);
+                                    x=0;
+                                });
+                            }
+                            if (lightsDB.getScreenButtons().get(i).button == 3) {
+                                if (THE_ROOM.getSWITCH7_B().dps.get("3") != null) {
+                                    RoomDevicesRef.child(THE_ROOM.getSWITCH7_B().getName()).child("3").addValueEventListener(new ValueEventListener() {
+                                        @Override
+                                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                            if (snapshot.getValue() != null) {
+                                                if (Integer.parseInt(snapshot.getValue().toString()) == 3 || Integer.parseInt(snapshot.getValue().toString()) == 1) {
+                                                    THE_ROOM.S7B3 = true;
+                                                    makeSwitchOn(text,image);
+                                                }
+                                                else if (Integer.parseInt(snapshot.getValue().toString()) == 0 || Integer.parseInt(snapshot.getValue().toString()) == 2) {
+                                                    THE_ROOM.S7B3 = false;
+                                                    makeSwitchOff(text,image);
+                                                }
+                                            }
+                                        }
+                                        @Override
+                                        public void onCancelled(@NonNull DatabaseError error) {
+
+                                        }
+                                    });
+                                }
+                                image.setOnClickListener(v -> {
+                                    clickSwitchButton(THE_ROOM.getSWITCH7(), String.valueOf(lightsDB.getScreenButtons().get(finalI).button), !THE_ROOM.S7B3);
+                                    x=0;
+                                });
+                            }
+                            if (lightsDB.getScreenButtons().get(i).button == 4) {
+                                if (THE_ROOM.getSWITCH7_B().dps.get("4") != null) {
+                                    RoomDevicesRef.child(THE_ROOM.getSWITCH7_B().getName()).child("4").addValueEventListener(new ValueEventListener() {
+                                        @Override
+                                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                            if (snapshot.getValue() != null) {
+                                                if (Integer.parseInt(snapshot.getValue().toString()) == 3 || Integer.parseInt(snapshot.getValue().toString()) == 1) {
+                                                    THE_ROOM.S7B4 = true;
+                                                    makeSwitchOn(text,image);
+                                                }
+                                                else if (Integer.parseInt(snapshot.getValue().toString()) == 0 || Integer.parseInt(snapshot.getValue().toString()) == 2) {
+                                                    THE_ROOM.S7B4= false;
+                                                    makeSwitchOff(text,image);
+                                                }
+                                            }
+                                        }
+                                        @Override
+                                        public void onCancelled(@NonNull DatabaseError error) {
+
+                                        }
+                                    });
+                                }
+                                image.setOnClickListener(v -> {
+                                    clickSwitchButton(THE_ROOM.getSWITCH7(), String.valueOf(lightsDB.getScreenButtons().get(finalI).button), !THE_ROOM.S7B4);
+                                    x=0;
+                                });
+                            }
+                        }
+                    }
+                    if (THE_ROOM.getSWITCH8_B() != null ) {
+                        String s = THE_ROOM.getSWITCH8_B().getName().split("Switch")[1];
+                        if (lightsDB.getScreenButtons().get(i).Switch == Integer.parseInt(s)) {
+                            LinearLayout LightButton = new LinearLayout(act);
+                            LightButton.setOrientation(LinearLayout.VERTICAL);
+                            TextView text = new TextView(act);
+                            Button image = new Button(act);
+                            if (Build.MODEL.equals("YS4B")) {
+                                image.setLayoutParams(new LinearLayout.LayoutParams(100, 100));
+                            }
+                            image.setBackgroundResource(R.drawable.light_off_new);
+                            LightButton.addView(text);
+                            LightButton.addView(image);
+                            text.setGravity(Gravity.CENTER);
+                            text.setText(lightsDB.getScreenButtons().get(i).name);
+                            text.setTextColor(Color.LTGRAY);
+                            text.setTextSize(20);
+                            LightButton.setGravity(Gravity.CENTER);
+                            LightButton.setPadding(2,2,2,2);
+                            lightsLayout.addView(LightButton);
+                            int finalI = i;
+                            if (lightsDB.getScreenButtons().get(i).button == 1) {
+                                if (THE_ROOM.getSWITCH8_B().dps.get("1") != null) {
+                                    RoomDevicesRef.child(THE_ROOM.getSWITCH8_B().getName()).child("1").addValueEventListener(new ValueEventListener() {
+                                        @Override
+                                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                            if (snapshot.getValue() != null) {
+                                                if (Integer.parseInt(snapshot.getValue().toString()) == 3 || Integer.parseInt(snapshot.getValue().toString()) == 1) {
+                                                    THE_ROOM.S8B1 = true;
+                                                    makeSwitchOn(text,image);
+                                                }
+                                                else if (Integer.parseInt(snapshot.getValue().toString()) == 0 || Integer.parseInt(snapshot.getValue().toString()) == 2) {
+                                                    THE_ROOM.S8B1 = false;
+                                                    makeSwitchOff(text,image);
+                                                }
+                                            }
+                                        }
+                                        @Override
+                                        public void onCancelled(@NonNull DatabaseError error) {
+
+                                        }
+                                    });
+                                }
+                                image.setOnClickListener(v -> {
+                                    clickSwitchButton(THE_ROOM.getSWITCH8(), String.valueOf(lightsDB.getScreenButtons().get(finalI).button), !THE_ROOM.S8B1);
+                                    x=0;
+                                });
+                            }
+                            if (lightsDB.getScreenButtons().get(i).button == 2) {
+                                if (THE_ROOM.getSWITCH8_B().dps.get("2") != null) {
+                                    RoomDevicesRef.child(THE_ROOM.getSWITCH8_B().getName()).child("2").addValueEventListener(new ValueEventListener() {
+                                        @Override
+                                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                            if (snapshot.getValue() != null) {
+                                                if (Integer.parseInt(snapshot.getValue().toString()) == 3 || Integer.parseInt(snapshot.getValue().toString()) == 1) {
+                                                    THE_ROOM.S8B2 = true;
+                                                    makeSwitchOn(text,image);
+                                                }
+                                                else if (Integer.parseInt(snapshot.getValue().toString()) == 0 || Integer.parseInt(snapshot.getValue().toString()) == 2) {
+                                                    THE_ROOM.S8B2 = false;
+                                                    makeSwitchOff(text,image);
+                                                }
+                                            }
+                                        }
+                                        @Override
+                                        public void onCancelled(@NonNull DatabaseError error) {
+
+                                        }
+                                    });
+                                }
+                                image.setOnClickListener(v -> {
+                                    clickSwitchButton(THE_ROOM.getSWITCH8(), String.valueOf(lightsDB.getScreenButtons().get(finalI).button), !THE_ROOM.S8B2);
+                                    x=0;
+                                });
+                            }
+                            if (lightsDB.getScreenButtons().get(i).button == 3) {
+                                if (THE_ROOM.getSWITCH8_B().dps.get("3") != null) {
+                                    RoomDevicesRef.child(THE_ROOM.getSWITCH8_B().getName()).child("3").addValueEventListener(new ValueEventListener() {
+                                        @Override
+                                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                            if (snapshot.getValue() != null) {
+                                                if (Integer.parseInt(snapshot.getValue().toString()) == 3 || Integer.parseInt(snapshot.getValue().toString()) == 1) {
+                                                    THE_ROOM.S8B3 = true;
+                                                    makeSwitchOn(text,image);
+                                                }
+                                                else if (Integer.parseInt(snapshot.getValue().toString()) == 0 || Integer.parseInt(snapshot.getValue().toString()) == 2) {
+                                                    THE_ROOM.S8B3 = false;
+                                                    makeSwitchOff(text,image);
+                                                }
+                                            }
+                                        }
+                                        @Override
+                                        public void onCancelled(@NonNull DatabaseError error) {
+
+                                        }
+                                    });
+                                }
+                                image.setOnClickListener(v -> {
+                                    clickSwitchButton(THE_ROOM.getSWITCH8(), String.valueOf(lightsDB.getScreenButtons().get(finalI).button), !THE_ROOM.S8B3);
+                                    x=0;
+                                });
+                            }
+                            if (lightsDB.getScreenButtons().get(i).button == 4) {
+                                if (THE_ROOM.getSWITCH8_B().dps.get("4") != null) {
+                                    RoomDevicesRef.child(THE_ROOM.getSWITCH8_B().getName()).child("4").addValueEventListener(new ValueEventListener() {
+                                        @Override
+                                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                            if (snapshot.getValue() != null) {
+                                                if (Integer.parseInt(snapshot.getValue().toString()) == 3 || Integer.parseInt(snapshot.getValue().toString()) == 1) {
+                                                    THE_ROOM.S8B4 = true;
+                                                    makeSwitchOn(text,image);
+                                                }
+                                                else if (Integer.parseInt(snapshot.getValue().toString()) == 0 || Integer.parseInt(snapshot.getValue().toString()) == 2) {
+                                                    THE_ROOM.S8B4= false;
+                                                    makeSwitchOff(text,image);
+                                                }
+                                            }
+                                        }
+                                        @Override
+                                        public void onCancelled(@NonNull DatabaseError error) {
+
+                                        }
+                                    });
+                                }
+                                image.setOnClickListener(v -> {
+                                    clickSwitchButton(THE_ROOM.getSWITCH8(), String.valueOf(lightsDB.getScreenButtons().get(finalI).button), !THE_ROOM.S8B4);
+                                    x=0;
+                                });
+                            }
+                        }
+                    }
                 }
+            }
+            if (BigScreen) {
+                ImageView lightsImage = findViewById(R.id.imageView14);
+                lightsImage.setBackgroundResource(R.drawable.lights_icon);
+                AnimationDrawable ad = (AnimationDrawable) lightsImage.getBackground();
+                ad.start();
             }
         }
     }
@@ -3126,7 +4028,14 @@ public class FullscreenActivity extends AppCompatActivity {
 
     private static void roomServiceOn(Activity act) {
         ImageView roomServiceImage = act.findViewById(R.id.imageView8);
-        roomServiceImage.setImageResource(R.drawable.towels_on);
+        if (BigScreen) {
+            roomServiceImage.setBackgroundResource(R.drawable.roomservice_on_3);
+            //AnimationDrawable roomserviceAd = (AnimationDrawable) roomServiceImage.getBackground();
+            //roomserviceAd.start();
+        }
+        else {
+            roomServiceImage.setImageResource(R.drawable.towels_on);
+        }
         ImageView roomServiceIcon = act.findViewById(R.id.imageView7);
         roomServiceIcon.setVisibility(View.VISIBLE);
         TextView roomServiceText = act.findViewById(R.id.textView38);
@@ -3134,7 +4043,14 @@ public class FullscreenActivity extends AppCompatActivity {
     }
     private static void roomServiceOff(Activity act) {
         ImageView roomServiceImage = act.findViewById(R.id.imageView8);
-        roomServiceImage.setImageResource(R.drawable.towels);
+        if (BigScreen) {
+            roomServiceImage.setBackgroundResource(R.drawable.roomservice_3);
+            //AnimationDrawable roomserviceAd = (AnimationDrawable) roomServiceImage.getBackground();
+            //roomserviceAd.start();
+        }
+        else {
+            roomServiceImage.setImageResource(R.drawable.towels);
+        }
         ImageView roomServiceIcon = act.findViewById(R.id.imageView7);
         roomServiceIcon.setVisibility(View.GONE);
         TextView roomServiceText = act.findViewById(R.id.textView38);
@@ -3143,7 +4059,14 @@ public class FullscreenActivity extends AppCompatActivity {
 
     private static void checkoutOn(Activity act) {
         ImageView checkOutImage = act.findViewById(R.id.imageView11);
-        checkOutImage.setImageResource(R.drawable.checkout_on);
+        if (BigScreen) {
+            checkOutImage.setBackgroundResource(R.drawable.checkout_on_2);
+            //AnimationDrawable ad = (AnimationDrawable) checkOutImage.getBackground();
+            //ad.start();
+        }
+        else {
+            checkOutImage.setImageResource(R.drawable.checkout_on);
+        }
         ImageView checkOutIcon = act.findViewById(R.id.imageView20);
         checkOutIcon.setVisibility(View.VISIBLE);
         TextView checkoutText = act.findViewById(R.id.textView42);
@@ -3151,7 +4074,14 @@ public class FullscreenActivity extends AppCompatActivity {
     }
     private static void checkoutOff(Activity act) {
         ImageView checkOutImage = act.findViewById(R.id.imageView11);
-        checkOutImage.setImageResource(R.drawable.checkout);
+        if (BigScreen) {
+            checkOutImage.setBackgroundResource(R.drawable.checkout_2);
+            //AnimationDrawable ad = (AnimationDrawable) checkOutImage.getBackground();
+            //ad.start();
+        }
+        else {
+            checkOutImage.setImageResource(R.drawable.checkout);
+        }
         ImageView checkOutIcon = act.findViewById(R.id.imageView20);
         checkOutIcon.setVisibility(View.GONE);
         TextView checkoutText = act.findViewById(R.id.textView42);
@@ -3160,7 +4090,14 @@ public class FullscreenActivity extends AppCompatActivity {
 
     private static void laundryOn(Activity act) {
         ImageView laundryImage  = act.findViewById(R.id.imageView16);
-        laundryImage.setImageResource(R.drawable.laundry_btn_on);
+        if (BigScreen) {
+            laundryImage.setBackgroundResource(R.drawable.laundry_on_anim);
+            //AnimationDrawable ad = (AnimationDrawable) laundryImage.getBackground();
+            //ad.start();
+        }
+        else {
+            laundryImage.setImageResource(R.drawable.laundry_btn_on);
+        }
         ImageView laundryIcon = act.findViewById(R.id.imageView10);
         laundryIcon.setVisibility(View.VISIBLE);
         TextView laundryText= act.findViewById(R.id.textView44);
@@ -3168,7 +4105,14 @@ public class FullscreenActivity extends AppCompatActivity {
     }
     private static void laundryOff(Activity act) {
         ImageView laundryImage  = act.findViewById(R.id.imageView16);
-        laundryImage.setImageResource(R.drawable.laundry_btn);
+        if (BigScreen) {
+            laundryImage.setBackgroundResource(R.drawable.laundry_anim);
+            //AnimationDrawable ad = (AnimationDrawable) laundryImage.getBackground();
+            //ad.start();
+        }
+        else {
+            laundryImage.setImageResource(R.drawable.laundry_btn);
+        }
         ImageView laundryIcon = act.findViewById(R.id.imageView10);
         laundryIcon.setVisibility(View.GONE);
         TextView laundryText= act.findViewById(R.id.textView44);
@@ -3177,7 +4121,14 @@ public class FullscreenActivity extends AppCompatActivity {
 
     private static void cleanupOn(Activity act) {
         ImageView cleanupImage = act.findViewById(R.id.imageView19);
-        cleanupImage.setImageResource(R.drawable.cleanup_btn_on);
+        if (BigScreen) {
+            cleanupImage.setBackgroundResource(R.drawable.cleanup_on_anim);
+            //AnimationDrawable ad = (AnimationDrawable) cleanupImage.getBackground();
+            //ad.start();
+        }
+        else {
+            cleanupImage.setImageResource(R.drawable.cleanup_btn_on);
+        }
         ImageView cleanupIcon = act.findViewById(R.id.imageView9);
         cleanupIcon.setVisibility(View.VISIBLE);
         TextView cleanupText = act.findViewById(R.id.textView45);
@@ -3185,7 +4136,14 @@ public class FullscreenActivity extends AppCompatActivity {
     }
     private static void cleanupOff(Activity act) {
         ImageView cleanupImage = act.findViewById(R.id.imageView19);
-        cleanupImage.setImageResource(R.drawable.cleanup_btn);
+        if (BigScreen) {
+            cleanupImage.setBackgroundResource(R.drawable.cleanup_anim);
+            //AnimationDrawable ad = (AnimationDrawable) cleanupImage.getBackground();
+            //ad.start();
+        }
+        else {
+            cleanupImage.setImageResource(R.drawable.cleanup_btn);
+        }
         ImageView cleanupIcon = act.findViewById(R.id.imageView9);
         cleanupIcon.setVisibility(View.GONE);
         TextView cleanupText = act.findViewById(R.id.textView45);
@@ -3194,7 +4152,7 @@ public class FullscreenActivity extends AppCompatActivity {
 
     private static void dndOn(Activity act) {
         ImageView dndImage = act.findViewById(R.id.DND_Image);
-        dndImage.setImageResource(R.drawable.union_6);
+        dndImage.setImageResource(R.drawable.dndnew_on);
         ImageView dndIcon = act.findViewById(R.id.DND_Icon);
         dndIcon.setVisibility(View.VISIBLE);
         TextView dndText = act.findViewById(R.id.DND_Text);
@@ -3202,7 +4160,7 @@ public class FullscreenActivity extends AppCompatActivity {
     }
     private static void dndOff(Activity act) {
         ImageView dndImage = act.findViewById(R.id.DND_Image);
-        dndImage.setImageResource(R.drawable.union_2);
+        dndImage.setImageResource(R.drawable.dndnew);
         ImageView dndIcon = act.findViewById(R.id.DND_Icon);
         dndIcon.setVisibility(View.GONE);
         TextView dndText = act.findViewById(R.id.DND_Text);
@@ -3211,7 +4169,7 @@ public class FullscreenActivity extends AppCompatActivity {
 
     private static void sosOn(Activity act) {
         ImageView sosImage = act.findViewById(R.id.SOS_Image);
-        sosImage.setImageResource(R.drawable.group_54);
+        sosImage.setImageResource(R.drawable.sosnew_on);
         ImageView sosIcon = act.findViewById(R.id.SOS_Icon);
         sosIcon.setVisibility(View.VISIBLE);
         TextView sosText = act.findViewById(R.id.SOS_Text);
@@ -3219,7 +4177,7 @@ public class FullscreenActivity extends AppCompatActivity {
     }
     private static void sosOff(Activity act) {
         ImageView sosImage = act.findViewById(R.id.SOS_Image);
-        sosImage.setImageResource(R.drawable.group_33);
+        sosImage.setImageResource(R.drawable.sosnew);
         ImageView sosIcon = act.findViewById(R.id.SOS_Icon);
         sosIcon.setVisibility(View.GONE);
         TextView sosText = act.findViewById(R.id.SOS_Text);
@@ -3257,6 +4215,8 @@ public class FullscreenActivity extends AppCompatActivity {
         AcLayout.setVisibility(View.GONE);
         BtnS.setVisibility(View.VISIBLE);
         Text.setVisibility(View.VISIBLE);
+        setServiceButtonImage();
+        //balloonsRunnable.run();
     }
 
     public void goToLights(View view) {
@@ -3440,6 +4400,22 @@ public class FullscreenActivity extends AppCompatActivity {
                             MyApp.Room.setSWITCH4_B(TheDevicesList.get(i));
                             MyApp.Room.setSWITCH4(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getSWITCH4_B().getDevId()));
                         }
+                        else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"Switch5")) {
+                            MyApp.Room.setSWITCH5_B(TheDevicesList.get(i));
+                            MyApp.Room.setSWITCH5(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getSWITCH5_B().getDevId()));
+                        }
+                        else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"Switch6")) {
+                            MyApp.Room.setSWITCH6_B(TheDevicesList.get(i));
+                            MyApp.Room.setSWITCH6(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getSWITCH6_B().getDevId()));
+                        }
+                        else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"Switch7")) {
+                            MyApp.Room.setSWITCH7_B(TheDevicesList.get(i));
+                            MyApp.Room.setSWITCH7(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getSWITCH7_B().getDevId()));
+                        }
+                        else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"Switch8")) {
+                            MyApp.Room.setSWITCH8_B(TheDevicesList.get(i));
+                            MyApp.Room.setSWITCH8(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getSWITCH8_B().getDevId()));
+                        }
                         else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"Lock")) {
                             MyApp.Room.setLOCK_B(TheDevicesList.get(i));
                             MyApp.Room.setLOCK(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getLOCK_B().getDevId()));
@@ -3458,10 +4434,20 @@ public class FullscreenActivity extends AppCompatActivity {
     }
 
     public void clickButtonSwitch(String devId,boolean status,int dpId,CallbackResult callbackResult) {
-        TuyaHomeSdk.newDeviceInstance(devId).publishDps("{\" "+dpId+"\": "+status+"}", new IResultCallback() {
+        TuyaHomeSdk.newDeviceInstance(devId).publishDps("{\" "+dpId+"\": "+status+"}", TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
             @Override
             public void onError(String code, String error) {
-                callbackResult.onFail(error);
+                TuyaHomeSdk.newDeviceInstance(devId).publishDps("{\" "+dpId+"\": "+status+"}", new IResultCallback() {
+                    @Override
+                    public void onError(String code, String error) {
+                        callbackResult.onFail(error);
+                    }
+
+                    @Override
+                    public void onSuccess() {
+                        callbackResult.onSuccess();
+                    }
+                });
             }
 
             @Override
@@ -3515,5 +4501,42 @@ public class FullscreenActivity extends AppCompatActivity {
         else {
             doorLayout.setVisibility(View.VISIBLE);
         }
+    }
+
+    private static void executeCommand() {
+        Process process = null;
+        BufferedReader reader = null;
+        StringBuilder result = new StringBuilder();
+        try {
+            String line;
+            process = Runtime.getRuntime().exec("adb shell dpm set-device-owner com.syriasoft.hotelservices/com.syriasoft.hotelservices.MyDeviceAdminReceiver"); //adb shell
+            reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+
+            while ((line = reader.readLine()) != null)
+                result.append(line).append("\n");
+
+            Log.d("setDeviceAdmin", result.toString());
+        } catch (final Exception e) {
+            Log.d("setDeviceAdmin",e.getMessage());
+        } finally {
+            try {
+                if (reader != null)
+                    reader.close();
+            } catch (IOException e) {
+                Log.d("setDeviceAdmin",e.getMessage());
+            }
+            try {
+                if (process != null)
+                    process.destroy();
+            } catch (Exception e) {
+                Log.d("setDeviceAdmin",e.getMessage());
+            }
+        }
+        Log.d("setDeviceAdmin", result.toString());
+//        Intent intent = new Intent(DevicePolicyManager. ACTION_ADD_DEVICE_ADMIN);
+//        ComponentName compName = new ComponentName(MyApp.App, MyDeviceAdminReceiver.class);
+//        intent.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, compName);
+//        intent.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, "Bấm zô nút đồng ý(ACTIVE á)");
+//        act.startActivityForResult(intent, 0);
     }
 }

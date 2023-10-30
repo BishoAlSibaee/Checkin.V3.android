@@ -218,6 +218,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         getProjectVariables();
+        Thread.setDefaultUncaughtExceptionHandler(new DefaultExceptionHandler(this));
     }
 
     void setActivity() {

@@ -33,6 +33,8 @@ public class MyApp extends Application {
     static String cloudClientId = "d9hyvtdshnm3uvaun59d" , cloudSecret = "825f9def941f456099798ccdc19112e9";
     public static List<Activity> restaurantActivities ;
     public static List<Activity> mainActivity ;
+    public static String ErrorsUrl = "https://ratco-solutions.com/Checkin/Test/php/insertError.php";
+    public static String applicationSide = "RoomApp";
 
     public MyApp() {
         App = this ;
@@ -60,6 +62,6 @@ public class MyApp extends Application {
                 startActivity(intent);
             }
         });
-
     }
+
 }

@@ -27,7 +27,7 @@ public class MakeMood extends AppCompatActivity {
 
     Activity act ;
     String modeName ;
-    Button S1_1,S1_2,S1_3,S1_4,S2_1,S2_2,S2_3,S2_4,S3_1,S3_2,S3_3,S3_4,S4_1,S4_2,S4_3,S4_4,Service1,Service2,Service3,Service4;
+    Button S1_1,S1_2,S1_3,S1_4,S2_1,S2_2,S2_3,S2_4,S3_1,S3_2,S3_3,S3_4,S4_1,S4_2,S4_3,S4_4 ,S5_1,S5_2,S5_3,S5_4 ,S6_1,S6_2,S6_3,S6_4 ,S7_1,S7_2,S7_3,S7_4 ,S8_1,S8_2,S8_3,S8_4,Service1,Service2,Service3,Service4;
     Button MoodButton ;
     MoodBtn BTN ;
     List<Button> SelectedButtons;
@@ -42,6 +42,7 @@ public class MakeMood extends AppCompatActivity {
         modeName = getIntent().getExtras().getString("ModeName");
         setActivity();
         setActivityActions();
+        Thread.setDefaultUncaughtExceptionHandler(new DefaultExceptionHandler(this));
     }
 
     void setActivity() {
@@ -67,6 +68,22 @@ public class MakeMood extends AppCompatActivity {
         S4_2 = findViewById(R.id.button19237);
         S4_3 = findViewById(R.id.button17237);
         S4_4 = findViewById(R.id.button28237);
+        S5_1 = findViewById(R.id.button2725);
+        S5_2 = findViewById(R.id.button192r);
+        S5_3 = findViewById(R.id.button1726);
+        S5_4 = findViewById(R.id.button2842);
+        S6_1 = findViewById(R.id.button2723j);
+        S6_2 = findViewById(R.id.button1923j);
+        S6_3 = findViewById(R.id.button1723j);
+        S6_4 = findViewById(R.id.button2823j);
+        S7_1 = findViewById(R.id.button27236k);
+        S7_2 = findViewById(R.id.button19236k);
+        S7_3 = findViewById(R.id.button17236k);
+        S7_4 = findViewById(R.id.button28236k);
+        S8_1 = findViewById(R.id.button27237a);
+        S8_2 = findViewById(R.id.button19237A);
+        S8_3 = findViewById(R.id.button17237a);
+        S8_4 = findViewById(R.id.button28237a);
         Service1 = findViewById(R.id.button27);
         Service2 = findViewById(R.id.button19);
         Service3 = findViewById(R.id.button17);
@@ -150,6 +167,86 @@ public class MakeMood extends AppCompatActivity {
             S4_2.setVisibility(View.INVISIBLE);
             S4_3.setVisibility(View.INVISIBLE);
             S4_4.setVisibility(View.INVISIBLE);
+        }
+        if (MyApp.Room.getSWITCH5_B() != null ) {
+            if (MyApp.Room.getSWITCH5_B().dps.get("4") == null) {
+                S5_4.setVisibility(View.INVISIBLE);
+            }
+            if (MyApp.Room.getSWITCH5_B().dps.get("3") == null) {
+                S5_3.setVisibility(View.INVISIBLE);
+            }
+            if (MyApp.Room.getSWITCH5_B().dps.get("2") == null) {
+                S5_2.setVisibility(View.INVISIBLE);
+            }
+            if (MyApp.Room.getSWITCH5_B().dps.get("1") == null) {
+                S5_1.setVisibility(View.INVISIBLE);
+            }
+        }
+        else {
+            S5_1.setVisibility(View.INVISIBLE);
+            S5_2.setVisibility(View.INVISIBLE);
+            S5_3.setVisibility(View.INVISIBLE);
+            S5_4.setVisibility(View.INVISIBLE);
+        }
+        if (MyApp.Room.getSWITCH6_B() != null ) {
+            if (MyApp.Room.getSWITCH6_B().dps.get("4") == null) {
+                S6_4.setVisibility(View.INVISIBLE);
+            }
+            if (MyApp.Room.getSWITCH6_B().dps.get("3") == null) {
+                S6_3.setVisibility(View.INVISIBLE);
+            }
+            if (MyApp.Room.getSWITCH6_B().dps.get("2") == null) {
+                S6_2.setVisibility(View.INVISIBLE);
+            }
+            if (MyApp.Room.getSWITCH6_B().dps.get("1") == null) {
+                S6_1.setVisibility(View.INVISIBLE);
+            }
+        }
+        else {
+            S6_1.setVisibility(View.INVISIBLE);
+            S6_2.setVisibility(View.INVISIBLE);
+            S6_3.setVisibility(View.INVISIBLE);
+            S6_4.setVisibility(View.INVISIBLE);
+        }
+        if (MyApp.Room.getSWITCH7_B() != null ) {
+            if (MyApp.Room.getSWITCH7_B().dps.get("4") == null) {
+                S7_4.setVisibility(View.INVISIBLE);
+            }
+            if (MyApp.Room.getSWITCH7_B().dps.get("3") == null) {
+                S7_3.setVisibility(View.INVISIBLE);
+            }
+            if (MyApp.Room.getSWITCH7_B().dps.get("2") == null) {
+                S7_2.setVisibility(View.INVISIBLE);
+            }
+            if (MyApp.Room.getSWITCH7_B().dps.get("1") == null) {
+                S7_1.setVisibility(View.INVISIBLE);
+            }
+        }
+        else {
+            S7_1.setVisibility(View.INVISIBLE);
+            S7_2.setVisibility(View.INVISIBLE);
+            S7_3.setVisibility(View.INVISIBLE);
+            S7_4.setVisibility(View.INVISIBLE);
+        }
+        if (MyApp.Room.getSWITCH8_B() != null ) {
+            if (MyApp.Room.getSWITCH8_B().dps.get("4") == null) {
+                S8_4.setVisibility(View.INVISIBLE);
+            }
+            if (MyApp.Room.getSWITCH8_B().dps.get("3") == null) {
+                S8_3.setVisibility(View.INVISIBLE);
+            }
+            if (MyApp.Room.getSWITCH8_B().dps.get("2") == null) {
+                S8_2.setVisibility(View.INVISIBLE);
+            }
+            if (MyApp.Room.getSWITCH8_B().dps.get("1") == null) {
+                S8_1.setVisibility(View.INVISIBLE);
+            }
+        }
+        else {
+            S8_1.setVisibility(View.INVISIBLE);
+            S8_2.setVisibility(View.INVISIBLE);
+            S8_3.setVisibility(View.INVISIBLE);
+            S8_4.setVisibility(View.INVISIBLE);
         }
         switch (MyApp.ProjectVariables.cleanupButton) {
             case 1 :
@@ -1037,6 +1134,833 @@ public class MakeMood extends AppCompatActivity {
             }
         });
 
+        S5_1.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (PhisicalButton.isChecked()) {
+                    BTN = new MoodBtn(MyApp.Room.getSWITCH5_B(),1,true);
+                    S5_1.setBackgroundResource(R.drawable.btn_bg_normal_selected0);
+                    PhisicalButton.setChecked(false);
+                    if (SelectedButtons.contains(S5_1)) {
+                        SelectedButtons.remove(S5_1);
+                    }
+                }
+                else {
+                    if (SelectedButtons.contains(S5_1)) {
+                        SelectedButtons.remove(S5_1);
+                        S5_1.setBackgroundResource(R.drawable.btn_bg_selector);
+                        for (int i=0;i<Buttons.size();i++) {
+                            if (Buttons.get(i).Switch == MyApp.Room.getSWITCH5_B() && Buttons.get(i).SwitchButton == 1) {
+                                Buttons.remove(i);
+                            }
+                        }
+                    }
+                    else {
+                        Dialog D = new Dialog(act);
+                        D.setContentView(R.layout.mood_button_status);
+                        TextView title = D.findViewById(R.id.textView69);
+                        RadioButton on = D.findViewById(R.id.radioButton);
+                        RadioButton off = D.findViewById(R.id.radioButton2);
+                        title.setText("Switch 5 Button 1");
+                        on.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                            @Override
+                            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                                SelectedButtons.add(S5_1);
+                                S5_1.setBackgroundResource(R.drawable.btn_bg_normal_selected);
+                                Buttons.add(new MoodBtn(MyApp.Room.getSWITCH5_B(),1,true));
+                                D.dismiss();
+                            }
+                        });
+                        off.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                            @Override
+                            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                                SelectedButtons.add(S5_1);
+                                S5_1.setBackgroundResource(R.drawable.btn_bg_normal_selected);
+                                Buttons.add(new MoodBtn(MyApp.Room.getSWITCH5_B(),1,false));
+                                D.dismiss();
+                            }
+                        });
+                        D.show();
+                    }
+                }
+            }
+        });
+        S5_2.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (PhisicalButton.isChecked()) {
+                    BTN = new MoodBtn(MyApp.Room.getSWITCH5_B(),2,true);
+                    S5_2.setBackgroundResource(R.drawable.btn_bg_normal_selected0);
+                    PhisicalButton.setChecked(false);
+                    if (SelectedButtons.contains(S5_2)) {
+                        SelectedButtons.remove(S5_2);
+                    }
+                }
+                else {
+                    if (SelectedButtons.contains(S5_2)) {
+                        SelectedButtons.remove(S5_2);
+                        S5_2.setBackgroundResource(R.drawable.btn_bg_selector);
+                        for (int i=0;i<Buttons.size();i++) {
+                            if (Buttons.get(i).Switch == MyApp.Room.getSWITCH5_B() && Buttons.get(i).SwitchButton == 2) {
+                                Buttons.remove(i);
+                            }
+                        }
+                    }
+                    else {
+                        Dialog D = new Dialog(act);
+                        D.setContentView(R.layout.mood_button_status);
+                        TextView title = D.findViewById(R.id.textView69);
+                        RadioButton on = D.findViewById(R.id.radioButton);
+                        RadioButton off = D.findViewById(R.id.radioButton2);
+                        title.setText("Switch 5 Button 2");
+                        on.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                            @Override
+                            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                                SelectedButtons.add(S5_2);
+                                S5_2.setBackgroundResource(R.drawable.btn_bg_normal_selected);
+                                Buttons.add(new MoodBtn(MyApp.Room.getSWITCH5_B(),2,true));
+                                D.dismiss();
+                            }
+                        });
+                        off.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                            @Override
+                            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                                SelectedButtons.add(S5_2);
+                                S5_2.setBackgroundResource(R.drawable.btn_bg_normal_selected);
+                                Buttons.add(new MoodBtn(MyApp.Room.getSWITCH5_B(),2,false));
+                                D.dismiss();
+                            }
+                        });
+                        D.show();
+                    }
+                }
+            }
+        });
+        S5_3.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (PhisicalButton.isChecked()) {
+                    BTN = new MoodBtn(MyApp.Room.getSWITCH5_B(),3,true);
+                    S5_3.setBackgroundResource(R.drawable.btn_bg_normal_selected0);
+                    PhisicalButton.setChecked(false);
+                    if (SelectedButtons.contains(S5_3)) {
+                        SelectedButtons.remove(S5_3);
+                    }
+                }
+                else {
+                    if (SelectedButtons.contains(S5_3)) {
+                        SelectedButtons.remove(S5_3);
+                        S5_3.setBackgroundResource(R.drawable.btn_bg_selector);
+                        for (int i=0;i<Buttons.size();i++) {
+                            if (Buttons.get(i).Switch == MyApp.Room.getSWITCH5_B() && Buttons.get(i).SwitchButton == 3) {
+                                Buttons.remove(i);
+                            }
+                        }
+                    }
+                    else {
+                        Dialog D = new Dialog(act);
+                        D.setContentView(R.layout.mood_button_status);
+                        TextView title = D.findViewById(R.id.textView69);
+                        RadioButton on = D.findViewById(R.id.radioButton);
+                        RadioButton off = D.findViewById(R.id.radioButton2);
+                        title.setText("Switch 5 Button 3");
+                        on.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                            @Override
+                            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                                SelectedButtons.add(S5_3);
+                                S5_3.setBackgroundResource(R.drawable.btn_bg_normal_selected);
+                                Buttons.add(new MoodBtn(MyApp.Room.getSWITCH5_B(),3,true));
+                                D.dismiss();
+                            }
+                        });
+                        off.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                            @Override
+                            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                                SelectedButtons.add(S5_3);
+                                S5_3.setBackgroundResource(R.drawable.btn_bg_normal_selected);
+                                Buttons.add(new MoodBtn(MyApp.Room.getSWITCH5_B(),3,false));
+                                D.dismiss();
+                            }
+                        });
+                        D.show();
+                    }
+                }
+            }
+        });
+        S5_4.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (PhisicalButton.isChecked()) {
+                    BTN = new MoodBtn(MyApp.Room.getSWITCH5_B(),4,true);
+                    S5_4.setBackgroundResource(R.drawable.btn_bg_normal_selected0);
+                    PhisicalButton.setChecked(false);
+                    if (SelectedButtons.contains(S5_4)) {
+                        SelectedButtons.remove(S5_4);
+                    }
+                }
+                else {
+                    if (SelectedButtons.contains(S5_4)) {
+                        SelectedButtons.remove(S5_4);
+                        S5_4.setBackgroundResource(R.drawable.btn_bg_selector);
+                        for (int i=0;i<Buttons.size();i++) {
+                            if (Buttons.get(i).Switch == MyApp.Room.getSWITCH5_B() && Buttons.get(i).SwitchButton == 4) {
+                                Buttons.remove(i);
+                            }
+                        }
+                    }
+                    else {
+                        Dialog D = new Dialog(act);
+                        D.setContentView(R.layout.mood_button_status);
+                        TextView title = D.findViewById(R.id.textView69);
+                        RadioButton on = D.findViewById(R.id.radioButton);
+                        RadioButton off = D.findViewById(R.id.radioButton2);
+                        title.setText("Switch 5 Button 4");
+                        on.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                            @Override
+                            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                                SelectedButtons.add(S5_4);
+                                S5_4.setBackgroundResource(R.drawable.btn_bg_normal_selected);
+                                Buttons.add(new MoodBtn(MyApp.Room.getSWITCH5_B(),4,true));
+                                D.dismiss();
+                            }
+                        });
+                        off.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                            @Override
+                            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                                SelectedButtons.add(S5_4);
+                                S5_4.setBackgroundResource(R.drawable.btn_bg_normal_selected);
+                                Buttons.add(new MoodBtn(MyApp.Room.getSWITCH5_B(),4,false));
+                                D.dismiss();
+                            }
+                        });
+                        D.show();
+                    }
+                }
+
+            }
+        });
+
+        S6_1.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (PhisicalButton.isChecked()) {
+                    BTN = new MoodBtn(MyApp.Room.getSWITCH6_B(),1,true);
+                    S6_1.setBackgroundResource(R.drawable.btn_bg_normal_selected0);
+                    PhisicalButton.setChecked(false);
+                    if (SelectedButtons.contains(S6_1)) {
+                        SelectedButtons.remove(S6_1);
+                    }
+                }
+                else {
+                    if (SelectedButtons.contains(S6_1)) {
+                        SelectedButtons.remove(S6_1);
+                        S6_1.setBackgroundResource(R.drawable.btn_bg_selector);
+                        for (int i=0;i<Buttons.size();i++) {
+                            if (Buttons.get(i).Switch == MyApp.Room.getSWITCH6_B() && Buttons.get(i).SwitchButton == 1) {
+                                Buttons.remove(i);
+                            }
+                        }
+                    }
+                    else {
+                        Dialog D = new Dialog(act);
+                        D.setContentView(R.layout.mood_button_status);
+                        TextView title = D.findViewById(R.id.textView69);
+                        RadioButton on = D.findViewById(R.id.radioButton);
+                        RadioButton off = D.findViewById(R.id.radioButton2);
+                        title.setText("Switch 6 Button 1");
+                        on.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                            @Override
+                            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                                SelectedButtons.add(S6_1);
+                                S6_1.setBackgroundResource(R.drawable.btn_bg_normal_selected);
+                                Buttons.add(new MoodBtn(MyApp.Room.getSWITCH6_B(),1,true));
+                                D.dismiss();
+                            }
+                        });
+                        off.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                            @Override
+                            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                                SelectedButtons.add(S6_1);
+                                S6_1.setBackgroundResource(R.drawable.btn_bg_normal_selected);
+                                Buttons.add(new MoodBtn(MyApp.Room.getSWITCH6_B(),1,false));
+                                D.dismiss();
+                            }
+                        });
+                        D.show();
+
+                    }
+                }
+            }
+        });
+        S6_2.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (PhisicalButton.isChecked()) {
+                    BTN = new MoodBtn(MyApp.Room.getSWITCH6_B(),2,true);
+                    S6_2.setBackgroundResource(R.drawable.btn_bg_normal_selected0);
+                    PhisicalButton.setChecked(false);
+                    if (SelectedButtons.contains(S6_2)) {
+                        SelectedButtons.remove(S6_2);
+                    }
+                }
+                else {
+                    if (SelectedButtons.contains(S6_2)) {
+                        SelectedButtons.remove(S6_2);
+                        S6_2.setBackgroundResource(R.drawable.btn_bg_selector);
+                        for (int i=0;i<Buttons.size();i++) {
+                            if (Buttons.get(i).Switch == MyApp.Room.getSWITCH6_B() && Buttons.get(i).SwitchButton == 2) {
+                                Buttons.remove(i);
+                            }
+                        }
+                    }
+                    else {
+                        Dialog D = new Dialog(act);
+                        D.setContentView(R.layout.mood_button_status);
+                        TextView title = D.findViewById(R.id.textView69);
+                        RadioButton on = D.findViewById(R.id.radioButton);
+                        RadioButton off = D.findViewById(R.id.radioButton2);
+                        title.setText("Switch 6 Button 2");
+                        on.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                            @Override
+                            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                                SelectedButtons.add(S6_2);
+                                S6_2.setBackgroundResource(R.drawable.btn_bg_normal_selected);
+                                Buttons.add(new MoodBtn(MyApp.Room.getSWITCH6_B(),2,true));
+                                D.dismiss();
+                            }
+                        });
+                        off.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                            @Override
+                            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                                SelectedButtons.add(S6_2);
+                                S6_2.setBackgroundResource(R.drawable.btn_bg_normal_selected);
+                                Buttons.add(new MoodBtn(MyApp.Room.getSWITCH6_B(),2,false));
+                                D.dismiss();
+                            }
+                        });
+                        D.show();
+                    }
+                }
+            }
+        });
+        S6_3.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (PhisicalButton.isChecked()) {
+                    BTN = new MoodBtn(MyApp.Room.getSWITCH6_B(),3,true);
+                    S6_3.setBackgroundResource(R.drawable.btn_bg_normal_selected0);
+                    PhisicalButton.setChecked(false);
+                    if (SelectedButtons.contains(S6_3)) {
+                        SelectedButtons.remove(S6_3);
+                    }
+                }
+                else {
+                    if (SelectedButtons.contains(S6_3)) {
+                        SelectedButtons.remove(S6_3);
+                        S6_3.setBackgroundResource(R.drawable.btn_bg_selector);
+                        for (int i=0;i<Buttons.size();i++) {
+                            if (Buttons.get(i).Switch == MyApp.Room.getSWITCH6_B() && Buttons.get(i).SwitchButton == 3) {
+                                Buttons.remove(i);
+                            }
+                        }
+                    }
+                    else {
+                        Dialog D = new Dialog(act);
+                        D.setContentView(R.layout.mood_button_status);
+                        TextView title = D.findViewById(R.id.textView69);
+                        RadioButton on = D.findViewById(R.id.radioButton);
+                        RadioButton off = D.findViewById(R.id.radioButton2);
+                        title.setText("Switch 6 Button 3");
+                        on.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                            @Override
+                            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                                SelectedButtons.add(S6_3);
+                                S6_3.setBackgroundResource(R.drawable.btn_bg_normal_selected);
+                                Buttons.add(new MoodBtn(MyApp.Room.getSWITCH6_B(),3,true));
+                                D.dismiss();
+                            }
+                        });
+                        off.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                            @Override
+                            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                                SelectedButtons.add(S6_3);
+                                S6_3.setBackgroundResource(R.drawable.btn_bg_normal_selected);
+                                Buttons.add(new MoodBtn(MyApp.Room.getSWITCH6_B(),3,false));
+                                D.dismiss();
+                            }
+                        });
+                        D.show();
+                    }
+                }
+            }
+        });
+        S6_4.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (PhisicalButton.isChecked()) {
+                    BTN = new MoodBtn(MyApp.Room.getSWITCH6_B(),4,true);
+                    S6_4.setBackgroundResource(R.drawable.btn_bg_normal_selected0);
+                    PhisicalButton.setChecked(false);
+                    if (SelectedButtons.contains(S6_4)) {
+                        SelectedButtons.remove(S6_4);
+                    }
+                }
+                else {
+                    if (SelectedButtons.contains(S6_4)) {
+                        SelectedButtons.remove(S6_4);
+                        S6_4.setBackgroundResource(R.drawable.btn_bg_selector);
+                        for (int i=0;i<Buttons.size();i++) {
+                            if (Buttons.get(i).Switch == MyApp.Room.getSWITCH6_B() && Buttons.get(i).SwitchButton == 4) {
+                                Buttons.remove(i);
+                            }
+                        }
+                    }
+                    else {
+                        Dialog D = new Dialog(act);
+                        D.setContentView(R.layout.mood_button_status);
+                        TextView title = D.findViewById(R.id.textView69);
+                        RadioButton on = D.findViewById(R.id.radioButton);
+                        RadioButton off = D.findViewById(R.id.radioButton2);
+                        title.setText("Switch 6 Button 4");
+                        on.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                            @Override
+                            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                                SelectedButtons.add(S6_4);
+                                S6_4.setBackgroundResource(R.drawable.btn_bg_normal_selected);
+                                Buttons.add(new MoodBtn(MyApp.Room.getSWITCH6_B(),4,true));
+                                D.dismiss();
+                            }
+                        });
+                        off.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                            @Override
+                            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                                SelectedButtons.add(S6_4);
+                                S6_4.setBackgroundResource(R.drawable.btn_bg_normal_selected);
+                                Buttons.add(new MoodBtn(MyApp.Room.getSWITCH6_B(),4,false));
+                                D.dismiss();
+                            }
+                        });
+                        D.show();
+                    }
+                }
+
+            }
+        });
+
+        S7_1.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (PhisicalButton.isChecked()) {
+                    BTN = new MoodBtn(MyApp.Room.getSWITCH7_B(),1,true);
+                    S7_1.setBackgroundResource(R.drawable.btn_bg_normal_selected0);
+                    PhisicalButton.setChecked(false);
+                    if (SelectedButtons.contains(S7_1)) {
+                        SelectedButtons.remove(S7_1);
+                    }
+                }
+                else {
+                    if (SelectedButtons.contains(S7_1)) {
+                        SelectedButtons.remove(S7_1);
+                        S7_1.setBackgroundResource(R.drawable.btn_bg_selector);
+                        for (int i=0;i<Buttons.size();i++) {
+                            if (Buttons.get(i).Switch == MyApp.Room.getSWITCH7_B() && Buttons.get(i).SwitchButton == 1) {
+                                Buttons.remove(i);
+                            }
+                        }
+                    }
+                    else {
+                        Dialog D = new Dialog(act);
+                        D.setContentView(R.layout.mood_button_status);
+                        TextView title = D.findViewById(R.id.textView69);
+                        RadioButton on = D.findViewById(R.id.radioButton);
+                        RadioButton off = D.findViewById(R.id.radioButton2);
+                        title.setText("Switch 7 Button 1");
+                        on.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                            @Override
+                            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                                SelectedButtons.add(S7_1);
+                                S7_1.setBackgroundResource(R.drawable.btn_bg_normal_selected);
+                                Buttons.add(new MoodBtn(MyApp.Room.getSWITCH7_B(),1,true));
+                                D.dismiss();
+                            }
+                        });
+                        off.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                            @Override
+                            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                                SelectedButtons.add(S7_1);
+                                S7_1.setBackgroundResource(R.drawable.btn_bg_normal_selected);
+                                Buttons.add(new MoodBtn(MyApp.Room.getSWITCH7_B(),1,false));
+                                D.dismiss();
+                            }
+                        });
+                        D.show();
+
+                    }
+                }
+            }
+        });
+        S7_2.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (PhisicalButton.isChecked()) {
+                    BTN = new MoodBtn(MyApp.Room.getSWITCH7_B(),2,true);
+                    S7_2.setBackgroundResource(R.drawable.btn_bg_normal_selected0);
+                    PhisicalButton.setChecked(false);
+                    if (SelectedButtons.contains(S7_2)) {
+                        SelectedButtons.remove(S7_2);
+                    }
+                }
+                else {
+                    if (SelectedButtons.contains(S7_2)) {
+                        SelectedButtons.remove(S7_2);
+                        S7_2.setBackgroundResource(R.drawable.btn_bg_selector);
+                        for (int i=0;i<Buttons.size();i++) {
+                            if (Buttons.get(i).Switch == MyApp.Room.getSWITCH7_B() && Buttons.get(i).SwitchButton == 2) {
+                                Buttons.remove(i);
+                            }
+                        }
+                    }
+                    else {
+                        Dialog D = new Dialog(act);
+                        D.setContentView(R.layout.mood_button_status);
+                        TextView title = D.findViewById(R.id.textView69);
+                        RadioButton on = D.findViewById(R.id.radioButton);
+                        RadioButton off = D.findViewById(R.id.radioButton2);
+                        title.setText("Switch 7 Button 2");
+                        on.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                            @Override
+                            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                                SelectedButtons.add(S7_2);
+                                S7_2.setBackgroundResource(R.drawable.btn_bg_normal_selected);
+                                Buttons.add(new MoodBtn(MyApp.Room.getSWITCH7_B(),2,true));
+                                D.dismiss();
+                            }
+                        });
+                        off.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                            @Override
+                            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                                SelectedButtons.add(S7_2);
+                                S7_2.setBackgroundResource(R.drawable.btn_bg_normal_selected);
+                                Buttons.add(new MoodBtn(MyApp.Room.getSWITCH7_B(),2,false));
+                                D.dismiss();
+                            }
+                        });
+                        D.show();
+                    }
+                }
+            }
+        });
+        S7_3.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (PhisicalButton.isChecked()) {
+                    BTN = new MoodBtn(MyApp.Room.getSWITCH7_B(),3,true);
+                    S7_3.setBackgroundResource(R.drawable.btn_bg_normal_selected0);
+                    PhisicalButton.setChecked(false);
+                    if (SelectedButtons.contains(S7_3)) {
+                        SelectedButtons.remove(S7_3);
+                    }
+                }
+                else {
+                    if (SelectedButtons.contains(S7_3)) {
+                        SelectedButtons.remove(S7_3);
+                        S7_3.setBackgroundResource(R.drawable.btn_bg_selector);
+                        for (int i=0;i<Buttons.size();i++) {
+                            if (Buttons.get(i).Switch == MyApp.Room.getSWITCH7_B() && Buttons.get(i).SwitchButton == 3) {
+                                Buttons.remove(i);
+                            }
+                        }
+                    }
+                    else {
+                        Dialog D = new Dialog(act);
+                        D.setContentView(R.layout.mood_button_status);
+                        TextView title = D.findViewById(R.id.textView69);
+                        RadioButton on = D.findViewById(R.id.radioButton);
+                        RadioButton off = D.findViewById(R.id.radioButton2);
+                        title.setText("Switch 7 Button 3");
+                        on.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                            @Override
+                            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                                SelectedButtons.add(S7_3);
+                                S7_3.setBackgroundResource(R.drawable.btn_bg_normal_selected);
+                                Buttons.add(new MoodBtn(MyApp.Room.getSWITCH7_B(),3,true));
+                                D.dismiss();
+                            }
+                        });
+                        off.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                            @Override
+                            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                                SelectedButtons.add(S7_3);
+                                S7_3.setBackgroundResource(R.drawable.btn_bg_normal_selected);
+                                Buttons.add(new MoodBtn(MyApp.Room.getSWITCH7_B(),3,false));
+                                D.dismiss();
+                            }
+                        });
+                        D.show();
+                    }
+                }
+            }
+        });
+        S7_4.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (PhisicalButton.isChecked()) {
+                    BTN = new MoodBtn(MyApp.Room.getSWITCH7_B(),4,true);
+                    S7_4.setBackgroundResource(R.drawable.btn_bg_normal_selected0);
+                    PhisicalButton.setChecked(false);
+                    if (SelectedButtons.contains(S7_4)) {
+                        SelectedButtons.remove(S7_4);
+                    }
+                }
+                else {
+                    if (SelectedButtons.contains(S7_4)) {
+                        SelectedButtons.remove(S7_4);
+                        S7_4.setBackgroundResource(R.drawable.btn_bg_selector);
+                        for (int i=0;i<Buttons.size();i++) {
+                            if (Buttons.get(i).Switch == MyApp.Room.getSWITCH7_B() && Buttons.get(i).SwitchButton == 4) {
+                                Buttons.remove(i);
+                            }
+                        }
+                    }
+                    else {
+                        Dialog D = new Dialog(act);
+                        D.setContentView(R.layout.mood_button_status);
+                        TextView title = D.findViewById(R.id.textView69);
+                        RadioButton on = D.findViewById(R.id.radioButton);
+                        RadioButton off = D.findViewById(R.id.radioButton2);
+                        title.setText("Switch 7 Button 4");
+                        on.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                            @Override
+                            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                                SelectedButtons.add(S7_4);
+                                S7_4.setBackgroundResource(R.drawable.btn_bg_normal_selected);
+                                Buttons.add(new MoodBtn(MyApp.Room.getSWITCH7_B(),4,true));
+                                D.dismiss();
+                            }
+                        });
+                        off.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                            @Override
+                            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                                SelectedButtons.add(S7_4);
+                                S7_4.setBackgroundResource(R.drawable.btn_bg_normal_selected);
+                                Buttons.add(new MoodBtn(MyApp.Room.getSWITCH7_B(),4,false));
+                                D.dismiss();
+                            }
+                        });
+                        D.show();
+                    }
+                }
+
+            }
+        });
+
+        S8_1.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (PhisicalButton.isChecked()) {
+                    BTN = new MoodBtn(MyApp.Room.getSWITCH8_B(),1,true);
+                    S8_1.setBackgroundResource(R.drawable.btn_bg_normal_selected0);
+                    PhisicalButton.setChecked(false);
+                    if (SelectedButtons.contains(S8_1)) {
+                        SelectedButtons.remove(S8_1);
+                    }
+                }
+                else {
+                    if (SelectedButtons.contains(S8_1)) {
+                        SelectedButtons.remove(S8_1);
+                        S8_1.setBackgroundResource(R.drawable.btn_bg_selector);
+                        for (int i=0;i<Buttons.size();i++) {
+                            if (Buttons.get(i).Switch == MyApp.Room.getSWITCH8_B() && Buttons.get(i).SwitchButton == 1) {
+                                Buttons.remove(i);
+                            }
+                        }
+                    }
+                    else {
+                        Dialog D = new Dialog(act);
+                        D.setContentView(R.layout.mood_button_status);
+                        TextView title = D.findViewById(R.id.textView69);
+                        RadioButton on = D.findViewById(R.id.radioButton);
+                        RadioButton off = D.findViewById(R.id.radioButton2);
+                        title.setText("Switch 8 Button 1");
+                        on.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                            @Override
+                            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                                SelectedButtons.add(S8_1);
+                                S8_1.setBackgroundResource(R.drawable.btn_bg_normal_selected);
+                                Buttons.add(new MoodBtn(MyApp.Room.getSWITCH8_B(),1,true));
+                                D.dismiss();
+                            }
+                        });
+                        off.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                            @Override
+                            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                                SelectedButtons.add(S8_1);
+                                S8_1.setBackgroundResource(R.drawable.btn_bg_normal_selected);
+                                Buttons.add(new MoodBtn(MyApp.Room.getSWITCH8_B(),1,false));
+                                D.dismiss();
+                            }
+                        });
+                        D.show();
+
+                    }
+                }
+            }
+        });
+        S8_2.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (PhisicalButton.isChecked()) {
+                    BTN = new MoodBtn(MyApp.Room.getSWITCH8_B(),2,true);
+                    S8_2.setBackgroundResource(R.drawable.btn_bg_normal_selected0);
+                    PhisicalButton.setChecked(false);
+                    if (SelectedButtons.contains(S8_2)) {
+                        SelectedButtons.remove(S8_2);
+                    }
+                }
+                else {
+                    if (SelectedButtons.contains(S8_2)) {
+                        SelectedButtons.remove(S8_2);
+                        S8_2.setBackgroundResource(R.drawable.btn_bg_selector);
+                        for (int i=0;i<Buttons.size();i++) {
+                            if (Buttons.get(i).Switch == MyApp.Room.getSWITCH8_B() && Buttons.get(i).SwitchButton == 2) {
+                                Buttons.remove(i);
+                            }
+                        }
+                    }
+                    else {
+                        Dialog D = new Dialog(act);
+                        D.setContentView(R.layout.mood_button_status);
+                        TextView title = D.findViewById(R.id.textView69);
+                        RadioButton on = D.findViewById(R.id.radioButton);
+                        RadioButton off = D.findViewById(R.id.radioButton2);
+                        title.setText("Switch 8 Button 2");
+                        on.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                            @Override
+                            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                                SelectedButtons.add(S8_2);
+                                S8_2.setBackgroundResource(R.drawable.btn_bg_normal_selected);
+                                Buttons.add(new MoodBtn(MyApp.Room.getSWITCH8_B(),2,true));
+                                D.dismiss();
+                            }
+                        });
+                        off.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                            @Override
+                            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                                SelectedButtons.add(S8_2);
+                                S8_2.setBackgroundResource(R.drawable.btn_bg_normal_selected);
+                                Buttons.add(new MoodBtn(MyApp.Room.getSWITCH8_B(),2,false));
+                                D.dismiss();
+                            }
+                        });
+                        D.show();
+                    }
+                }
+            }
+        });
+        S8_3.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (PhisicalButton.isChecked()) {
+                    BTN = new MoodBtn(MyApp.Room.getSWITCH8_B(),3,true);
+                    S8_3.setBackgroundResource(R.drawable.btn_bg_normal_selected0);
+                    PhisicalButton.setChecked(false);
+                    if (SelectedButtons.contains(S8_3)) {
+                        SelectedButtons.remove(S8_3);
+                    }
+                }
+                else {
+                    if (SelectedButtons.contains(S8_3)) {
+                        SelectedButtons.remove(S8_3);
+                        S8_3.setBackgroundResource(R.drawable.btn_bg_selector);
+                        for (int i=0;i<Buttons.size();i++) {
+                            if (Buttons.get(i).Switch == MyApp.Room.getSWITCH8_B() && Buttons.get(i).SwitchButton == 3) {
+                                Buttons.remove(i);
+                            }
+                        }
+                    }
+                    else {
+                        Dialog D = new Dialog(act);
+                        D.setContentView(R.layout.mood_button_status);
+                        TextView title = D.findViewById(R.id.textView69);
+                        RadioButton on = D.findViewById(R.id.radioButton);
+                        RadioButton off = D.findViewById(R.id.radioButton2);
+                        title.setText("Switch 8 Button 3");
+                        on.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                            @Override
+                            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                                SelectedButtons.add(S8_3);
+                                S8_3.setBackgroundResource(R.drawable.btn_bg_normal_selected);
+                                Buttons.add(new MoodBtn(MyApp.Room.getSWITCH8_B(),3,true));
+                                D.dismiss();
+                            }
+                        });
+                        off.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                            @Override
+                            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                                SelectedButtons.add(S8_3);
+                                S8_3.setBackgroundResource(R.drawable.btn_bg_normal_selected);
+                                Buttons.add(new MoodBtn(MyApp.Room.getSWITCH8_B(),3,false));
+                                D.dismiss();
+                            }
+                        });
+                        D.show();
+                    }
+                }
+            }
+        });
+        S8_4.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (PhisicalButton.isChecked()) {
+                    BTN = new MoodBtn(MyApp.Room.getSWITCH8_B(),4,true);
+                    S8_4.setBackgroundResource(R.drawable.btn_bg_normal_selected0);
+                    PhisicalButton.setChecked(false);
+                    if (SelectedButtons.contains(S8_4)) {
+                        SelectedButtons.remove(S8_4);
+                    }
+                }
+                else {
+                    if (SelectedButtons.contains(S8_4)) {
+                        SelectedButtons.remove(S8_4);
+                        S8_4.setBackgroundResource(R.drawable.btn_bg_selector);
+                        for (int i=0;i<Buttons.size();i++) {
+                            if (Buttons.get(i).Switch == MyApp.Room.getSWITCH8_B() && Buttons.get(i).SwitchButton == 4) {
+                                Buttons.remove(i);
+                            }
+                        }
+                    }
+                    else {
+                        Dialog D = new Dialog(act);
+                        D.setContentView(R.layout.mood_button_status);
+                        TextView title = D.findViewById(R.id.textView69);
+                        RadioButton on = D.findViewById(R.id.radioButton);
+                        RadioButton off = D.findViewById(R.id.radioButton2);
+                        title.setText("Switch 8 Button 4");
+                        on.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                            @Override
+                            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                                SelectedButtons.add(S8_4);
+                                S8_4.setBackgroundResource(R.drawable.btn_bg_normal_selected);
+                                Buttons.add(new MoodBtn(MyApp.Room.getSWITCH8_B(),4,true));
+                                D.dismiss();
+                            }
+                        });
+                        off.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                            @Override
+                            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                                SelectedButtons.add(S8_4);
+                                S8_4.setBackgroundResource(R.drawable.btn_bg_normal_selected);
+                                Buttons.add(new MoodBtn(MyApp.Room.getSWITCH8_B(),4,false));
+                                D.dismiss();
+                            }
+                        });
+                        D.show();
+                    }
+                }
+
+            }
+        });
+
         Service1.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -1272,6 +2196,5 @@ public class MakeMood extends AppCompatActivity {
 
 
     }
-
 
 }

@@ -1,14 +1,11 @@
 package com.syriasoft.hotelservices.lock;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.app.Dialog;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -27,9 +24,7 @@ import com.syriasoft.hotelservices.MyApp;
 import com.syriasoft.hotelservices.R;
 import com.syriasoft.hotelservices.ROOM;
 import com.syriasoft.hotelservices.TUYA.Tuya_Login;
-import com.syriasoft.hotelservices.ToastMaker;
 import com.syriasoft.hotelservices.LoadingDialog;
-import com.syriasoft.hotelservices.messageDialog;
 import com.ttlock.bl.sdk.util.GsonUtil;
 
 import org.json.JSONArray;
@@ -121,7 +116,7 @@ public class UserLockActivity extends AppCompatActivity {
                         e.printStackTrace();
                         Calendar c = Calendar.getInstance(Locale.getDefault());
                         long time = c.getTimeInMillis();
-                        ErrorRegister.rigestError(act,MyApp.THE_PROJECT.projectName,MyApp.Room.RoomNumber,time,007,e.getMessage(),"error Getting Locks List");
+                        ErrorRegister.insertError(act,MyApp.THE_PROJECT.projectName,MyApp.Room.RoomNumber,time,007,e.getMessage(),"error Getting Locks List");
                     }
                 }
                 else
@@ -138,7 +133,7 @@ public class UserLockActivity extends AppCompatActivity {
                //ToastMaker.MakeToast(t.getMessage(),act);
                 Calendar c = Calendar.getInstance(Locale.getDefault());
                 long time = c.getTimeInMillis();
-                ErrorRegister.rigestError(act ,MyApp.THE_PROJECT.projectName,MyApp.Room.RoomNumber,time,007,t.getMessage(),"error Getting Locks List");
+                ErrorRegister.insertError(act ,MyApp.THE_PROJECT.projectName,MyApp.Room.RoomNumber,time,007,t.getMessage(),"error Getting Locks List");
             }
         });
     }

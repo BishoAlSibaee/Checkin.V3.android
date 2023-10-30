@@ -1,15 +1,7 @@
 package com.syriasoft.laundryscreen;
 
-import android.app.Service;
-import android.content.Intent;
-import android.os.IBinder;
-import android.util.Log;
-import android.widget.Toast;
-
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
-
-import java.util.Map;
 
 public class messagingService extends FirebaseMessagingService {
     static String token ;
@@ -19,10 +11,9 @@ public class messagingService extends FirebaseMessagingService {
 
 
     @Override
-    public void onMessageReceived(RemoteMessage remoteMessage)
-    {
+    public void onMessageReceived(RemoteMessage remoteMessage) {
 
-                MainActivity.getOrders();
+
     }
     @Override
     public void onNewToken(String token) {
