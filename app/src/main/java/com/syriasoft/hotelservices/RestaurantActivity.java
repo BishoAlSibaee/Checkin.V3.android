@@ -744,7 +744,7 @@ public class RestaurantActivity extends AppCompatActivity {
 
     void setLockButton() {
         LinearLayout doorLayout = findViewById(R.id.Door_Button);
-        if (MyApp.BluetoothLock == null && MyApp.Room.getLOCK_B() == null) {
+        if (MyApp.Room.getLOCK_B() == null) {
             doorLayout.setVisibility(View.GONE);
         }
         else {

@@ -129,6 +129,8 @@ public class ROOM {
     private LockObj Lock ;
     ValueEventListener CleanupListener , LaundryListener , CheckoutListener , DNDListener , SetPointIntervalListener , DoorWarningListener , roomStatusListener , CheckInModeTimeListener , CheckOutModeTimeListener , ClientInListener ;
     boolean S1B1,S1B2,S1B3,S1B4 ,S2B1,S2B2,S2B3,S2B4 ,S3B1,S3B2,S3B3,S3B4 ,S4B1,S4B2,S4B3,S4B4 ,S5B1,S5B2,S5B3,S5B4 ,S6B1,S6B2,S6B3,S6B4, S7B1,S7B2,S7B3,S7B4 ,S8B1,S8B2,S8B3,S8B4 ,living,sleeping,work,romance,read,masterOff;
+    ACVariables acVariables;
+
 
     public ROOM(int id, int roomNumber, int status, int hotel, int building, int building_id, int floor, int floor_id, String roomType, int suiteStatus, int suiteNumber, int suiteId, int reservationNumber, int roomStatus, int clientIn, String message, int selected, int loading, int tablet, String dep, int cleanup, int laundry, int roomService, String roomServiceText, int checkout, int restaurant, int miniBarCheck, int facility, int SOS, int DND, int powerSwitch, int doorSensor, int motionSensor, int thermostat, int ZBGateway, int online, int curtainSwitch, int serviceSwitch, int lock, int switch1, int switch2, int switch3,int switch4,int switch5,int switch6,int switch7,int switch8, String lockGateway, String lockName, int powerStatus, int curtainStatus, int doorStatus, int doorWarning, int temp, int tempSetPoint, int setPointInterval, int checkInModeTime, int checkOutModeTime, String welcomeMessage, String logo, String token) {
         this.id = id;
@@ -174,10 +176,10 @@ public class ROOM {
         Switch2 = switch2;
         Switch3 = switch3;
         Switch4 = switch4;
-        Switch4 = switch5;
-        Switch4 = switch6;
-        Switch4 = switch7;
-        Switch4 = switch8;
+        Switch5 = switch5;
+        Switch6 = switch6;
+        Switch7 = switch7;
+        Switch8 = switch8;
         LockGateway = lockGateway;
         LockName = lockName;
         this.powerStatus = powerStatus;
@@ -192,6 +194,7 @@ public class ROOM {
         WelcomeMessage = welcomeMessage;
         Logo = logo;
         this.token = token;
+        acVariables = new ACVariables();
     }
 
     public void setFireRoom(DatabaseReference fireRoom) {

@@ -7,27 +7,15 @@ buildscript {
         
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:4.2.2'
+        //classpath 'com.android.tools.build:gradle:4.2.2'
         classpath 'com.google.gms:google-services:4.3.15'
         classpath 'com.android.tools.build:gradle:4.0.1'
         //classpath 'com.google.gms:google-services:4.3.5'
 
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
+        //apply plugin: 'com.android.application'
+// References the script plug-in.
+        //apply from : "thingMapping.gradle"
     }
 }
-
-//allprojects {
-//    repositories {
-//        google()
-//        jcenter()
-//        mavenLocal()
-//    }
-//}
-//plugins {
-//    id 'com.android.application' version '7.3.1' apply false
-//    id 'com.android.library' version '7.3.1' apply false
-//}
-//task clean(type: Delete) {
-//    delete rootProject.buildDir
-//}

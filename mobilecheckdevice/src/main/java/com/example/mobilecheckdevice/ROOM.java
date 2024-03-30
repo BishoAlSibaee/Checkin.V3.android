@@ -12,9 +12,14 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.example.mobilecheckdevice.Interface.HomeBeanCallBack;
+import com.example.mobilecheckdevice.Interface.SearchHomeCallBack;
 import com.example.mobilecheckdevice.lock.LockObj;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.ValueEventListener;
+import com.tuya.smart.home.sdk.TuyaHomeSdk;
+import com.tuya.smart.home.sdk.bean.HomeBean;
+import com.tuya.smart.home.sdk.callback.ITuyaHomeResultCallback;
 import com.tuya.smart.sdk.api.IResultCallback;
 import com.tuya.smart.sdk.api.ITuyaDevice;
 import com.tuya.smart.sdk.api.ITuyaGateway;
@@ -23,6 +28,7 @@ import com.tuya.smart.sdk.bean.DeviceBean;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -1126,6 +1132,251 @@ public class ROOM {
                 }
             }
         });
+    }
+
+    public boolean isRoomUnInstalled() {
+        return GATEWAY_B == null;
+    }
+
+    public static List<DeviceBean> getRoomDevices(ROOM room) {
+        List<DeviceBean> devices = new ArrayList<>();
+        if (room.getPOWER_B() != null) {
+            devices.add(room.getPOWER_B());
+        }
+        if (room.getGATEWAY_B() != null) {
+            devices.add(room.getGATEWAY_B());
+        }
+        if (room.getSERVICE1_B() != null) {
+            devices.add(room.getSERVICE1_B());
+        }
+        if (room.getSERVICE2_B() != null) {
+            devices.add(room.getSERVICE2_B());
+        }
+        if (room.getSWITCH1_B() != null) {
+            devices.add(room.getSWITCH1_B());
+        }
+        if (room.getSWITCH2_B() != null) {
+            devices.add(room.getSWITCH2_B());
+        }
+        if (room.getSWITCH3_B() != null) {
+            devices.add(room.getSWITCH3_B());
+        }
+        if (room.getSWITCH4_B() != null) {
+            devices.add(room.getSWITCH4_B());
+        }
+        if (room.getSWITCH5_B() != null) {
+            devices.add(room.getSWITCH5_B());
+        }
+        if (room.getSWITCH6_B() != null) {
+            devices.add(room.getSWITCH6_B());
+        }
+        if (room.getSWITCH7_B() != null) {
+            devices.add(room.getSWITCH7_B());
+        }
+        if (room.getSWITCH8_B() != null) {
+            devices.add(room.getSWITCH8_B());
+        }
+        if (room.getDOORSENSOR_B() != null) {
+            devices.add(room.getDOORSENSOR_B());
+        }
+        if (room.getMOTIONSENSOR_B() != null) {
+            devices.add(room.getMOTIONSENSOR_B());
+        }
+        if (room.getLOCK_B() != null) {
+            devices.add(room.getLOCK_B());
+        }
+        if (room.getAC_B() != null) {
+            devices.add(room.getAC_B());
+        }
+        if (room.getCURTAIN_B() != null) {
+            devices.add(room.getCURTAIN_B());
+        }
+        return devices;
+    }
+
+    public static void searchRoomInHome(CheckInHome homeBean , ROOM room, SearchHomeCallBack callBack) {
+        TuyaHomeSdk.newHomeInstance(homeBean.Home.getHomeId()).getHomeDetail(new ITuyaHomeResultCallback() {
+            @Override
+            public void onSuccess(HomeBean bean) {
+                List<DeviceBean> roomDevices = ROOM.getRoomDevices(room);
+                f1:
+                for (DeviceBean rd : roomDevices) {
+                    for (DeviceBean d : bean.getDeviceList()) {
+                        if (rd.devId.equals(d.devId)) {
+                            callBack.onSuccess(true);
+                            break f1;
+                        }
+                    }
+                }
+                callBack.onSuccess(false);
+            }
+
+            @Override
+            public void onError(String errorCode, String errorMsg) {
+                callBack.onFail(errorMsg);
+            }
+        });
+    }
+
+    public static void getRoomHome(ROOM room,List<CheckInHome> homes,HomeBeanCallBack callBack) {
+       for (int i=0;i<homes.size();i++) {
+           int finalI = i;
+           ROOM.searchRoomInHome(homes.get(i), room, new SearchHomeCallBack() {
+               @Override
+               public void onSuccess(boolean result) {
+                   if (result) {
+                       callBack.onSuccess(homes.get(finalI).Home);
+                   }
+               }
+
+               @Override
+               public void onFail(String error) {
+                    callBack.onFail(error);
+               }
+           });
+       }
+    }
+
+    public boolean searchDeviceInRoom(DeviceBean device) {
+        List<DeviceBean> roomDevices = ROOM.getRoomDevices(this);
+        for (DeviceBean d : roomDevices) {
+            if (d.getDevId().equals(device.getDevId())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean searchDeviceNameInRoom(String deviceName) {
+        List<DeviceBean> roomDevices = ROOM.getRoomDevices(this);
+        for (DeviceBean d : roomDevices) {
+            if (d.getName().contains(deviceName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public DeviceBean searchDeviceNameInRoomDevices(String deviceName) {
+        List<DeviceBean> roomDevices = ROOM.getRoomDevices(this);
+        for (DeviceBean d : roomDevices) {
+            if (d.getName().contains(deviceName)) {
+                return d;
+            }
+        }
+        return null;
+    }
+
+    DeviceBean getDeviceByName(DeviceBean d) {
+        String name = d.name;
+        if (name.contains("Power")) {
+            return getPOWER_B();
+        }
+        else if (name.contains("Gat")) {
+            return getGATEWAY_B();
+        }
+        else if (name.contains("AC")) {
+            return getAC_B();
+        }
+        else if (name.contains("Lock")) {
+            return getLOCK_B();
+        }
+        else if (name.contains("ServiceSwitch2")) {
+            return getSERVICE2_B();
+        }
+        else if (name.contains("ServiceSwitch")) {
+            return getSERVICE1_B();
+        }
+        else if (name.contains("Switch1")) {
+            return getSWITCH1_B();
+        }
+        else if (name.contains("Switch2")) {
+            return getSWITCH2_B();
+        }
+        else if (name.contains("Switch3")) {
+            return getSWITCH3_B();
+        }
+        else if (name.contains("Switch4")) {
+            return getSWITCH4_B();
+        }
+        else if (name.contains("Switch5")) {
+            return getSWITCH5_B();
+        }
+        else if (name.contains("Switch6")) {
+            return getSWITCH6_B();
+        }
+        else if (name.contains("Switch7")) {
+            return getSWITCH7_B();
+        }
+        else if (name.contains("Switch8")) {
+            return getSWITCH8_B();
+        }
+        else if (name.contains("DoorSensor")) {
+            return getDOORSENSOR_B();
+        }
+        else if (name.contains("MotionSensor")) {
+            return getMOTIONSENSOR_B();
+        }
+        else if (name.contains("Curtain")) {
+            return getCURTAIN_B();
+        }
+        else {
+            return null;
+        }
+    }
+
+    void setRoomDeviceByName(String name,DeviceBean d) {
+        if (name.contains("Power")) {
+            setPOWER_B(d);
+        }
+        else if (name.contains("Gat")) {
+            setGATEWAY_B(d);
+        }
+        else if (name.contains("AC")) {
+            setAC_B(d);
+        }
+        else if (name.contains("Lock")) {
+            setLOCK_B(d);
+        }
+        else if (name.contains("ServiceSwitch2")) {
+            setSERVICE2_B(d);
+        }
+        else if (name.contains("ServiceSwitch")) {
+            setSERVICE1_B(d);
+        }
+        else if (name.contains("Switch1")) {
+            setSWITCH1_B(d);
+        }
+        else if (name.contains("Switch2")) {
+            setSWITCH2_B(d);
+        }
+        else if (name.contains("Switch3")) {
+            setSWITCH3_B(d);
+        }
+        else if (name.contains("Switch4")) {
+            setSWITCH4_B(d);
+        }
+        else if (name.contains("Switch5")) {
+            setSWITCH5_B(d);
+        }
+        else if (name.contains("Switch6")) {
+            setSWITCH6_B(d);
+        }
+        else if (name.contains("Switch7")) {
+            setSWITCH7_B(d);
+        }
+        else if (name.contains("Switch8")) {
+            setSWITCH8_B(d);
+        }
+        else if (name.contains("DoorSensor")) {
+            setDOORSENSOR_B(d);
+        }
+        else if (name.contains("MotionSensor")) {
+            setMOTIONSENSOR_B(d);
+        }
+        else if (name.contains("Curtain")) {
+            setCURTAIN_B(d);
+        }
     }
 
 }

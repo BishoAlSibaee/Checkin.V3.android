@@ -5,7 +5,24 @@
     <string name="dnd">DND</string>
     <string name="checkout">Checkout</string>
     <string name="roomService">RoomService</string>
-    <string name="roomsTemplate">Room Templates</string>
+    <string name="template">Templates</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="search">Search</string>
+    <string name="templates">Templates</string>
+    <string name="addTemplate">add Template</string>
+    <string name="applyTemplateOnRoom">Apply Template On Room</string>
+    <string name="addMood">Add Mood</string>
+    <string name="addMultiControl">Add MultiControl</string>
+    <string name="roomsAddedToTemplate">Rooms Added To Template</string>
+    <string name="moods">Moods</string>
+    <string name="multiControls">Multi Controls</string>
+    <string name="addRooms">Add Rooms</string>
+    <string name="addedRooms">Added Rooms</string>
+    <string name="enable">Enable</string>
+    <string name="disable">Disable</string>
+    <string name="rooms">Rooms</string>
+    <string name="devices">Devices</string>
 
     <!--    Messages -->
 

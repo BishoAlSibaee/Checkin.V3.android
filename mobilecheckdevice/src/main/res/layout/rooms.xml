@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_weight="1"
-    android:background="@color/dark_gray"
+    android:background="@color/colorPrimary"
     android:orientation="vertical"
     tools:context=".Rooms">
 
@@ -57,127 +57,174 @@
         android:orientation="horizontal"
         android:visibility="visible">
 
-        <ImageView
-            android:id="@+id/imageView2"
-            android:layout_width="70dp"
-            android:layout_height="30dp"
-            android:layout_gravity="center_vertical"
-            app:srcCompat="@drawable/logo_android" />
-
-        <TextView
-            android:id="@+id/hotelName"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:padding="2dp"
-            android:textAlignment="textStart"
-            android:textColor="@color/white"
-            android:textSize="24sp"
-            android:textStyle="bold|italic" />
+            android:orientation="vertical">
 
-        <Button
-            android:id="@+id/button15"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical"
-            android:layout_margin="2dp"
-            android:layout_weight="1"
-            android:onClick="lockAndUnlock"
-            android:text="Lock Project"
-            android:textAllCaps="false"
-            android:textSize="12sp"
-            android:visibility="gone" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="horizontal">
 
-        <Button
-            android:id="@+id/button9"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical"
-            android:layout_margin="2dp"
-            android:layout_weight="1"
-            android:onClick="toggleRoomsDevices"
-            android:text="Toggle Rooms/Devices"
-            android:textAllCaps="false"
-            android:textSize="12sp" />
+                <ImageView
+                    android:id="@+id/imageView2"
+                    android:layout_width="70dp"
+                    android:layout_height="30dp"
+                    android:layout_gravity="center_vertical"
+                    app:srcCompat="@drawable/logo_android" />
 
-        <EditText
-            android:id="@+id/search_text"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical"
-            android:layout_weight="1"
-            android:ems="10"
-            android:hint="Search"
-            android:inputType="textPersonName"
-            android:textSize="12sp" />
+                <TextView
+                    android:id="@+id/hotelName"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:padding="2dp"
+                    android:textColor="@color/white"
+                    android:textSize="24sp"
+                    android:textStyle="bold|italic" />
 
-        <Button
-            android:id="@+id/button16"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical"
-            android:layout_marginEnd="2dp"
-            android:text="Search"
-            android:textAllCaps="false"
-            android:textSize="12sp" />
+                <Button
+                    android:id="@+id/button9"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_margin="2dp"
+                    android:layout_weight="1"
+                    android:drawableEnd="@drawable/ic_baseline_podcasts_24"
+                    android:onClick="toggleRoomsDevices"
+                    android:text="Devices"
+                    android:textAllCaps="false"
+                    android:textSize="12sp" />
 
-        <Button
-            android:id="@+id/button2"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical"
-            android:layout_marginEnd="2dp"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:onClick="refresh"
-            android:text="Refresh"
-            android:textAllCaps="false"
-            android:textSize="12sp" />
+                <EditText
+                    android:id="@+id/search_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_weight="1"
+                    android:ems="10"
+                    android:hint="Search"
+                    android:inputType="textPersonName"
+                    android:minHeight="48dp"
+                    android:textSize="12sp" />
 
-        <Button
-            android:id="@+id/button17"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical"
-            android:layout_weight="1"
-            android:onClick="goToLocks"
-            android:text="Locks"
-            android:textAllCaps="false"
-            android:textSize="12sp" />
+                <Button
+                    android:id="@+id/button2"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginEnd="2dp"
+                    android:layout_weight="1"
+                    android:drawableEnd="@android:drawable/ic_popup_sync"
+                    android:gravity="center"
+                    android:onClick="refresh"
+                    android:text="Refresh"
+                    android:textAllCaps="false"
+                    android:textSize="12sp" />
 
-        <Button
-            android:id="@+id/templatesButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Templates"
-            android:onClick="goToTemplates"
-            android:textAllCaps="false" />
+                <Button
+                    android:id="@+id/button17"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_weight="1"
+                    android:drawableEnd="@drawable/ic_baseline_door_back_24"
+                    android:onClick="goToLocks"
+                    android:text="Locks"
+                    android:textAllCaps="false"
+                    android:textSize="12sp" />
 
-        <Button
-            android:id="@+id/button26"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical"
-            android:layout_weight="1"
-            android:onClick="logOut"
-            android:text="logout"
-            android:textAllCaps="false" />
+                <Button
+                    android:id="@+id/templatesButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_weight="1"
+                    android:drawableEnd="@android:drawable/ic_input_get"
+                    android:onClick="goToTemplates"
+                    android:text="Templates"
+                    android:textAllCaps="false" />
+
+                <Button
+                    android:id="@+id/button26"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_weight="1"
+                    android:drawableEnd="@android:drawable/ic_menu_set_as"
+                    android:onClick="logOut"
+                    android:text="logout"
+                    android:textAllCaps="false" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/textView28"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:text="Homes"
+                    android:textColor="@color/white" />
+
+                <Spinner
+                    android:id="@+id/spinner3"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1" />
+
+                <TextView
+                    android:id="@+id/textView30"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:textColor="@color/light_blue_A200" />
+
+                <Button
+                    android:id="@+id/button15"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:onClick="addHome"
+                    android:text="Add Home"
+                    android:textAllCaps="false" />
+
+                <Button
+                    android:id="@+id/button170"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:onClick="deleteHome"
+                    android:text="Delete Home"
+                    android:textAllCaps="false" />
+            </LinearLayout>
+
+        </LinearLayout>
+
     </LinearLayout>
 
-    <ListView
-        android:id="@+id/RoomsListView"
+    <GridView
+        android:id="@+id/rooms_recycler"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:layout_weight="1"
-        android:visibility="visible" />
+        android:numColumns="6"
+        android:visibility="visible">
 
-    <ListView
+    </GridView>
+
+    <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/DevicesListView"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:layout_weight="1"
         android:visibility="visible" />
 
@@ -235,12 +282,5 @@
             android:layout_height="100dp" />
     </LinearLayout>
 
-    <ListView
-        android:id="@+id/rooms_recycler"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:visibility="gone">
-
-    </ListView>
 
 </LinearLayout>

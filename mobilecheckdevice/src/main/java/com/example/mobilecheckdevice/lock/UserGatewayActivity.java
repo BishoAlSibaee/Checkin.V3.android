@@ -12,7 +12,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.mobilecheckdevice.R;
 import com.example.mobilecheckdevice.Rooms;
-import com.example.mobilecheckdevice.lodingDialog;
+import com.example.mobilecheckdevice.LoadingDialog;
 import com.google.gson.reflect.TypeToken;
 import com.ttlock.bl.sdk.util.GsonUtil;
 
@@ -67,7 +67,7 @@ public class UserGatewayActivity extends AppCompatActivity {
 
     private void gatewayList()
     {
-        final lodingDialog loading = new lodingDialog(act);
+        final LoadingDialog loading = new LoadingDialog(act);
         ApiService apiService = RetrofitAPIManager.provideClientApi();
         Call<String> call = apiService.getGatewayList(ApiService.CLIENT_ID, Rooms.acc.getAccess_token(), pageNo, pageSize, System.currentTimeMillis());
         call.enqueue(new Callback<String>() {

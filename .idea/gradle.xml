@@ -11,9 +11,9 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/HouseKeeping" />
+            <option value="$PROJECT_DIR$/Server" />
             <option value="$PROJECT_DIR$/app" />
-            <option value="$PROJECT_DIR$/cleanup" />
-            <option value="$PROJECT_DIR$/hotelservicesstandalone" />
             <option value="$PROJECT_DIR$/laundryscreen" />
             <option value="$PROJECT_DIR$/mobilecheckdevice" />
             <option value="$PROJECT_DIR$/projectscontrol" />

@@ -44,29 +44,34 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
+        android:gravity="center"
         android:orientation="horizontal">
 
         <Button
             android:id="@+id/cancel_diallog"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_gravity="center"
             android:text="cancel"
             android:textSize="12sp" />
 
         <Button
             android:id="@+id/DoTheRename"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_gravity="center"
+            android:drawableEnd="@android:drawable/ic_menu_edit"
+            android:gravity="center"
             android:text="Rename"
             android:textSize="12sp" />
 
         <Button
             android:id="@+id/deleteDevice"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_gravity="start"
+            android:drawableEnd="@android:drawable/ic_menu_delete"
+            android:gravity="center"
             android:text="Delete"
             android:textSize="12sp" />
     </LinearLayout>

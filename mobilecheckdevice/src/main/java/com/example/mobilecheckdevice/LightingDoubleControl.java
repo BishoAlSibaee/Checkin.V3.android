@@ -1,22 +1,23 @@
 package com.example.mobilecheckdevice;
 
 import android.app.Activity;
-import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.tuya.smart.android.device.api.ITuyaDeviceMultiControl;
+import com.tuya.smart.android.device.bean.DeviceDpInfoBean;
 import com.tuya.smart.android.device.bean.MultiControlBean;
+import com.tuya.smart.android.device.bean.MultiControlLinkBean;
 import com.tuya.smart.home.sdk.TuyaHomeSdk;
 import com.tuya.smart.home.sdk.callback.ITuyaResultCallback;
+import com.tuya.smart.sdk.api.ITuyaDataCallback;
 import com.tuya.smart.sdk.bean.DeviceBean;
 
 import org.json.JSONArray;
@@ -30,17 +31,13 @@ import java.util.Random;
 public class LightingDoubleControl extends AppCompatActivity {
 
     Activity act ;
-    LinearLayout FirstLayout , SecondLayout ;
-    List<DeviceBean> FirstDeviceList , SecondDeviceList ;
-    RecyclerView FirstDevicesRec , SecondDevicesRec;
-    LinearLayoutManager fManager , sManager ;
-    DoubleControlFirst_Adapter fAdapter;
-    DoubleControlSecond_Adapter sAdapter;
     public static DeviceBean FIRST , SECOND ;
     Button S1_1,S1_2,S1_3,S1_4,S2_1,S2_2,S2_3,S2_4,S3_1,S3_2,S3_3,S3_4,S4_1,S4_2,S4_3,S4_4 ,S5_1,S5_2,S5_3,S5_4 ,S6_1,S6_2,S6_3,S6_4 ,S7_1,S7_2,S7_3,S7_4 ,S8_1,S8_2,S8_3,S8_4,Service1,Service2,Service3,Service4,doorSensor;
     List<Button> SelectedButtons;
     List<MoodBtn> SelectedMoodButtons ;
-    ITuyaDeviceMultiControl iTuyaDeviceMultiControl;
+    static ITuyaDeviceMultiControl iTuyaDeviceMultiControl;
+    static List<MultiControlLinkBean.MultiGroupBean> MultiControlsList;
+    static RecyclerView MultiControlRecycler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,24 +46,18 @@ public class LightingDoubleControl extends AppCompatActivity {
         setActivity();
         setActivityActions();
         Thread.setDefaultUncaughtExceptionHandler(new DefaultExceptionHandler(this));
+        getDevicesMultiControl();
     }
 
     void setActivity() {
         act = this ;
-        FirstLayout = findViewById(R.id.FirstDeviceLayout);
-        SecondLayout = findViewById(R.id.SecondDeviceLayout);
-        FirstDevicesRec = findViewById(R.id.FirstDevicesRecycler);
-        SecondDevicesRec = findViewById(R.id.SecondDevicesRecycler);
-        fManager = new LinearLayoutManager(act,RecyclerView.VERTICAL,false);
-        sManager = new LinearLayoutManager(act,RecyclerView.VERTICAL,false);
-        FirstDevicesRec.setLayoutManager(fManager);
-        SecondDevicesRec.setLayoutManager(sManager);
-        FirstDeviceList = new ArrayList<>();
-        SecondDeviceList = new ArrayList<>();
-
         iTuyaDeviceMultiControl = TuyaHomeSdk.getDeviceMultiControlInstance();
         SelectedMoodButtons = new ArrayList<>();
         SelectedButtons = new ArrayList<>();
+        MultiControlsList = new ArrayList<>();
+        MultiControlRecycler = findViewById(R.id.multi_recycler);
+        GridLayoutManager manager = new GridLayoutManager(act,6);
+        MultiControlRecycler.setLayoutManager(manager);
         doorSensor = findViewById(R.id.button19237Av);
         S1_1 = findViewById(R.id.button272);
         S1_2 = findViewById(R.id.button192);
@@ -310,62 +301,6 @@ public class LightingDoubleControl extends AppCompatActivity {
         S8_4.setOnClickListener(setButtonListener(S8_4,RoomManager.Room.getSWITCH8_B(),4));
     }
 
-    void setDevicesButtons() {
-        if (RoomManager.Room.getSWITCH1_B() != null ) {
-            FirstDeviceList.add(RoomManager.Room.getSWITCH1_B());
-            SecondDeviceList.add(RoomManager.Room.getSWITCH1_B());
-        }
-        if (RoomManager.Room.getSWITCH2_B() != null) {
-            FirstDeviceList.add(RoomManager.Room.getSWITCH2_B());
-            SecondDeviceList.add(RoomManager.Room.getSWITCH2_B());
-        }
-        if (RoomManager.Room.getSWITCH3_B() != null) {
-            FirstDeviceList.add(RoomManager.Room.getSWITCH3_B());
-            SecondDeviceList.add(RoomManager.Room.getSWITCH3_B());
-        }
-        if (RoomManager.Room.getSWITCH4_B() != null) {
-            FirstDeviceList.add(RoomManager.Room.getSWITCH4_B());
-            SecondDeviceList.add(RoomManager.Room.getSWITCH4_B());
-        }
-        if (RoomManager.Room.getSWITCH5_B() != null) {
-            FirstDeviceList.add(RoomManager.Room.getSWITCH5_B());
-            SecondDeviceList.add(RoomManager.Room.getSWITCH5_B());
-        }
-        if (RoomManager.Room.getSWITCH6_B() != null) {
-            FirstDeviceList.add(RoomManager.Room.getSWITCH6_B());
-            SecondDeviceList.add(RoomManager.Room.getSWITCH6_B());
-        }
-        if (RoomManager.Room.getSWITCH7_B() != null) {
-            FirstDeviceList.add(RoomManager.Room.getSWITCH7_B());
-            SecondDeviceList.add(RoomManager.Room.getSWITCH7_B());
-        }
-        if (RoomManager.Room.getSWITCH8_B() != null) {
-            FirstDeviceList.add(RoomManager.Room.getSWITCH8_B());
-            SecondDeviceList.add(RoomManager.Room.getSWITCH8_B());
-        }
-        if (RoomManager.Room.getSERVICE1_B() != null) {
-            FirstDeviceList.add(RoomManager.Room.getSERVICE1_B());
-            SecondDeviceList.add(RoomManager.Room.getSERVICE1_B());
-        }
-        fAdapter = new DoubleControlFirst_Adapter(FirstDeviceList);
-        FirstDevicesRec.setAdapter(fAdapter);
-        sAdapter = new DoubleControlSecond_Adapter(SecondDeviceList);
-        SecondDevicesRec.setAdapter(sAdapter);
-    }
-
-    public void nextToSelectDps(View view) {
-        if (FIRST == null ) {
-            Toast.makeText(act,"select first device",Toast.LENGTH_SHORT).show();
-            return;
-        }
-        if (SECOND == null ) {
-            Toast.makeText(act,"select second device",Toast.LENGTH_SHORT).show();
-            return;
-        }
-        Intent i = new Intent(act, DoubleControlSelectDps.class);
-        startActivity(i);
-    }
-
     View.OnClickListener setButtonListener(Button b,DeviceBean d,int dbId) {
         return new View.OnClickListener() {
             @Override
@@ -398,10 +333,8 @@ public class LightingDoubleControl extends AppCompatActivity {
             new MessageDialog(getResources().getString(R.string.pleaseSelectOtherButtonsInMultiControl),getResources().getString(R.string.selectOtherButtons),act);
             return ;
         }
-
-        Random r = new Random();
-        int x = r.nextInt(30);
         JSONArray arr = new JSONArray();
+        int x = new Random().nextInt(1000);
         for (MoodBtn mb : SelectedMoodButtons) {
             JSONObject groupDetails = new JSONObject() ;
             try {
@@ -415,25 +348,24 @@ public class LightingDoubleControl extends AppCompatActivity {
             arr.put(groupDetails);
         }
 
-            JSONObject multiControlBean = new JSONObject();
-            try {
-                multiControlBean.put("groupName", RoomManager.Room.RoomNumber + "Lighting" + x);
-                multiControlBean.put("groupType", 1);
-                multiControlBean.put("groupDetail", arr);
-                multiControlBean.put("id", x);
-            } catch (JSONException e) {
-                Toast.makeText(act,"failed "+e.getMessage(),Toast.LENGTH_SHORT).show();
-            }
+        JSONObject multiControlBean = new JSONObject();
+        try {
+            multiControlBean.put("groupName", RoomManager.Room.RoomNumber+x);
+            multiControlBean.put("groupType", 1);
+            multiControlBean.put("groupDetail", arr);
+            multiControlBean.put("id", x);
+        } catch (JSONException e) {
+            Toast.makeText(act,"failed "+e.getMessage(),Toast.LENGTH_SHORT).show();
+        }
 
-            iTuyaDeviceMultiControl.saveDeviceMultiControl(MyApp.HOME.getHomeId(), multiControlBean.toString(), new ITuyaResultCallback<MultiControlBean>() {
+        iTuyaDeviceMultiControl.saveDeviceMultiControl(RoomManager.HOME.Home.getHomeId(), multiControlBean.toString(), new ITuyaResultCallback<MultiControlBean>() {
                 @Override
                 public void onSuccess(MultiControlBean result) {
                     Toast.makeText(act,"double control created",Toast.LENGTH_SHORT).show();
-                    Log.d("switch1Dp1", result.getGroupName());
-                    iTuyaDeviceMultiControl.enableMultiControl(x, new ITuyaResultCallback<Boolean>() {
+                    getDevicesMultiControl();
+                    iTuyaDeviceMultiControl.enableMultiControl(result.getId(), new ITuyaResultCallback<Boolean>() {
                         @Override
                         public void onSuccess(Boolean result) {
-                            Log.d("switch1Dp1", result.toString());
                             Toast.makeText(act,"double control enabled",Toast.LENGTH_SHORT).show();
                             for (Button b : SelectedButtons) {
                                 b.setBackgroundResource(R.drawable.btn_bg_selector);
@@ -444,7 +376,6 @@ public class LightingDoubleControl extends AppCompatActivity {
 
                         @Override
                         public void onError(String errorCode, String errorMessage) {
-                            Log.d("switch1Dp1", errorMessage);
                             Toast.makeText(act,"failed "+errorMessage,Toast.LENGTH_SHORT).show();
                         }
                     });
@@ -453,7 +384,6 @@ public class LightingDoubleControl extends AppCompatActivity {
                 @Override
                 public void onError(String errorCode, String errorMessage) {
                     Toast.makeText(act,"failed "+errorMessage + " " +errorCode,Toast.LENGTH_SHORT).show();
-                    Log.d("switch1Dp1", errorMessage + "here "+errorCode+" "+x);
                 }
             });
     }
@@ -461,4 +391,372 @@ public class LightingDoubleControl extends AppCompatActivity {
     public void create(View view) {
         createMultiControl();
     }
+
+    public static void getDevicesMultiControl() {
+        MultiControlsList.clear();
+        if (RoomManager.Room.getSWITCH1_B() != null) {
+            iTuyaDeviceMultiControl.getDeviceDpInfoList(RoomManager.Room.getSWITCH1_B().devId, new ITuyaDataCallback<ArrayList<DeviceDpInfoBean>>() {
+                @Override
+                public void onSuccess(ArrayList<DeviceDpInfoBean> result) {
+                    for (DeviceDpInfoBean ddb : result) {
+                        Log.d("multiControl 1 : ",ddb.getDpId()+" "+ddb.getName());
+                        iTuyaDeviceMultiControl.queryLinkInfoByDp(RoomManager.Room.getSWITCH1_B().devId, ddb.getDpId(), new ITuyaDataCallback<MultiControlLinkBean>() {
+                            @Override
+                            public void onSuccess(MultiControlLinkBean result) {
+                                if (result.getMultiGroup() != null) {
+                                    Log.d("multiControl 1 : ",result.getMultiGroup().getGroupName());
+                                    if (!searchMultiControl(result.getMultiGroup())) {
+                                        MultiControlsList.add(result.getMultiGroup());
+                                        setMultiControlsRecycler();
+                                    }
+                                    Log.d("multiControl 1 : ",result.getMultiGroup().getGroupName()+" "+result.getMultiGroup().getGroupDetail().size());
+                                    for (MultiControlLinkBean.MultiGroupBean.GroupDetailBean gdb : result.getMultiGroup().getGroupDetail()) {
+                                        Log.d("multiControl 1 : ",gdb.getDpId()+" "+gdb.getDevName());
+                                    }
+                                }
+                            }
+
+                            @Override
+                            public void onError(String errorCode, String errorMessage) {
+                                Log.d("multiControl 1 : ",errorCode+" "+errorMessage);
+                            }
+                        });
+                    }
+                }
+
+                @Override
+                public void onError(String errorCode, String errorMessage) {
+
+                }
+            });
+        }
+        if (RoomManager.Room.getSWITCH2_B() != null) {
+            iTuyaDeviceMultiControl.getDeviceDpInfoList(RoomManager.Room.getSWITCH2_B().devId, new ITuyaDataCallback<ArrayList<DeviceDpInfoBean>>() {
+                @Override
+                public void onSuccess(ArrayList<DeviceDpInfoBean> result) {
+                    for (DeviceDpInfoBean ddb : result) {
+                        iTuyaDeviceMultiControl.queryLinkInfoByDp(RoomManager.Room.getSWITCH2_B().devId, ddb.getDpId(), new ITuyaDataCallback<MultiControlLinkBean>() {
+                            @Override
+                            public void onSuccess(MultiControlLinkBean result) {
+                                if (result.getMultiGroup() != null) {
+                                    if (!searchMultiControl(result.getMultiGroup())) {
+                                        MultiControlsList.add(result.getMultiGroup());
+                                        setMultiControlsRecycler();
+                                    }
+                                    Log.d("multiControl 2 : ",result.getMultiGroup().getGroupName()+" "+result.getMultiGroup().getGroupDetail().size());
+                                    for (MultiControlLinkBean.MultiGroupBean.GroupDetailBean gdb : result.getMultiGroup().getGroupDetail()) {
+                                        Log.d("multiControl 2 : ",gdb.getDpId()+" "+gdb.getDevName());
+                                    }
+                                }
+                            }
+
+                            @Override
+                            public void onError(String errorCode, String errorMessage) {
+
+                            }
+                        });
+                    }
+                }
+
+                @Override
+                public void onError(String errorCode, String errorMessage) {
+
+                }
+            });
+        }
+        if (RoomManager.Room.getSWITCH3_B() != null) {
+            iTuyaDeviceMultiControl.getDeviceDpInfoList(RoomManager.Room.getSWITCH3_B().devId, new ITuyaDataCallback<ArrayList<DeviceDpInfoBean>>() {
+                @Override
+                public void onSuccess(ArrayList<DeviceDpInfoBean> result) {
+                    for (DeviceDpInfoBean ddb : result) {
+                        iTuyaDeviceMultiControl.queryLinkInfoByDp(RoomManager.Room.getSWITCH3_B().devId, ddb.getDpId(), new ITuyaDataCallback<MultiControlLinkBean>() {
+                            @Override
+                            public void onSuccess(MultiControlLinkBean result) {
+                                if (result.getMultiGroup() != null) {
+                                    if (!searchMultiControl(result.getMultiGroup())) {
+                                        MultiControlsList.add(result.getMultiGroup());
+                                        setMultiControlsRecycler();
+                                    }
+                                    Log.d("multiControl 3 : ",result.getMultiGroup().getGroupName()+" "+result.getMultiGroup().getGroupDetail().size());
+                                    for (MultiControlLinkBean.MultiGroupBean.GroupDetailBean gdb : result.getMultiGroup().getGroupDetail()) {
+                                        Log.d("multiControl 3 : ",gdb.getDpId()+" "+gdb.getDevName());
+                                    }
+                                }
+                            }
+
+                            @Override
+                            public void onError(String errorCode, String errorMessage) {
+
+                            }
+                        });
+                    }
+                }
+
+                @Override
+                public void onError(String errorCode, String errorMessage) {
+
+                }
+            });
+        }
+        if (RoomManager.Room.getSWITCH4_B() != null) {
+            iTuyaDeviceMultiControl.getDeviceDpInfoList(RoomManager.Room.getSWITCH4_B().devId, new ITuyaDataCallback<ArrayList<DeviceDpInfoBean>>() {
+                @Override
+                public void onSuccess(ArrayList<DeviceDpInfoBean> result) {
+                    for (DeviceDpInfoBean ddb : result) {
+                        iTuyaDeviceMultiControl.queryLinkInfoByDp(RoomManager.Room.getSWITCH4_B().devId, ddb.getDpId(), new ITuyaDataCallback<MultiControlLinkBean>() {
+                            @Override
+                            public void onSuccess(MultiControlLinkBean result) {
+                                if (result.getMultiGroup() != null) {
+                                    if (!searchMultiControl(result.getMultiGroup())) {
+                                        MultiControlsList.add(result.getMultiGroup());
+                                        setMultiControlsRecycler();
+                                    }
+                                    Log.d("multiControl 4 : ",result.getMultiGroup().getGroupName()+" "+result.getMultiGroup().getGroupDetail().size());
+                                    for (MultiControlLinkBean.MultiGroupBean.GroupDetailBean gdb : result.getMultiGroup().getGroupDetail()) {
+                                        Log.d("multiControl 4 : ",gdb.getDpId()+" "+gdb.getDevName());
+                                    }
+                                }
+                            }
+
+                            @Override
+                            public void onError(String errorCode, String errorMessage) {
+
+                            }
+                        });
+                    }
+                }
+
+                @Override
+                public void onError(String errorCode, String errorMessage) {
+
+                }
+            });
+        }
+        if (RoomManager.Room.getSWITCH5_B() != null) {
+            iTuyaDeviceMultiControl.getDeviceDpInfoList(RoomManager.Room.getSWITCH5_B().devId, new ITuyaDataCallback<ArrayList<DeviceDpInfoBean>>() {
+                @Override
+                public void onSuccess(ArrayList<DeviceDpInfoBean> result) {
+                    for (DeviceDpInfoBean ddb : result) {
+                        iTuyaDeviceMultiControl.queryLinkInfoByDp(RoomManager.Room.getSWITCH5_B().devId, ddb.getDpId(), new ITuyaDataCallback<MultiControlLinkBean>() {
+                            @Override
+                            public void onSuccess(MultiControlLinkBean result) {
+                                if (result.getMultiGroup() != null) {
+                                    if (!searchMultiControl(result.getMultiGroup())) {
+                                        MultiControlsList.add(result.getMultiGroup());
+                                        setMultiControlsRecycler();
+                                    }
+                                    Log.d("multiControl 5 : ",result.getMultiGroup().getGroupName()+" "+result.getMultiGroup().getGroupDetail().size());
+                                    for (MultiControlLinkBean.MultiGroupBean.GroupDetailBean gdb : result.getMultiGroup().getGroupDetail()) {
+                                        Log.d("multiControl 5 : ",gdb.getDpId()+" "+gdb.getDevName());
+                                    }
+                                }
+                            }
+
+                            @Override
+                            public void onError(String errorCode, String errorMessage) {
+
+                            }
+                        });
+                    }
+                }
+
+                @Override
+                public void onError(String errorCode, String errorMessage) {
+
+                }
+            });
+        }
+        if (RoomManager.Room.getSWITCH6_B() != null) {
+            iTuyaDeviceMultiControl.getDeviceDpInfoList(RoomManager.Room.getSWITCH6_B().devId, new ITuyaDataCallback<ArrayList<DeviceDpInfoBean>>() {
+                @Override
+                public void onSuccess(ArrayList<DeviceDpInfoBean> result) {
+                    for (DeviceDpInfoBean ddb : result) {
+                        iTuyaDeviceMultiControl.queryLinkInfoByDp(RoomManager.Room.getSWITCH6_B().devId, ddb.getDpId(), new ITuyaDataCallback<MultiControlLinkBean>() {
+                            @Override
+                            public void onSuccess(MultiControlLinkBean result) {
+                                if (result.getMultiGroup() != null) {
+                                    if (!searchMultiControl(result.getMultiGroup())) {
+                                        MultiControlsList.add(result.getMultiGroup());
+                                        setMultiControlsRecycler();
+                                    }
+                                    Log.d("multiControl 6 : ",result.getMultiGroup().getGroupName()+" "+result.getMultiGroup().getGroupDetail().size());
+                                    for (MultiControlLinkBean.MultiGroupBean.GroupDetailBean gdb : result.getMultiGroup().getGroupDetail()) {
+                                        Log.d("multiControl 6 : ",gdb.getDpId()+" "+gdb.getDevName());
+                                    }
+                                }
+                            }
+
+                            @Override
+                            public void onError(String errorCode, String errorMessage) {
+
+                            }
+                        });
+                    }
+                }
+
+                @Override
+                public void onError(String errorCode, String errorMessage) {
+
+                }
+            });
+        }
+        if (RoomManager.Room.getSWITCH7_B() != null) {
+            iTuyaDeviceMultiControl.getDeviceDpInfoList(RoomManager.Room.getSWITCH7_B().devId, new ITuyaDataCallback<ArrayList<DeviceDpInfoBean>>() {
+                @Override
+                public void onSuccess(ArrayList<DeviceDpInfoBean> result) {
+                    for (DeviceDpInfoBean ddb : result) {
+                        iTuyaDeviceMultiControl.queryLinkInfoByDp(RoomManager.Room.getSWITCH7_B().devId, ddb.getDpId(), new ITuyaDataCallback<MultiControlLinkBean>() {
+                            @Override
+                            public void onSuccess(MultiControlLinkBean result) {
+                                if (result.getMultiGroup() != null) {
+                                    if (!searchMultiControl(result.getMultiGroup())) {
+                                        MultiControlsList.add(result.getMultiGroup());
+                                        setMultiControlsRecycler();
+                                    }
+                                    Log.d("multiControl 7 : ",result.getMultiGroup().getGroupName()+" "+result.getMultiGroup().getGroupDetail().size());
+                                    for (MultiControlLinkBean.MultiGroupBean.GroupDetailBean gdb : result.getMultiGroup().getGroupDetail()) {
+                                        Log.d("multiControl 7 : ",gdb.getDpId()+" "+gdb.getDevName());
+                                    }
+                                }
+                            }
+
+                            @Override
+                            public void onError(String errorCode, String errorMessage) {
+
+                            }
+                        });
+                    }
+                }
+
+                @Override
+                public void onError(String errorCode, String errorMessage) {
+
+                }
+            });
+        }
+        if (RoomManager.Room.getSWITCH8_B() != null) {
+            iTuyaDeviceMultiControl.getDeviceDpInfoList(RoomManager.Room.getSWITCH8_B().devId, new ITuyaDataCallback<ArrayList<DeviceDpInfoBean>>() {
+                @Override
+                public void onSuccess(ArrayList<DeviceDpInfoBean> result) {
+                    for (DeviceDpInfoBean ddb : result) {
+                        iTuyaDeviceMultiControl.queryLinkInfoByDp(RoomManager.Room.getSWITCH8_B().devId, ddb.getDpId(), new ITuyaDataCallback<MultiControlLinkBean>() {
+                            @Override
+                            public void onSuccess(MultiControlLinkBean result) {
+                                if (result.getMultiGroup() != null) {
+                                    if (!searchMultiControl(result.getMultiGroup())) {
+                                        MultiControlsList.add(result.getMultiGroup());
+                                        setMultiControlsRecycler();
+                                    }
+                                    Log.d("multiControl 8 : ",result.getMultiGroup().getGroupName()+" "+result.getMultiGroup().getGroupDetail().size());
+                                    for (MultiControlLinkBean.MultiGroupBean.GroupDetailBean gdb : result.getMultiGroup().getGroupDetail()) {
+                                        Log.d("multiControl 8 : ",gdb.getDpId()+" "+gdb.getDevName());
+                                    }
+                                }
+                            }
+
+                            @Override
+                            public void onError(String errorCode, String errorMessage) {
+
+                            }
+                        });
+                    }
+                }
+
+                @Override
+                public void onError(String errorCode, String errorMessage) {
+
+                }
+            });
+        }
+        if (RoomManager.Room.getSERVICE1_B() != null) {
+            iTuyaDeviceMultiControl.getDeviceDpInfoList(RoomManager.Room.getSERVICE1_B().devId, new ITuyaDataCallback<ArrayList<DeviceDpInfoBean>>() {
+                @Override
+                public void onSuccess(ArrayList<DeviceDpInfoBean> result) {
+                    for (DeviceDpInfoBean ddb : result) {
+                        iTuyaDeviceMultiControl.queryLinkInfoByDp(RoomManager.Room.getSERVICE1_B().devId, ddb.getDpId(), new ITuyaDataCallback<MultiControlLinkBean>() {
+                            @Override
+                            public void onSuccess(MultiControlLinkBean result) {
+                                if (result.getMultiGroup() != null) {
+                                    if (!searchMultiControl(result.getMultiGroup())) {
+                                        MultiControlsList.add(result.getMultiGroup());
+                                        setMultiControlsRecycler();
+                                    }
+                                    Log.d("multiControl Service1 : ",result.getMultiGroup().getGroupName()+" "+result.getMultiGroup().getGroupDetail().size());
+                                    for (MultiControlLinkBean.MultiGroupBean.GroupDetailBean gdb : result.getMultiGroup().getGroupDetail()) {
+                                        Log.d("multiControl Service1 : ",gdb.getDpId()+" "+gdb.getDevName());
+                                    }
+                                }
+                            }
+
+                            @Override
+                            public void onError(String errorCode, String errorMessage) {
+
+                            }
+                        });
+                    }
+                }
+
+                @Override
+                public void onError(String errorCode, String errorMessage) {
+
+                }
+            });
+        }
+        if (RoomManager.Room.getSERVICE2_B() != null) {
+            iTuyaDeviceMultiControl.getDeviceDpInfoList(RoomManager.Room.getSERVICE2_B().devId, new ITuyaDataCallback<ArrayList<DeviceDpInfoBean>>() {
+                @Override
+                public void onSuccess(ArrayList<DeviceDpInfoBean> result) {
+                    for (DeviceDpInfoBean ddb : result) {
+                        iTuyaDeviceMultiControl.queryLinkInfoByDp(RoomManager.Room.getSERVICE2_B().devId, ddb.getDpId(), new ITuyaDataCallback<MultiControlLinkBean>() {
+                            @Override
+                            public void onSuccess(MultiControlLinkBean result) {
+                                if (result.getMultiGroup() != null) {
+                                    if (!searchMultiControl(result.getMultiGroup())) {
+                                        MultiControlsList.add(result.getMultiGroup());
+                                        setMultiControlsRecycler();
+                                    }
+                                    Log.d("multiControl Service2 : ",result.getMultiGroup().getGroupName()+" "+result.getMultiGroup().getGroupDetail().size());
+                                    for (MultiControlLinkBean.MultiGroupBean.GroupDetailBean gdb : result.getMultiGroup().getGroupDetail()) {
+                                        Log.d("multiControl Service2 : ",gdb.getDpId()+" "+gdb.getDevName());
+                                    }
+                                }
+                            }
+
+                            @Override
+                            public void onError(String errorCode, String errorMessage) {
+
+                            }
+                        });
+                    }
+                }
+
+                @Override
+                public void onError(String errorCode, String errorMessage) {
+
+                }
+            });
+        }
+        setMultiControlsRecycler();
+    }
+
+    static void setMultiControlsRecycler() {
+        Log.d("multiDetails","start");
+        for (MultiControlLinkBean.MultiGroupBean mg:MultiControlsList) {
+            for (MultiControlLinkBean.MultiGroupBean.GroupDetailBean gdb : mg.getGroupDetail()) {
+                Log.d("multiDetails",gdb.getStatus()+"");
+            }
+        }
+        MultiControl_Adapter adapter = new MultiControl_Adapter(MultiControlsList);
+        MultiControlRecycler.setAdapter(adapter);
+    }
+
+    static boolean searchMultiControl(MultiControlLinkBean.MultiGroupBean mc) {
+        for (MultiControlLinkBean.MultiGroupBean MC : MultiControlsList) {
+            if (MC.getId() == mc.getId()) {
+                return true ;
+            }
+        }
+        return false;
+    }
+
 }

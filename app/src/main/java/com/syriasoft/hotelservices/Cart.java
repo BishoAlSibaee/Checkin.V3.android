@@ -93,7 +93,7 @@ public class Cart extends AppCompatActivity
         itemsGridView.stopNestedScroll();
         itemsGridView.setAdapter(adapter);
         Facility = getIntent().getExtras().getInt("Facility");
-        FirebaseDatabase database = FirebaseDatabase.getInstance("https://hotelservices-ebe66.firebaseio.com/");
+        FirebaseDatabase database = FirebaseDatabase.getInstance("https://checkin-62774-default-rtdb.asia-southeast1.firebasedatabase.app/");
         Room = database.getReference(MyApp.ProjectName+"/B"+MyApp.Room.Building+"/F"+MyApp.Room.Floor+"/R"+MyApp.Room.RoomNumber);
         Reserv = Room.child("ReservationNumber");
         restaurant = Room.child("Restaurant");
@@ -232,7 +232,11 @@ public class Cart extends AppCompatActivity
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 if (snapshot.getValue() != null) {
+                    Log.d("restOrder",snapshot.getValue().toString());
                     Reservation = Integer.parseInt(Objects.requireNonNull(snapshot.getValue()).toString());
+                }
+                else {
+                    Log.d("restOrder","null");
                 }
             }
             @Override
@@ -314,6 +318,7 @@ public class Cart extends AppCompatActivity
     }
 
     public void sendOrder(View view) {
+        Log.d("restOrder",Reservation+" ");
         Long time = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
         x=0;
         String url = MyApp.ProjectURL + "facilitys/addRestaurantOrder";
@@ -753,7 +758,7 @@ public class Cart extends AppCompatActivity
 
     void setLockButton() {
         LinearLayout doorLayout = findViewById(R.id.Door_Button);
-        if (MyApp.BluetoothLock == null && MyApp.Room.getLOCK_B() == null) {
+        if (MyApp.Room.getLOCK_B() == null) {
             doorLayout.setVisibility(View.GONE);
         }
         else {

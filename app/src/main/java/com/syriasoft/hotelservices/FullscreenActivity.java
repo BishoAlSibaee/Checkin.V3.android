@@ -30,6 +30,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.WindowCompat;
@@ -38,6 +39,7 @@ import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.StringRequest;
@@ -64,19 +66,21 @@ import com.tuya.smart.home.sdk.bean.scene.dev.TaskListBean;
 import com.tuya.smart.home.sdk.callback.ITuyaGetHomeListCallback;
 import com.tuya.smart.home.sdk.callback.ITuyaHomeResultCallback;
 import com.tuya.smart.home.sdk.callback.ITuyaResultCallback;
-import com.tuya.smart.sdk.api.IDeviceListener;
 import com.tuya.smart.sdk.api.IResultCallback;
 import com.tuya.smart.sdk.api.ITuyaDevice;
 import com.tuya.smart.sdk.bean.DeviceBean;
 import com.tuya.smart.sdk.enums.TYDevicePublishModeEnum;
 import com.wang.avi.AVLoadingIndicatorView;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
@@ -131,6 +135,7 @@ public class FullscreenActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.d("screenModel",Build.MODEL);
         if (Build.MODEL.equals("YC-55P") || Build.MODEL.equals("YS4B")) {
             setContentView(R.layout.fullscreen_small);
             BigScreen = false ;
@@ -139,6 +144,7 @@ public class FullscreenActivity extends AppCompatActivity {
             setContentView(R.layout.activity_fullscreen);
             BigScreen = true;
         }
+        Log.d("screenModel",Build.MODEL+BigScreen);
         TTLockClient.getDefault().prepareBTService(getApplicationContext());
         setActivity();
         order = new OrderDB(act);
@@ -440,7 +446,7 @@ public class FullscreenActivity extends AppCompatActivity {
     }
 
     void setFirebaseReferences() {
-        FirebaseDatabase database = FirebaseDatabase.getInstance("https://hotelservices-ebe66.firebaseio.com/");
+        FirebaseDatabase database = FirebaseDatabase.getInstance("https://checkin-62774-default-rtdb.asia-southeast1.firebasedatabase.app/");
         ServiceUsers = database.getReference(MyApp.ProjectName+"ServiceUsers");
         Room = database.getReference(MyApp.ProjectName+"/B"+MyApp.Room.Building+"/F"+MyApp.Room.Floor+"/R"+MyApp.Room.RoomNumber);
         myRefLaundry = Room.child("Laundry");
@@ -1287,40 +1293,56 @@ public class FullscreenActivity extends AppCompatActivity {
         if (serviceButtonsTimerIndex == 0) {
             runOnUiThread(() -> {
                 if (CleanupStatus) {
-                    servicesImage.setBackgroundResource(R.drawable.cleanup_on_anim);
+                    if (BigScreen) {
+                        servicesImage.setBackgroundResource(R.drawable.cleanup_on_anim);
+                    }
                 }
                 else {
-                    servicesImage.setBackgroundResource(R.drawable.cleanup_anim);
+                    if (BigScreen) {
+                        servicesImage.setBackgroundResource(R.drawable.cleanup_anim);
+                    }
                 }
             });
         }
         else if (serviceButtonsTimerIndex == 1) {
             runOnUiThread(() -> {
                 if (LaundryStatus) {
-                    servicesImage.setBackgroundResource(R.drawable.laundry_on_anim);
+                    if (BigScreen) {
+                        servicesImage.setBackgroundResource(R.drawable.laundry_on_anim);
+                    }
                 }
                 else {
-                    servicesImage.setBackgroundResource(R.drawable.laundry_anim);
+                    if (BigScreen) {
+                        servicesImage.setBackgroundResource(R.drawable.laundry_anim);
+                    }
                 }
             });
         }
         else if (serviceButtonsTimerIndex == 2) {
             runOnUiThread(() -> {
                 if (RoomServiceStatus) {
-                    servicesImage.setBackgroundResource(R.drawable.roomservice_on_3);
+                    if (BigScreen) {
+                        servicesImage.setBackgroundResource(R.drawable.roomservice_on_3);
+                    }
                 }
                 else {
-                    servicesImage.setBackgroundResource(R.drawable.roomservice_3);
+                    if (BigScreen) {
+                        servicesImage.setBackgroundResource(R.drawable.roomservice_3);
+                    }
                 }
             });
         }
         else if (serviceButtonsTimerIndex == 3) {
             runOnUiThread(() -> {
                 if (CheckoutStatus) {
-                    servicesImage.setBackgroundResource(R.drawable.checkout_on_2);
+                    if (BigScreen) {
+                        servicesImage.setBackgroundResource(R.drawable.checkout_on_2);
+                    }
                 }
                 else {
-                    servicesImage.setBackgroundResource(R.drawable.checkout_2);
+                    if (BigScreen) {
+                        servicesImage.setBackgroundResource(R.drawable.checkout_2);
+                    }
                 }
             });
         }
@@ -1347,304 +1369,463 @@ public class FullscreenActivity extends AppCompatActivity {
 
     void setTheAcLayout() {
         TextView clientSelectedTemp = findViewById(R.id.clientTemp);
-        TextView currentTempText = findViewById(R.id.currentTemp);
         TextView fanSpeedText = findViewById(R.id.fanSpeed);
         Button onOf = findViewById(R.id.onOffBtn);
         Button fanSpeed = findViewById(R.id.fanSpeedBtn);
         Button tempUp = findViewById(R.id.tempUpBtn);
         Button tempDown = findViewById(R.id.tempDownBtn);
-        ImageView acImage = findViewById(R.id.imageView30);
-        acImage.setBackgroundResource(R.drawable.ac_animation);
-        AnimationDrawable ad = (AnimationDrawable) acImage.getBackground();
-        ad.start();
         if (THE_ROOM.getAC_B() != null) {
+            final int[] lastTemp = {0};
             TuyaHomeSdk.getSceneManagerInstance().getDeviceConditionOperationList(THE_ROOM.getAC_B().devId, new ITuyaResultCallback<List<TaskListBean>>() {
                 @Override
                 public void onSuccess(List<TaskListBean> result) {
-                    long SetId = 0 ;
-                    TaskListBean SetTask = null ;
-                    long PowerId = 0 ;
-                    long CurrentId = 0 ;
-                    long FanId = 0;
-                    for (int i=0 ; i<result.size();i++) {
-                        if (result.get(i).getName().equals("Set temp") || result.get(i).getName().equals("temp_set") || result.get(i).getName().equals("Set Temperature") || result.get(i).getName().equals("Set temperature")) {
-                            SetId = result.get(i).getDpId() ;
-                            SetTask = result.get(i) ;
-                        }
-                        if (result.get(i).getName().equals("Power") || result.get(i).getName().equals("switch") || result.get(i).getName().equals("Switch")) {
-                            PowerId = result.get(i).getDpId() ;
-                        }
-                        if (result.get(i).getName().equals("Current temp") || result.get(i).getName().equals("temp_current") || result.get(i).getName().equals("Current Temperature") || result.get(i).getName().equals("Current temperature")) {
-                            CurrentId = result.get(i).getDpId() ;
-                        }
-                        if (result.get(i).getName().contains("Fan") || result.get(i).getName().contains("level") || result.get(i).getName().contains("Gear") || result.get(i).getName().contains("FAN")) {
-                            FanId = result.get(i).getDpId() ;
-                        }
-                    }
-                    if (SetId != 0 && CurrentId != 0) {
-                        boolean[] POWER_STATUS = {false} ;
-                        String UNIT = SetTask.getValueSchemaBean().getUnit() ;
-                        String MAX = String.valueOf(SetTask.getValueSchemaBean().getMax()) ;
-                        int max = SetTask.getValueSchemaBean().getMax() ;
-                        int min = SetTask.getValueSchemaBean().getMin() ;
-                        if (MAX.length() > 2 ) {
-                            int roomTempInt = (int) (Integer.parseInt(Objects.requireNonNull(THE_ROOM.getAC_B().dps.get(String.valueOf(CurrentId))).toString()) * 0.1);
-                            int setTempInt = (int) (Integer.parseInt(Objects.requireNonNull(THE_ROOM.getAC_B().dps.get(String.valueOf(SetId))).toString()) * 0.1);
-                            String roomTemp = String.valueOf(roomTempInt);
-                            String setTemp = String.valueOf(setTempInt);
-                            currentTempText.setText(String.format("%s %s", roomTemp, UNIT));
-                            clientSelectedTemp.setText(String.format("%s %s", setTemp, UNIT));
-                        }
-                        else {
-                            int roomTempInt =  Integer.parseInt(Objects.requireNonNull(THE_ROOM.getAC_B().dps.get(String.valueOf(CurrentId))).toString()) ;
-                            int setTempInt = Integer.parseInt(Objects.requireNonNull(THE_ROOM.getAC_B().dps.get(String.valueOf(SetId))).toString());
-                            String roomTemp = String.valueOf(roomTempInt);
-                            String setTemp = String.valueOf(setTempInt);
-                            currentTempText.setText(String.format("%s %s", roomTemp, UNIT));
-                            clientSelectedTemp.setText(String.format("%s %s", setTemp, UNIT));
-                        }
-                        if (PowerId != 0) {
-                            POWER_STATUS[0] = Boolean.parseBoolean(Objects.requireNonNull(THE_ROOM.getAC_B().dps.get(String.valueOf(PowerId))).toString());
-                            if (POWER_STATUS[0]) {
-                                tempUp.setVisibility(View.VISIBLE);
-                                tempDown.setVisibility(View.VISIBLE);
-                                fanSpeed.setVisibility(View.VISIBLE);
-                                onOf.setBackgroundResource(R.drawable.ac_on);
-                            }
-                            else {
-                                tempUp.setVisibility(View.INVISIBLE);
-                                tempDown.setVisibility(View.INVISIBLE);
-                                fanSpeed.setVisibility(View.INVISIBLE);
-                                onOf.setBackgroundResource(R.drawable.ac_off);
-                            }
-                        }
-                        long finalSetId = SetId;
-                        long finalPowerId = PowerId;
-                        long finalFanId = FanId;
-                        if (THE_ROOM.getAC_B().dps.get(String.valueOf(finalFanId)) != null) {
-                            if (Objects.requireNonNull(THE_ROOM.getAC_B().dps.get(String.valueOf(finalFanId))).toString().equals("low") || Objects.requireNonNull(THE_ROOM.getAC_B().dps.get(String.valueOf(finalFanId))).toString().equals("Low") || Objects.requireNonNull(THE_ROOM.getAC_B().dps.get(String.valueOf(finalFanId))).toString().equals("1")) {
-                                fanSpeedText.setText(getResources().getString(R.string.low));
-                            }
-                            else if (Objects.requireNonNull(THE_ROOM.getAC_B().dps.get(String.valueOf(finalFanId))).toString().equals("auto") || Objects.requireNonNull(THE_ROOM.getAC_B().dps.get(String.valueOf(finalFanId))).toString().equals("Auto") ) {
-                                fanSpeedText.setText(getResources().getString(R.string.auto));
-                            }
-                            else if (Objects.requireNonNull(THE_ROOM.getAC_B().dps.get(String.valueOf(finalFanId))).toString().equals("High") || Objects.requireNonNull(THE_ROOM.getAC_B().dps.get(String.valueOf(finalFanId))).toString().equals("high") || Objects.requireNonNull(THE_ROOM.getAC_B().dps.get(String.valueOf(finalFanId))).toString().equals("3")) {
-                                fanSpeedText.setText(getResources().getString(R.string.high));
-                            }
-                            else if (Objects.requireNonNull(THE_ROOM.getAC_B().dps.get(String.valueOf(finalFanId))).toString().equals("Med") || Objects.requireNonNull(THE_ROOM.getAC_B().dps.get(String.valueOf(finalFanId))).toString().equals("med") || Objects.requireNonNull(THE_ROOM.getAC_B().dps.get(String.valueOf(finalFanId))).toString().equals("middle") || Objects.requireNonNull(THE_ROOM.getAC_B().dps.get(String.valueOf(finalFanId))).toString().equals("2")) {
-                                fanSpeedText.setText(getResources().getString(R.string.med));
-                            }
-                        }
-                        View.OnClickListener off = v -> {
-                            RoomDevicesRef.child(THE_ROOM.getAC_B().getName()).child(String.valueOf(finalPowerId)).setValue("4");
-                            RoomDevicesRef.child(THE_ROOM.getAC_B().getName()).child(String.valueOf(finalPowerId)).setValue("2");
-                            x=0;
-                        };
-                        View.OnClickListener on = v -> {
-                            RoomDevicesRef.child(THE_ROOM.getAC_B().getName()).child(String.valueOf(finalPowerId)).setValue("4");
-                            RoomDevicesRef.child(THE_ROOM.getAC_B().getName()).child(String.valueOf(finalPowerId)).setValue("1");
-                            x=0;
-                        };
-                        RoomDevicesRef.child(THE_ROOM.getAC_B().getName()).child(String.valueOf(PowerId)).addValueEventListener(new ValueEventListener() {
-                            @Override
-                            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                                if (snapshot.getValue() != null) {
-                                    int Val = Integer.parseInt(snapshot.getValue().toString());
-                                    if (Val == 1 || Val == 3) {
-                                        tempUp.setVisibility(View.VISIBLE);
-                                        tempDown.setVisibility(View.VISIBLE);
-                                        fanSpeed.setVisibility(View.VISIBLE);
-                                        onOf.setBackgroundResource(R.drawable.ac_on);
-                                        onOf.setOnClickListener(off);
-                                    }
-                                    else if (Val == 0 || Val == 2) {
-                                        tempUp.setVisibility(View.INVISIBLE);
-                                        tempDown.setVisibility(View.INVISIBLE);
-                                        fanSpeed.setVisibility(View.INVISIBLE);
-                                        onOf.setBackgroundResource(android.R.drawable.ic_lock_power_off);
-                                        onOf.setOnClickListener(on);
-                                    }
-                                }
-                            }
-
-                            @Override
-                            public void onCancelled(@NonNull DatabaseError error) {
-
-                            }
-                        });
-                        RoomDevicesRef.child(THE_ROOM.getAC_B().getName()).child(String.valueOf(SetId)).addValueEventListener(new ValueEventListener() {
-                            @Override
-                            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                                if (snapshot.getValue() != null) {
-                                    int Val = Integer.parseInt(snapshot.getValue().toString());
-                                    if (MAX.length() > 2) {
-                                        String res = String.valueOf((int) (Val*0.1)) ;
-                                        clientSelectedTemp.setText(String.format("%s %s", res, UNIT));
-                                        int newUpTemp = Val+10;
-                                        if (newUpTemp <= max) {
-                                            tempUp.setOnClickListener(setTempButtonClick(String.valueOf(newUpTemp),RoomDevicesRef.child(THE_ROOM.getAC_B().getName()).child(String.valueOf(finalSetId))));
-                                        }
-                                        int newDownTemp = Val-10;
-                                        if (newDownTemp >= min) {
-                                            tempDown.setOnClickListener(setTempButtonClick(String.valueOf(newDownTemp),RoomDevicesRef.child(THE_ROOM.getAC_B().getName()).child(String.valueOf(finalSetId))));
-                                        }
-                                    }
-                                    else {
-                                        String res = String.valueOf(Val) ;
-                                        clientSelectedTemp.setText(String.format("%s %s", res, UNIT));
-                                        int newTemp = Val+1;
-                                        if (newTemp <= max) {
-                                            tempUp.setOnClickListener(setTempButtonClick(String.valueOf(newTemp),RoomDevicesRef.child(THE_ROOM.getAC_B().getName()).child(String.valueOf(finalSetId))));
-                                        }
-                                        int newDownTemp = Val-1;
-                                        if (newDownTemp >= min) {
-                                            tempDown.setOnClickListener(setTempButtonClick(String.valueOf(newDownTemp),RoomDevicesRef.child(THE_ROOM.getAC_B().getName()).child(String.valueOf(finalSetId))));
-                                        }
-                                    }
-                                }
-                            }
-
-                            @Override
-                            public void onCancelled(@NonNull DatabaseError error) {
-
-                            }
-                        });
-                        RoomDevicesRef.child(THE_ROOM.getAC_B().getName()).child(String.valueOf(FanId)).addValueEventListener(new ValueEventListener() {
-                            @Override
-                            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                                if (snapshot.getValue() != null) {
-                                    String Val = snapshot.getValue().toString();
-                                    fanSpeedText.setText(Val);
-                                    switch (Val) {
-                                        case "low":
-                                        case "Low":
-                                        case "LOW":
-                                        case "0":
-                                            switch (Val) {
-                                                case "low":
-                                                    fanSpeed.setOnClickListener(setFanSpeedButtonOnClick("med", RoomDevicesRef.child(THE_ROOM.getAC_B().getName()).child(String.valueOf(finalFanId))));
-                                                    break;
-                                                case "Low":
-                                                    fanSpeed.setOnClickListener(setFanSpeedButtonOnClick("Med", RoomDevicesRef.child(THE_ROOM.getAC_B().getName()).child(String.valueOf(finalFanId))));
-                                                    break;
-                                                case "LOW":
-                                                    fanSpeed.setOnClickListener(setFanSpeedButtonOnClick("MED", RoomDevicesRef.child(THE_ROOM.getAC_B().getName()).child(String.valueOf(finalFanId))));
-                                                    break;
-                                                case "0":
-                                                    fanSpeed.setOnClickListener(setFanSpeedButtonOnClick("1", RoomDevicesRef.child(THE_ROOM.getAC_B().getName()).child(String.valueOf(finalFanId))));
-                                                    break;
-                                            }
-                                            break;
-                                        case "med":
-                                        case "Med":
-                                        case "MED":
-                                        case "middle":
-                                        case "1":
-                                            switch (Val) {
-                                                case "med":
-                                                case "middle":
-                                                    fanSpeed.setOnClickListener(setFanSpeedButtonOnClick("high", RoomDevicesRef.child(THE_ROOM.getAC_B().getName()).child(String.valueOf(finalFanId))));
-                                                    break;
-                                                case "Med":
-                                                    fanSpeed.setOnClickListener(setFanSpeedButtonOnClick("High", RoomDevicesRef.child(THE_ROOM.getAC_B().getName()).child(String.valueOf(finalFanId))));
-                                                    break;
-                                                case "MED":
-                                                    fanSpeed.setOnClickListener(setFanSpeedButtonOnClick("HIGH", RoomDevicesRef.child(THE_ROOM.getAC_B().getName()).child(String.valueOf(finalFanId))));
-                                                    break;
-                                                case "1":
-                                                    fanSpeed.setOnClickListener(setFanSpeedButtonOnClick("2", RoomDevicesRef.child(THE_ROOM.getAC_B().getName()).child(String.valueOf(finalFanId))));
-                                                    break;
-                                            }
-                                            break;
-                                        case "high":
-                                        case "High":
-                                        case "HIGH":
-                                        case "2":
-                                            switch (Val) {
-                                                case "high":
-                                                    fanSpeed.setOnClickListener(setFanSpeedButtonOnClick("auto", RoomDevicesRef.child(THE_ROOM.getAC_B().getName()).child(String.valueOf(finalFanId))));
-                                                    break;
-                                                case "High":
-                                                    fanSpeed.setOnClickListener(setFanSpeedButtonOnClick("Auto", RoomDevicesRef.child(THE_ROOM.getAC_B().getName()).child(String.valueOf(finalFanId))));
-                                                    break;
-                                                case "HIGH":
-                                                    fanSpeed.setOnClickListener(setFanSpeedButtonOnClick("AUTO", RoomDevicesRef.child(THE_ROOM.getAC_B().getName()).child(String.valueOf(finalFanId))));
-                                                    break;
-                                                case "2":
-                                                    fanSpeed.setOnClickListener(setFanSpeedButtonOnClick("3", RoomDevicesRef.child(THE_ROOM.getAC_B().getName()).child(String.valueOf(finalFanId))));
-                                                    break;
-                                            }
-                                            break;
-                                        case "auto":
-                                        case "Auto":
-                                        case "AUTO":
-                                        case "3":
-                                            switch (Val) {
-                                                case "auto":
-                                                    fanSpeed.setOnClickListener(setFanSpeedButtonOnClick("low", RoomDevicesRef.child(THE_ROOM.getAC_B().getName()).child(String.valueOf(finalFanId))));
-                                                    break;
-                                                case "Auto":
-                                                    fanSpeed.setOnClickListener(setFanSpeedButtonOnClick("Low", RoomDevicesRef.child(THE_ROOM.getAC_B().getName()).child(String.valueOf(finalFanId))));
-                                                    break;
-                                                case "AUTO":
-                                                    fanSpeed.setOnClickListener(setFanSpeedButtonOnClick("LOW", RoomDevicesRef.child(THE_ROOM.getAC_B().getName()).child(String.valueOf(finalFanId))));
-                                                    break;
-                                                case "3":
-                                                    fanSpeed.setOnClickListener(setFanSpeedButtonOnClick("0", RoomDevicesRef.child(THE_ROOM.getAC_B().getName()).child(String.valueOf(finalFanId))));
-                                                    break;
-                                            }
-                                            break;
-                                    }
-                                }
-                            }
-
-                            @Override
-                            public void onCancelled(@NonNull DatabaseError error) {
-
-                            }
-                        });
-                    }
-                    long finalPowerId1 = PowerId;
-                    TuyaHomeSdk.newDeviceInstance(THE_ROOM.getAC_B().devId).registerDeviceListener(new IDeviceListener() {
-                        @Override
-                        public void onDpUpdate(String devId, Map<String, Object> dpStr) {
-                            if (THE_ROOM.getAC_B().dps.get(String.valueOf(finalPowerId1)) != null) {
-                                Log.d("acListener", Objects.requireNonNull(THE_ROOM.getAC_B().dps.get(String.valueOf(finalPowerId1))).toString());
-                                if (Objects.requireNonNull(THE_ROOM.getAC_B().dps.get(String.valueOf(finalPowerId1))).toString().equals("true")) {
-                                    acImage.setVisibility(View.VISIBLE);
+                    for (int j=0 ; j<result.size();j++) {
+                        if (result.get(j).getName().equals("Set temp") || result.get(j).getName().equals("temp_set") || result.get(j).getName().equals("Set Temperature") || result.get(j).getName().equals("Set temperature")) {
+                            THE_ROOM.acVariables.TempSetDP = result.get(j).getDpId();
+                            THE_ROOM.acVariables.TempMax = result.get(j).getValueSchemaBean().getMax();
+                            THE_ROOM.acVariables.TempMin = result.get(j).getValueSchemaBean().getMin();
+                            THE_ROOM.acVariables.unit = result.get(j).getValueSchemaBean().getUnit();
+                            THE_ROOM.acVariables.step = result.get(j).getValueSchemaBean().getStep();
+                            try{
+                                String x = String.valueOf(THE_ROOM.acVariables.TempMax);
+                                THE_ROOM.acVariables.TempChars = x.length();
+                                if (THE_ROOM.acVariables.TempChars == 2) {
+                                    THE_ROOM.acVariables.TempSetPoint = MyApp.ProjectVariables.Temp ;
+                                    THE_ROOM.acVariables.TempClient = 24 ;
                                 }
                                 else {
-                                    acImage.setVisibility(View.INVISIBLE);
+                                    THE_ROOM.acVariables.TempSetPoint = MyApp.ProjectVariables.Temp*10 ;
+                                    THE_ROOM.acVariables.TempClient = 240 ;
+                                }
+                            }catch (Exception e) {
+                                Log.d("ac",e.getMessage());
+                            }
+                        }
+                        if (result.get(j).getName().equals("Power") || result.get(j).getName().equals("switch") || result.get(j).getName().equals("Switch")) {
+                            THE_ROOM.acVariables.PowerDP = result.get(j).getDpId();
+                        }
+                        if (result.get(j).getName().equals("Current temp") || result.get(j).getName().equals("temp_current") || result.get(j).getName().equals("Current Temperature") || result.get(j).getName().equals("Current temperature")) {
+                            THE_ROOM.acVariables.TempCurrentDP = result.get(j).getDpId() ;
+                        }
+                        if (result.get(j).getName().contains("Fan") || result.get(j).getName().contains("level") || result.get(j).getName().contains("Gear") || result.get(j).getName().contains("FAN") || result.get(j).getName().contains("fan")) {
+                            THE_ROOM.acVariables.FanDP = result.get(j).getDpId() ;
+                            try {
+                                JSONObject r = new JSONObject(result.get(j).getSchemaBean().property);
+                                String[] v = r.getString("range").split(",");
+                                for (int y = 0;y<v.length;y++) {
+                                    v[y] = v[y].replaceAll("\"","");
+                                    v[y] = v[y].replace("]","");
+                                    v[y] = v[y].replace("[","");
+                                }
+                                THE_ROOM.acVariables.FanValues = v;
+
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+                    Log.d("setDevicesListAC"+THE_ROOM.RoomNumber,"set dp: "+THE_ROOM.acVariables.TempSetDP+" power dp: "+THE_ROOM.acVariables.PowerDP+" fan dp: "+THE_ROOM.acVariables.FanDP+" current dp: "+THE_ROOM.acVariables.TempCurrentDP+" fan values: "+ Arrays.toString(THE_ROOM.acVariables.FanValues)+" max: "+THE_ROOM.acVariables.TempMax+" min: "+THE_ROOM.acVariables.TempMin+" unit: "+THE_ROOM.acVariables.unit+" step: "+THE_ROOM.acVariables.step+" chars: "+THE_ROOM.acVariables.TempChars+" setPoint: "+THE_ROOM.acVariables.TempSetPoint+" clientTemp: "+THE_ROOM.acVariables.TempClient);
+                    View.OnClickListener off = v -> {
+                        RoomDevicesRef.child(THE_ROOM.getAC_B().getName()).child("power").setValue("4");
+                        RoomDevicesRef.child(THE_ROOM.getAC_B().getName()).child("power").setValue("2");
+                        x=0;
+                    };
+                    View.OnClickListener on = v -> {
+                        RoomDevicesRef.child(THE_ROOM.getAC_B().getName()).child("power").setValue("4");
+                        RoomDevicesRef.child(THE_ROOM.getAC_B().getName()).child("power").setValue("1");
+                        x=0;
+                    };
+                    RoomDevicesRef.child(THE_ROOM.getAC_B().getName()).child("power").addValueEventListener(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            if (snapshot.getValue() != null) {
+                                int Val = Integer.parseInt(snapshot.getValue().toString());
+                                if (Val == 1 || Val == 3) {
+                                    tempUp.setVisibility(View.VISIBLE);
+                                    tempDown.setVisibility(View.VISIBLE);
+                                    fanSpeed.setVisibility(View.VISIBLE);
+                                    onOf.setBackgroundResource(R.drawable.ac_on);
+                                    onOf.setOnClickListener(off);
+                                }
+                                else if (Val == 0 || Val == 2) {
+                                    tempUp.setVisibility(View.INVISIBLE);
+                                    tempDown.setVisibility(View.INVISIBLE);
+                                    fanSpeed.setVisibility(View.INVISIBLE);
+                                    onOf.setBackgroundResource(android.R.drawable.ic_lock_power_off);
+                                    onOf.setOnClickListener(on);
                                 }
                             }
                         }
 
                         @Override
-                        public void onRemoved(String devId) {
-
-                        }
-
-                        @Override
-                        public void onStatusChanged(String devId, boolean online) {
-
-                        }
-
-                        @Override
-                        public void onNetworkStatusChanged(String devId, boolean status) {
-
-                        }
-
-                        @Override
-                        public void onDevInfoUpdate(String devId) {
+                        public void onCancelled(@NonNull DatabaseError error) {
 
                         }
                     });
+                    RoomDevicesRef.child(THE_ROOM.getAC_B().getName()).child("temp").addValueEventListener(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            if (snapshot.getValue() != null) {
+                                int Val = Integer.parseInt(snapshot.getValue().toString());
+                                lastTemp[0] = Val;
+                                if (THE_ROOM.acVariables.TempChars == 3) {
+                                    String res = String.valueOf(Val) ;
+                                    clientSelectedTemp.setText(String.format("%s %s", res, THE_ROOM.acVariables.unit));
+                                    if (lastTemp[0]*10 > THE_ROOM.acVariables.TempMax) {
+                                        ToastMaker.MakeToast("max temp",act);
+                                        tempUp.setOnClickListener(v -> {
+
+                                        });
+                                    }
+                                    else {
+                                        tempUp.setOnClickListener(setTempButtonClick(String.valueOf((lastTemp[0]+1)),RoomDevicesRef.child(THE_ROOM.getAC_B().getName()).child("temp")));
+                                    }
+                                    if (lastTemp[0]*10 < THE_ROOM.acVariables.TempMin) {
+                                        ToastMaker.MakeToast("min temp",act);
+                                        tempDown.setOnClickListener(v -> {
+
+                                        });
+                                    }
+                                    else {
+                                        tempDown.setOnClickListener(setTempButtonClick(String.valueOf((lastTemp[0]-1)),RoomDevicesRef.child(THE_ROOM.getAC_B().getName()).child("temp")));
+                                    }
+                                }
+                                else {
+                                    String res = String.valueOf(Val) ;
+                                    clientSelectedTemp.setText(String.format("%s %s", res, THE_ROOM.acVariables.unit));
+                                    if (lastTemp[0] > THE_ROOM.acVariables.TempMax) {
+                                        ToastMaker.MakeToast("max temp",act);
+                                        tempUp.setOnClickListener(v -> {
+
+                                        });
+                                    }
+                                    else {
+                                        tempUp.setOnClickListener(setTempButtonClick(String.valueOf((lastTemp[0]+1)),RoomDevicesRef.child(THE_ROOM.getAC_B().getName()).child("temp")));
+                                    }
+                                    if (lastTemp[0] < THE_ROOM.acVariables.TempMin) {
+                                        ToastMaker.MakeToast("min temp",act);
+                                        tempDown.setOnClickListener(v -> {
+
+                                        });
+                                    }
+                                    else {
+                                        tempDown.setOnClickListener(setTempButtonClick(String.valueOf((lastTemp[0]-1)),RoomDevicesRef.child(THE_ROOM.getAC_B().getName()).child("temp")));
+                                    }
+                                }
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+
+                        }
+                    });
+                    RoomDevicesRef.child(THE_ROOM.getAC_B().getName()).child("fan").addValueEventListener(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            if (snapshot.getValue() != null) {
+                                String Val = snapshot.getValue().toString();
+                                fanSpeedText.setText(Val);
+                                switch (Val) {
+                                    case "low":
+                                    case "Low":
+                                    case "LOW":
+                                    case "0":
+                                        switch (Val) {
+                                            case "low":
+                                                fanSpeed.setOnClickListener(setFanSpeedButtonOnClick("med", RoomDevicesRef.child(THE_ROOM.getAC_B().getName()).child("fan")));
+                                                break;
+                                            case "Low":
+                                                fanSpeed.setOnClickListener(setFanSpeedButtonOnClick("Med", RoomDevicesRef.child(THE_ROOM.getAC_B().getName()).child("fan")));
+                                                break;
+                                            case "LOW":
+                                                fanSpeed.setOnClickListener(setFanSpeedButtonOnClick("MED", RoomDevicesRef.child(THE_ROOM.getAC_B().getName()).child("fan")));
+                                                break;
+                                            case "0":
+                                                fanSpeed.setOnClickListener(setFanSpeedButtonOnClick("1", RoomDevicesRef.child(THE_ROOM.getAC_B().getName()).child("fan")));
+                                                break;
+                                        }
+                                        break;
+                                    case "med":
+                                    case "Med":
+                                    case "MED":
+                                    case "middle":
+                                    case "1":
+                                        switch (Val) {
+                                            case "med":
+                                            case "middle":
+                                                fanSpeed.setOnClickListener(setFanSpeedButtonOnClick("high", RoomDevicesRef.child(THE_ROOM.getAC_B().getName()).child("fan")));
+                                                break;
+                                            case "Med":
+                                                fanSpeed.setOnClickListener(setFanSpeedButtonOnClick("High", RoomDevicesRef.child(THE_ROOM.getAC_B().getName()).child("fan")));
+                                                break;
+                                            case "MED":
+                                                fanSpeed.setOnClickListener(setFanSpeedButtonOnClick("HIGH", RoomDevicesRef.child(THE_ROOM.getAC_B().getName()).child("fan")));
+                                                break;
+                                            case "1":
+                                                fanSpeed.setOnClickListener(setFanSpeedButtonOnClick("2", RoomDevicesRef.child(THE_ROOM.getAC_B().getName()).child("fan")));
+                                                break;
+                                        }
+                                        break;
+                                    case "high":
+                                    case "High":
+                                    case "HIGH":
+                                    case "2":
+                                        switch (Val) {
+                                            case "high":
+                                                fanSpeed.setOnClickListener(setFanSpeedButtonOnClick("auto", RoomDevicesRef.child(THE_ROOM.getAC_B().getName()).child("fan")));
+                                                break;
+                                            case "High":
+                                                fanSpeed.setOnClickListener(setFanSpeedButtonOnClick("Auto", RoomDevicesRef.child(THE_ROOM.getAC_B().getName()).child("fan")));
+                                                break;
+                                            case "HIGH":
+                                                fanSpeed.setOnClickListener(setFanSpeedButtonOnClick("AUTO", RoomDevicesRef.child(THE_ROOM.getAC_B().getName()).child("fan")));
+                                                break;
+                                            case "2":
+                                                fanSpeed.setOnClickListener(setFanSpeedButtonOnClick("3", RoomDevicesRef.child(THE_ROOM.getAC_B().getName()).child("fan")));
+                                                break;
+                                        }
+                                        break;
+                                    case "auto":
+                                    case "Auto":
+                                    case "AUTO":
+                                    case "3":
+                                        switch (Val) {
+                                            case "auto":
+                                                fanSpeed.setOnClickListener(setFanSpeedButtonOnClick("low", RoomDevicesRef.child(THE_ROOM.getAC_B().getName()).child("fan")));
+                                                break;
+                                            case "Auto":
+                                                fanSpeed.setOnClickListener(setFanSpeedButtonOnClick("Low", RoomDevicesRef.child(THE_ROOM.getAC_B().getName()).child("fan")));
+                                                break;
+                                            case "AUTO":
+                                                fanSpeed.setOnClickListener(setFanSpeedButtonOnClick("LOW", RoomDevicesRef.child(THE_ROOM.getAC_B().getName()).child("fan")));
+                                                break;
+                                            case "3":
+                                                fanSpeed.setOnClickListener(setFanSpeedButtonOnClick("0", RoomDevicesRef.child(THE_ROOM.getAC_B().getName()).child("fan")));
+                                                break;
+                                        }
+                                        break;
+                                }
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+
+                        }
+                    });
+//                    if (THE_ROOM.acVariables.PowerDP != 0) {
+//                        boolean powerStatus = Boolean.parseBoolean(Objects.requireNonNull(THE_ROOM.getAC_B().dps.get(String.valueOf(THE_ROOM.acVariables.PowerDP))).toString());
+//                        if (powerStatus) {
+//                            tempUp.setVisibility(View.VISIBLE);
+//                            tempDown.setVisibility(View.VISIBLE);
+//                            fanSpeed.setVisibility(View.VISIBLE);
+//                            onOf.setBackgroundResource(R.drawable.ac_on);
+//                        }
+//                        else {
+//                            tempUp.setVisibility(View.INVISIBLE);
+//                            tempDown.setVisibility(View.INVISIBLE);
+//                            fanSpeed.setVisibility(View.INVISIBLE);
+//                            onOf.setBackgroundResource(R.drawable.ac_off);
+//                        }
+//                    }
+//                    if (THE_ROOM.getAC_B().dps.get(String.valueOf(THE_ROOM.acVariables.FanDP)) != null) {
+//                        if (Objects.requireNonNull(THE_ROOM.getAC_B().dps.get(String.valueOf(THE_ROOM.acVariables.FanDP))).toString().equals("low") || Objects.requireNonNull(THE_ROOM.getAC_B().dps.get(String.valueOf(THE_ROOM.acVariables.FanDP))).toString().equals("Low") || Objects.requireNonNull(THE_ROOM.getAC_B().dps.get(String.valueOf(THE_ROOM.acVariables.FanDP))).toString().equals("1")) {
+//                            fanSpeedText.setText(getResources().getString(R.string.low));
+//                        }
+//                        else if (Objects.requireNonNull(THE_ROOM.getAC_B().dps.get(String.valueOf(THE_ROOM.acVariables.FanDP))).toString().equals("auto") || Objects.requireNonNull(THE_ROOM.getAC_B().dps.get(String.valueOf(THE_ROOM.acVariables.FanDP))).toString().equals("Auto") ) {
+//                            fanSpeedText.setText(getResources().getString(R.string.auto));
+//                        }
+//                        else if (Objects.requireNonNull(THE_ROOM.getAC_B().dps.get(String.valueOf(THE_ROOM.acVariables.FanDP))).toString().equals("High") || Objects.requireNonNull(THE_ROOM.getAC_B().dps.get(String.valueOf(THE_ROOM.acVariables.FanDP))).toString().equals("high") || Objects.requireNonNull(THE_ROOM.getAC_B().dps.get(String.valueOf(THE_ROOM.acVariables.FanDP))).toString().equals("3")) {
+//                            fanSpeedText.setText(getResources().getString(R.string.high));
+//                        }
+//                        else if (Objects.requireNonNull(THE_ROOM.getAC_B().dps.get(String.valueOf(THE_ROOM.acVariables.FanDP))).toString().equals("Med") || Objects.requireNonNull(THE_ROOM.getAC_B().dps.get(String.valueOf(THE_ROOM.acVariables.FanDP))).toString().equals("med") || Objects.requireNonNull(THE_ROOM.getAC_B().dps.get(String.valueOf(THE_ROOM.acVariables.FanDP))).toString().equals("middle") || Objects.requireNonNull(THE_ROOM.getAC_B().dps.get(String.valueOf(THE_ROOM.acVariables.FanDP))).toString().equals("2")) {
+//                            fanSpeedText.setText(getResources().getString(R.string.med));
+//                        }
+//                    }
                 }
+
                 @Override
                 public void onError(String errorCode, String errorMessage) {
 
                 }
             });
+//            TuyaHomeSdk.getSceneManagerInstance().getDeviceConditionOperationList(THE_ROOM.getAC_B().devId, new ITuyaResultCallback<List<TaskListBean>>() {
+//                @Override
+//                public void onSuccess(List<TaskListBean> result) {
+//                    long SetId = 0;
+//                    long PowerId = 0;
+//                    long FanId = 0;
+//                    long CurrentId = 0;
+//                    for (int j=0 ; j<result.size();j++) {
+//                        Log.d("setDevicesList",result.get(j).getName());
+//                        if (result.get(j).getName().equals("Set temp") || result.get(j).getName().equals("temp_set") || result.get(j).getName().equals("Set Temperature") || result.get(j).getName().equals("Set temperature")) {
+//                            SetId = result.get(j).getDpId() ;
+//                            THE_ROOM.acVariables.TempSetDP = SetId;
+//                            THE_ROOM.acVariables.TempMax = result.get(j).getValueSchemaBean().getMax();
+//                            THE_ROOM.acVariables.TempMin = result.get(j).getValueSchemaBean().getMin();
+//                            try{
+//                                String x = String.valueOf(THE_ROOM.acVariables.TempMax);
+//                                THE_ROOM.acVariables.TempChars = x.length();
+//                                if (THE_ROOM.acVariables.TempChars == 2) {
+//                                    THE_ROOM.acVariables.TempSetPoint = MyApp.ProjectVariables.Temp ;
+//                                }
+//                                else {
+//                                    THE_ROOM.acVariables.TempSetPoint = MyApp.ProjectVariables.Temp*10 ;
+//                                }
+//                            }catch (Exception e) {
+//                                Log.d("ac",e.getMessage());
+//                            }
+//                            Log.d("setDevicesListSet",result.get(j).getSchemaBean().property+" "+THE_ROOM.RoomNumber);
+//                        }
+//                        if (result.get(j).getName().equals("Power") || result.get(j).getName().equals("switch") || result.get(j).getName().equals("Switch")) {
+//                            PowerId = result.get(j).getDpId() ;
+//                            THE_ROOM.acVariables.PowerDP = PowerId;
+//                            Log.d("setDevicesListPower",result.get(j).getSchemaBean().property+" "+THE_ROOM.RoomNumber);
+//                        }
+//                        if (result.get(j).getName().equals("Current temp") || result.get(j).getName().equals("temp_current") || result.get(j).getName().equals("Current Temperature") || result.get(j).getName().equals("Current temperature")) {
+//                            CurrentId = result.get(j).getDpId() ;
+//                            THE_ROOM.acVariables.TempCurrentDP = CurrentId;
+//                            Log.d("setDevicesListCur",result.get(j).getSchemaBean().property+" "+THE_ROOM.RoomNumber);
+//                        }
+//                        if (result.get(j).getName().contains("Fan") || result.get(j).getName().contains("level") || result.get(j).getName().contains("Gear") || result.get(j).getName().contains("FAN") || result.get(j).getName().contains("fan")) {
+//                            FanId = result.get(j).getDpId() ;
+//                            THE_ROOM.acVariables.FanDP = FanId;
+//                            Log.d("setDevicesListFan",result.get(j).getSchemaBean().property+" "+THE_ROOM.RoomNumber);//+result.get(j).getSchemaBean().property
+//                            try {
+//                                JSONObject r = new JSONObject(result.get(j).getSchemaBean().property);
+//                                String[] v = r.getString("range").split(",");
+//                                for (int y = 0;y<v.length;y++) {
+//                                    v[y] = v[y].replaceAll("\"","");
+//                                    v[y] = v[y].replace("]","");
+//                                    v[y] = v[y].replace("[","");
+//                                    Log.d("setDevicesListFan",v[y]);
+//                                }
+//                                THE_ROOM.acVariables.FanValues = v;
+//
+//                            } catch (JSONException e) {
+//                                e.printStackTrace();
+//                            }
+//                        }
+//                    }
+//                    if (THE_ROOM.acVariables.PowerDP != 0) {
+//                        if (THE_ROOM.getAC_B().dps.get(String.valueOf(PowerId)) != null) {
+//                            long finalPowerId = PowerId;
+//                            Log.d("setDevicesList",finalPowerId+" power");
+////                            if (Boolean.parseBoolean(Objects.requireNonNull(THE_ROOM.getAC_B().dps.get(String.valueOf(PowerId))).toString())) {
+////                                ProjectDevices.child(String.valueOf(THE_ROOM.RoomNumber)).child(THE_ROOM.getAC_B().name).child("power").setValue(3);
+////                            }
+////                            else {
+////                                ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getAC_B().name).child("power").setValue(0);
+////                            }
+////                            RoomsDevicesReferencesListeners.add(new DatabaseReference_ValueEventListener(ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getAC_B().name).child("power"),
+////                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getAC_B().name).child("power").addValueEventListener(new ValueEventListener() {
+////                                        @Override
+////                                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+////                                            if (snapshot.getValue() != null) {
+////                                                if (Integer.parseInt(snapshot.getValue().toString()) == 1) {
+////                                                    ROOMS.get(finalI).getAC().publishDps("{\" "+ finalPowerId +"\":true}",TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
+////                                                        @Override
+////                                                        public void onError(String code, String error) {
+////                                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getAC_B().name).child("power").setValue(0);
+////                                                        }
+////                                                        @Override
+////                                                        public void onSuccess() {
+////                                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getAC_B().name).child("power").setValue(3);
+////                                                        }
+////                                                    });
+////                                                }
+////                                                if (Integer.parseInt(snapshot.getValue().toString()) == 2) {
+////                                                    ROOMS.get(finalI).getAC().publishDps("{\" "+finalPowerId+"\":false}",TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
+////                                                        @Override
+////                                                        public void onError(String code, String error) {
+////                                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getAC_B().name).child("power").setValue(3);
+////                                                        }
+////                                                        @Override
+////                                                        public void onSuccess() {
+////                                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getAC_B().name).child("power").setValue(0);
+////                                                        }
+////                                                    });
+////                                                }
+////                                            }
+////                                        }
+////                                        @Override
+////                                        public void onCancelled(@NonNull DatabaseError error) {
+////
+////                                        }
+////                                    })));
+//                        }
+//                    }
+//                    if (THE_ROOM.acVariables.TempSetDP != 0) {
+//                        if (THE_ROOM.getAC_B().dps.get(String.valueOf(SetId)) != null) {
+////                            long finalSetId = SetId;
+////                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getAC_B().name).child("temp").setValue(Objects.requireNonNull(ROOMS.get(finalI).getAC_B().dps.get(String.valueOf(SetId))).toString());
+////                            RoomsDevicesReferencesListeners.add(new DatabaseReference_ValueEventListener(ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getAC_B().name).child("temp"),
+////                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getAC_B().name).child("temp").addValueEventListener(new ValueEventListener() {
+////                                        @Override
+////                                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+////                                            if (snapshot.getValue() != null) {
+////                                                Log.d("tempModify" , snapshot.getValue().toString());
+////                                                int newTemp = Integer.parseInt(snapshot.getValue().toString());
+////                                                ROOMS.get(finalI).getAC().publishDps("{\" "+ finalSetId +"\":"+newTemp+"}",TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
+////                                                    @Override
+////                                                    public void onError(String code, String error) {
+////                                                        ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getAC_B().name).child("temp").setValue(Integer.parseInt(Objects.requireNonNull(ROOMS.get(finalI).getAC_B().dps.get(String.valueOf(finalSetId))).toString()));
+////                                                    }
+////                                                    @Override
+////                                                    public void onSuccess() {
+////                                                    }
+////                                                });
+////                                            }
+////                                        }
+////                                        @Override
+////                                        public void onCancelled(@NonNull DatabaseError error) {
+////
+////                                        }
+////                                    })));
+//                        }
+//                    }
+//                    if (THE_ROOM.acVariables.FanDP != 0) {
+//                        if (THE_ROOM.getAC_B().dps.get(String.valueOf(FanId)) != null) {
+////                            long finalFanId = FanId;
+////                            RoomsDevicesReferencesListeners.add(new DatabaseReference_ValueEventListener(ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getAC_B().name).child("fan"),
+////                                    ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getAC_B().name).child("fan").addValueEventListener(new ValueEventListener() {
+////                                        @Override
+////                                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+////                                            if (snapshot.getValue() != null) {
+////                                                Log.d("fanModify" , snapshot.getValue().toString());
+////                                                String value = snapshot.getValue().toString();
+////                                                if (value.equals("high") || value.equals("med") || value.equals("low") || value.equals("auto") || value.equals("middle")) {
+////                                                    ROOMS.get(finalI).getAC().publishDps("{\" "+ finalFanId +"\":\""+value+"\"}",TYDevicePublishModeEnum.TYDevicePublishModeHttp, new IResultCallback() {
+////                                                        @Override
+////                                                        public void onError(String code, String error) {
+////                                                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getAC_B().name).child("fan").setValue(ROOMS.get(finalI).getAC_B().dps.get(String.valueOf(finalFanId)));
+////                                                        }
+////                                                        @Override
+////                                                        public void onSuccess() {
+////                                                        }
+////                                                    });
+////                                                }
+////                                            }
+////                                        }
+////                                        @Override
+////                                        public void onCancelled(@NonNull DatabaseError error) {
+////
+////                                        }
+////                                    })));
+////                            ProjectDevices.child(String.valueOf(ROOMS.get(finalI).RoomNumber)).child(ROOMS.get(finalI).getAC_B().name).child("fan").setValue(Objects.requireNonNull(ROOMS.get(finalI).getAC_B().dps.get(String.valueOf(FanId))).toString());
+//                        }
+//                    }
+//                    if (THE_ROOM.acVariables.TempCurrentDP != 0) {
+//                        Log.d("currentTemp",THE_ROOM.acVariables.TempCurrentDP+" "+CurrentId);
+//                    }
+//                }
+//
+//                @Override
+//                public void onError(String errorCode, String errorMessage) {
+//
+//                }
+//            });
         }
         else {
             showAc.setVisibility(View.GONE);
@@ -1652,6 +1833,7 @@ public class FullscreenActivity extends AppCompatActivity {
     }
 
     View.OnClickListener setTempButtonClick(String temp,DatabaseReference ref) {
+        Log.d("acTempClick",temp+" "+THE_ROOM.acVariables.TempMax+" "+THE_ROOM.acVariables.TempMin);
         return v -> {
             ref.setValue(temp);
             x=0;
@@ -4152,36 +4334,58 @@ public class FullscreenActivity extends AppCompatActivity {
 
     private static void dndOn(Activity act) {
         ImageView dndImage = act.findViewById(R.id.DND_Image);
-        dndImage.setImageResource(R.drawable.dndnew_on);
+
         ImageView dndIcon = act.findViewById(R.id.DND_Icon);
         dndIcon.setVisibility(View.VISIBLE);
         TextView dndText = act.findViewById(R.id.DND_Text);
         dndText.setTextColor(RESOURCES.getColor(R.color.red,null));
+        if (BigScreen) {
+            dndImage.setImageResource(R.drawable.dndnew_on);
+        }
+        else {
+            dndImage.setImageResource(R.drawable.union_6);
+        }
     }
     private static void dndOff(Activity act) {
         ImageView dndImage = act.findViewById(R.id.DND_Image);
-        dndImage.setImageResource(R.drawable.dndnew);
         ImageView dndIcon = act.findViewById(R.id.DND_Icon);
         dndIcon.setVisibility(View.GONE);
         TextView dndText = act.findViewById(R.id.DND_Text);
         dndText.setTextColor(Color.WHITE);
+        if (BigScreen) {
+            dndImage.setImageResource(R.drawable.dndnew);
+        }
+        else {
+            dndImage.setImageResource(R.drawable.union_2);
+        }
     }
 
     private static void sosOn(Activity act) {
         ImageView sosImage = act.findViewById(R.id.SOS_Image);
-        sosImage.setImageResource(R.drawable.sosnew_on);
+
         ImageView sosIcon = act.findViewById(R.id.SOS_Icon);
         sosIcon.setVisibility(View.VISIBLE);
         TextView sosText = act.findViewById(R.id.SOS_Text);
         sosText.setTextColor(RESOURCES.getColor(R.color.red,null));
+        if (BigScreen) {
+            sosImage.setImageResource(R.drawable.sosnew_on);
+        }
+        else {
+            sosImage.setImageResource(R.drawable.group_54);
+        }
     }
     private static void sosOff(Activity act) {
         ImageView sosImage = act.findViewById(R.id.SOS_Image);
-        sosImage.setImageResource(R.drawable.sosnew);
         ImageView sosIcon = act.findViewById(R.id.SOS_Icon);
         sosIcon.setVisibility(View.GONE);
         TextView sosText = act.findViewById(R.id.SOS_Text);
         sosText.setTextColor(Color.WHITE);
+        if (BigScreen) {
+            sosImage.setImageResource(R.drawable.sosnew);
+        }
+        else {
+            sosImage.setImageResource(R.drawable.group_33);
+        }
     }
 
     private static void restaurantOn(Activity act) {
@@ -4215,7 +4419,9 @@ public class FullscreenActivity extends AppCompatActivity {
         AcLayout.setVisibility(View.GONE);
         BtnS.setVisibility(View.VISIBLE);
         Text.setVisibility(View.VISIBLE);
-        setServiceButtonImage();
+        if (BigScreen) {
+            setServiceButtonImage();
+        }
         //balloonsRunnable.run();
     }
 

@@ -37,6 +37,17 @@ public class AddNewProject extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_new_project);
         setActivity();
+        sendTuyaVerificationCodeToEmail("bisho.alsibaei@gmail.com", new RequestCallback() {
+            @Override
+            public void onSuccess(String result) {
+                new MessageDialog(result,result,act);
+            }
+
+            @Override
+            public void onFailed(String error) {
+                new MessageDialog(error,"failed",act);
+            }
+        });
     }
 
     void setActivity() {

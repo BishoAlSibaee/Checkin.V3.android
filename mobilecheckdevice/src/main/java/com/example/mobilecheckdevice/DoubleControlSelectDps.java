@@ -123,7 +123,7 @@ public class DoubleControlSelectDps extends AppCompatActivity {
                 Toast.makeText(act,"failed "+e.getMessage(),Toast.LENGTH_SHORT).show();
             }
 
-            iTuyaDeviceMultiControl.saveDeviceMultiControl(MyApp.HOME.getHomeId(), multiControlBean.toString(), new ITuyaResultCallback<MultiControlBean>() {
+            iTuyaDeviceMultiControl.saveDeviceMultiControl(MyApp.homeBeans.get(0).getHomeId(), multiControlBean.toString(), new ITuyaResultCallback<MultiControlBean>() {
                 @Override
                 public void onSuccess(MultiControlBean result) {
                     Toast.makeText(act,"double control created",Toast.LENGTH_SHORT).show();

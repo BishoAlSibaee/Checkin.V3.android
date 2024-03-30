@@ -6,17 +6,21 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SwitchCompat;
 
+import com.example.mobilecheckdevice.Interface.HomeBeanCallBack;
 import com.tuya.smart.home.sdk.TuyaHomeSdk;
+import com.tuya.smart.home.sdk.bean.HomeBean;
 import com.tuya.smart.home.sdk.bean.scene.SceneBean;
 import com.tuya.smart.home.sdk.bean.scene.SceneCondition;
 import com.tuya.smart.home.sdk.bean.scene.SceneTask;
 import com.tuya.smart.home.sdk.bean.scene.condition.rule.BoolRule;
+import com.tuya.smart.home.sdk.bean.scene.condition.rule.EnumRule;
 import com.tuya.smart.home.sdk.bean.scene.dev.TaskListBean;
 import com.tuya.smart.home.sdk.callback.ITuyaResultCallback;
 import com.tuya.smart.sdk.api.IResultCallback;
@@ -31,10 +35,10 @@ public class MakeMood extends AppCompatActivity {
     Activity act ;
     String modeName ;
     Button S1_1,S1_2,S1_3,S1_4,S2_1,S2_2,S2_3,S2_4,S3_1,S3_2,S3_3,S3_4,S4_1,S4_2,S4_3,S4_4 ,S5_1,S5_2,S5_3,S5_4 ,S6_1,S6_2,S6_3,S6_4 ,S7_1,S7_2,S7_3,S7_4 ,S8_1,S8_2,S8_3,S8_4,Service1,Service2,Service3,Service4,doorSensor,AC;
-    Button MoodButton ;
-    MoodBtn BTN ;
-    List<Button> SelectedButtons;
-    List<MoodBtn> Buttons ;
+    List<Button> SelectedConditionButtons;
+    List<MoodBtn> ConditionMoodButtons;
+    List<Button> SelectedTaskButtons;
+    List<MoodBtn> TaskMoodButtons;
     SwitchCompat PhysicalButton;
     int powerId;
 
@@ -53,8 +57,10 @@ public class MakeMood extends AppCompatActivity {
         act = this ;
         TextView ModeName = findViewById(R.id.textView68);
         ModeName.setText(modeName);
-        SelectedButtons = new ArrayList<>();
-        Buttons = new ArrayList<>();
+        SelectedTaskButtons = new ArrayList<>();
+        TaskMoodButtons = new ArrayList<>();
+        SelectedConditionButtons = new ArrayList<>();
+        ConditionMoodButtons = new ArrayList<>();
         PhysicalButton = findViewById(R.id.switch1);
         doorSensor = findViewById(R.id.button19237Av);
         AC = findViewById(R.id.button19237Av0);
@@ -259,7 +265,6 @@ public class MakeMood extends AppCompatActivity {
             TuyaHomeSdk.getSceneManagerInstance().getDeviceConditionOperationList(RoomManager.Room.getAC_B().devId, new ITuyaResultCallback<List<TaskListBean>>() {
                 @Override
                 public void onSuccess(List<TaskListBean> result) {
-                    TaskListBean SetTask = null ;
                     for (int i=0 ; i<result.size();i++) {
                         if (result.get(i).getName().equals("Power") || result.get(i).getName().equals("switch") || result.get(i).getName().equals("Switch")) {
                             powerId = (int) result.get(i).getDpId();
@@ -276,6 +281,15 @@ public class MakeMood extends AppCompatActivity {
         }
         else {
             AC.setVisibility(View.INVISIBLE);
+        }
+        if (RoomManager.Room.getCURTAIN_B() != null) {
+            LinearLayout curtainLayout = findViewById(R.id.CurtainLayout);
+            curtainLayout.setVisibility(View.VISIBLE);
+            getCurtainDetails(RoomManager.Room.getCURTAIN_B(),curtainLayout);
+        }
+        else {
+            LinearLayout curtainLayout = findViewById(R.id.CurtainLayout);
+            curtainLayout.setVisibility(View.GONE);
         }
         switch (MyApp.ProjectVariables.cleanupButton) {
             case 1 :
@@ -339,21 +353,18 @@ public class MakeMood extends AppCompatActivity {
         PhysicalButton.setOnCheckedChangeListener((buttonView, isChecked) -> {
         });
 
-        doorSensor.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (!PhysicalButton.isChecked()) {
-                    new MessageDialog("door sensor must be the condition please turn the switch on ","switch on",act);
-                    return;
-                }
-                try {
-                    Log.d("doorSensor", RoomManager.Room.getDOORSENSOR_B().dps.keySet().toArray()[0].toString());
-                    int x = Integer.parseInt(RoomManager.Room.getDOORSENSOR_B().dps.keySet().toArray()[0].toString());
-                    createPhysicalButtonStatusDialogSelector(act, "Door Sensor ", doorSensor, RoomManager.Room.getDOORSENSOR_B(), x);
-                }
-                catch (Exception e) {
-                    new MessageDialog(e.getMessage(),"error",act);
-                }
+        doorSensor.setOnClickListener(view -> {
+            if (!PhysicalButton.isChecked()) {
+                new MessageDialog("door sensor must be the condition please turn the switch on ","switch on",act);
+                return;
+            }
+            try {
+                Log.d("doorSensor", RoomManager.Room.getDOORSENSOR_B().dps.keySet().toArray()[0].toString());
+                int x = Integer.parseInt(RoomManager.Room.getDOORSENSOR_B().dps.keySet().toArray()[0].toString());
+                createPhysicalButtonStatusDialogSelector(act, "Door Sensor ", doorSensor, RoomManager.Room.getDOORSENSOR_B(), x);
+            }
+            catch (Exception e) {
+                new MessageDialog(e.getMessage(),"error",act);
             }
         });
 
@@ -399,12 +410,12 @@ public class MakeMood extends AppCompatActivity {
 
         Service1.setOnClickListener(v -> {
             if (Service1.getText().toString().equals("DND")) {
-                if (SelectedButtons.contains(Service1)) {
-                    SelectedButtons.remove(Service1);
+                if (SelectedTaskButtons.contains(Service1)) {
+                    SelectedTaskButtons.remove(Service1);
                     Service1.setBackgroundResource(R.drawable.btn_bg_selector);
-                    for (int i=0;i<Buttons.size();i++) {
-                        if (Buttons.get(i).Switch == RoomManager.Room.getSERVICE1_B() && Buttons.get(i).SwitchButton == MyApp.ProjectVariables.dndButton) {
-                            Buttons.remove(i);
+                    for (int i = 0; i< TaskMoodButtons.size(); i++) {
+                        if (TaskMoodButtons.get(i).Switch == RoomManager.Room.getSERVICE1_B() && TaskMoodButtons.get(i).SwitchButton == MyApp.ProjectVariables.dndButton) {
+                            TaskMoodButtons.remove(i);
                             break;
                         }
                     }
@@ -417,15 +428,15 @@ public class MakeMood extends AppCompatActivity {
                     RadioButton off = D.findViewById(R.id.radioButton2);
                     title.setText(getResources().getString(R.string.dnd));
                     on.setOnCheckedChangeListener((buttonView, isChecked) -> {
-                        SelectedButtons.add(Service1);
+                        SelectedTaskButtons.add(Service1);
                         Service1.setBackgroundResource(R.drawable.btn_bg_normal_selected);
-                        Buttons.add(new MoodBtn(RoomManager.Room.getSERVICE1_B(),MyApp.ProjectVariables.dndButton,true));
+                        TaskMoodButtons.add(new MoodBtn(RoomManager.Room.getSERVICE1_B(),MyApp.ProjectVariables.dndButton,true));
                         D.dismiss();
                     });
                     off.setOnCheckedChangeListener((buttonView, isChecked) -> {
-                        SelectedButtons.add(Service1);
+                        SelectedTaskButtons.add(Service1);
                         Service1.setBackgroundResource(R.drawable.btn_bg_normal_selected);
-                        Buttons.add(new MoodBtn(RoomManager.Room.getSERVICE1_B(),MyApp.ProjectVariables.dndButton,false));
+                        TaskMoodButtons.add(new MoodBtn(RoomManager.Room.getSERVICE1_B(),MyApp.ProjectVariables.dndButton,false));
                         D.dismiss();
                     });
                     D.show();
@@ -434,12 +445,12 @@ public class MakeMood extends AppCompatActivity {
         });
         Service2.setOnClickListener(v -> {
             if (Service2.getText().toString().equals("DND")) {
-                if (SelectedButtons.contains(Service2)) {
-                    SelectedButtons.remove(Service2);
+                if (SelectedTaskButtons.contains(Service2)) {
+                    SelectedTaskButtons.remove(Service2);
                     Service2.setBackgroundResource(R.drawable.btn_bg_selector);
-                    for (int i=0;i<Buttons.size();i++) {
-                        if (Buttons.get(i).Switch == RoomManager.Room.getSERVICE1_B() && Buttons.get(i).SwitchButton == MyApp.ProjectVariables.dndButton) {
-                            Buttons.remove(i);
+                    for (int i = 0; i< TaskMoodButtons.size(); i++) {
+                        if (TaskMoodButtons.get(i).Switch == RoomManager.Room.getSERVICE1_B() && TaskMoodButtons.get(i).SwitchButton == MyApp.ProjectVariables.dndButton) {
+                            TaskMoodButtons.remove(i);
                             break;
                         }
                     }
@@ -452,15 +463,15 @@ public class MakeMood extends AppCompatActivity {
                     RadioButton off = D.findViewById(R.id.radioButton2);
                     title.setText(getResources().getString(R.string.dnd));
                     on.setOnCheckedChangeListener((buttonView, isChecked) -> {
-                        SelectedButtons.add(Service2);
+                        SelectedTaskButtons.add(Service2);
                         Service2.setBackgroundResource(R.drawable.btn_bg_normal_selected);
-                        Buttons.add(new MoodBtn(RoomManager.Room.getSERVICE1_B(),MyApp.ProjectVariables.dndButton,true));
+                        TaskMoodButtons.add(new MoodBtn(RoomManager.Room.getSERVICE1_B(),MyApp.ProjectVariables.dndButton,true));
                         D.dismiss();
                     });
                     off.setOnCheckedChangeListener((buttonView, isChecked) -> {
-                        SelectedButtons.add(Service2);
+                        SelectedTaskButtons.add(Service2);
                         Service2.setBackgroundResource(R.drawable.btn_bg_normal_selected);
-                        Buttons.add(new MoodBtn(RoomManager.Room.getSERVICE1_B(),MyApp.ProjectVariables.dndButton,false));
+                        TaskMoodButtons.add(new MoodBtn(RoomManager.Room.getSERVICE1_B(),MyApp.ProjectVariables.dndButton,false));
                         D.dismiss();
                     });
                     D.show();
@@ -469,12 +480,12 @@ public class MakeMood extends AppCompatActivity {
         });
         Service3.setOnClickListener(v -> {
             if (Service3.getText().toString().equals("DND")) {
-                if (SelectedButtons.contains(Service3)) {
-                    SelectedButtons.remove(Service3);
+                if (SelectedTaskButtons.contains(Service3)) {
+                    SelectedTaskButtons.remove(Service3);
                     Service3.setBackgroundResource(R.drawable.btn_bg_selector);
-                    for (int i=0;i<Buttons.size();i++) {
-                        if (Buttons.get(i).Switch == RoomManager.Room.getSERVICE1_B() && Buttons.get(i).SwitchButton == MyApp.ProjectVariables.dndButton) {
-                            Buttons.remove(i);
+                    for (int i = 0; i< TaskMoodButtons.size(); i++) {
+                        if (TaskMoodButtons.get(i).Switch == RoomManager.Room.getSERVICE1_B() && TaskMoodButtons.get(i).SwitchButton == MyApp.ProjectVariables.dndButton) {
+                            TaskMoodButtons.remove(i);
                             break;
                         }
                     }
@@ -487,15 +498,15 @@ public class MakeMood extends AppCompatActivity {
                     RadioButton off = D.findViewById(R.id.radioButton2);
                     title.setText(getResources().getString(R.string.dnd));
                     on.setOnCheckedChangeListener((buttonView, isChecked) -> {
-                        SelectedButtons.add(Service3);
+                        SelectedTaskButtons.add(Service3);
                         Service3.setBackgroundResource(R.drawable.btn_bg_normal_selected);
-                        Buttons.add(new MoodBtn(RoomManager.Room.getSERVICE1_B(),MyApp.ProjectVariables.dndButton,true));
+                        TaskMoodButtons.add(new MoodBtn(RoomManager.Room.getSERVICE1_B(),MyApp.ProjectVariables.dndButton,true));
                         D.dismiss();
                     });
                     off.setOnCheckedChangeListener((buttonView, isChecked) -> {
-                        SelectedButtons.add(Service3);
+                        SelectedTaskButtons.add(Service3);
                         Service3.setBackgroundResource(R.drawable.btn_bg_normal_selected);
-                        Buttons.add(new MoodBtn(RoomManager.Room.getSERVICE1_B(),MyApp.ProjectVariables.dndButton,false));
+                        TaskMoodButtons.add(new MoodBtn(RoomManager.Room.getSERVICE1_B(),MyApp.ProjectVariables.dndButton,false));
                         D.dismiss();
                     });
                     D.show();
@@ -504,12 +515,12 @@ public class MakeMood extends AppCompatActivity {
         });
         Service4.setOnClickListener(v -> {
             if (Service4.getText().toString().equals("DND")) {
-                if (SelectedButtons.contains(Service4)) {
-                    SelectedButtons.remove(Service4);
+                if (SelectedTaskButtons.contains(Service4)) {
+                    SelectedTaskButtons.remove(Service4);
                     Service4.setBackgroundResource(R.drawable.btn_bg_selector);
-                    for (int i=0;i<Buttons.size();i++) {
-                        if (Buttons.get(i).Switch == RoomManager.Room.getSERVICE1_B() && Buttons.get(i).SwitchButton == MyApp.ProjectVariables.dndButton) {
-                            Buttons.remove(i);
+                    for (int i = 0; i< TaskMoodButtons.size(); i++) {
+                        if (TaskMoodButtons.get(i).Switch == RoomManager.Room.getSERVICE1_B() && TaskMoodButtons.get(i).SwitchButton == MyApp.ProjectVariables.dndButton) {
+                            TaskMoodButtons.remove(i);
                             break;
                         }
                     }
@@ -522,15 +533,15 @@ public class MakeMood extends AppCompatActivity {
                     RadioButton off = D.findViewById(R.id.radioButton2);
                     title.setText(getResources().getString(R.string.dnd));
                     on.setOnCheckedChangeListener((buttonView, isChecked) -> {
-                        SelectedButtons.add(Service4);
+                        SelectedTaskButtons.add(Service4);
                         Service4.setBackgroundResource(R.drawable.btn_bg_normal_selected);
-                        Buttons.add(new MoodBtn(RoomManager.Room.getSERVICE1_B(),MyApp.ProjectVariables.dndButton,true));
+                        TaskMoodButtons.add(new MoodBtn(RoomManager.Room.getSERVICE1_B(),MyApp.ProjectVariables.dndButton,true));
                         D.dismiss();
                     });
                     off.setOnCheckedChangeListener((buttonView, isChecked) -> {
-                        SelectedButtons.add(Service4);
+                        SelectedTaskButtons.add(Service4);
                         Service4.setBackgroundResource(R.drawable.btn_bg_normal_selected);
-                        Buttons.add(new MoodBtn(RoomManager.Room.getSERVICE1_B(),MyApp.ProjectVariables.dndButton,false));
+                        TaskMoodButtons.add(new MoodBtn(RoomManager.Room.getSERVICE1_B(),MyApp.ProjectVariables.dndButton,false));
                         D.dismiss();
                     });
                     D.show();
@@ -542,122 +553,268 @@ public class MakeMood extends AppCompatActivity {
     }
 
     public void createMod(View view) {
-        if (Buttons.size() == 0) {
+        if (TaskMoodButtons.size() == 0) {
             new MessageDialog("please select buttons first","No Buttons",act);
             return ;
         }
-        List<SceneCondition> condS = null;
-        List<SceneTask> tasks = new ArrayList<>();
-        if (BTN != null) {
-            condS = new ArrayList<>();
-            BoolRule rule = BoolRule.newInstance("dp"+BTN.SwitchButton, BTN.status);
-            SceneCondition cond = SceneCondition.createDevCondition(BTN.Switch, String.valueOf(BTN.SwitchButton),rule);
-            condS.add(cond);
-        }
-        final int[] counter = {0};
-        for (int i=0;i<Buttons.size();i++) {
-            HashMap<String, Object> taskMap = new HashMap<>();
-            taskMap.put(String.valueOf(Buttons.get(i).SwitchButton), Buttons.get(i).status);
-            SceneTask task = TuyaHomeSdk.getSceneManagerInstance().createDpTask(Buttons.get(i).Switch.devId, taskMap);
-            tasks.add(task);
-        }
-        TuyaHomeSdk.getSceneManagerInstance().createScene(
-                MyApp.HOME.getHomeId(),
-                RoomManager.Room.RoomNumber+modeName,
-                false,
-                RoomManager.IMAGES.get(0),
-                condS,
-                tasks,
-                null,
-                SceneBean.MATCH_TYPE_AND,
-                new ITuyaResultCallback<SceneBean>() {
-                    @Override
-                    public void onSuccess(SceneBean sceneBean) {
-                        Log.d("MoodCreation", "create Scene Success");
-                        TuyaHomeSdk.newSceneInstance(sceneBean.getId()).enableScene(sceneBean.getId(), new IResultCallback() {
+        LoadingDialog loading = new LoadingDialog(act);
+        ROOM.getRoomHome(RoomManager.Room, MyApp.ProjectHomes, new HomeBeanCallBack() {
+            @Override
+            public void onSuccess(HomeBean homeBean) {
+                List<SceneCondition> condS = null;
+                List<SceneTask> tasks = new ArrayList<>();
+//                if (BTN != null) {
+//                    condS = new ArrayList<>();
+//                    if (BTN.statusString == null) {
+//                        BoolRule rule = BoolRule.newInstance("dp"+BTN.SwitchButton, BTN.status);
+//                        SceneCondition cond = SceneCondition.createDevCondition(BTN.Switch, String.valueOf(BTN.SwitchButton),rule);
+//                        condS.add(cond);
+//                    }
+//                    else {
+//                        EnumRule rr = EnumRule.newInstance("dp"+BTN.SwitchButton,BTN.statusString);
+//                        SceneCondition cond = SceneCondition.createDevCondition(BTN.Switch, String.valueOf(BTN.SwitchButton),rr);
+//                        condS.add(cond);
+//                    }
+//                }
+                if (ConditionMoodButtons.size() > 0) {
+                    condS = new ArrayList<>();
+                    for (int i=0;i<ConditionMoodButtons.size();i++) {
+                        if (ConditionMoodButtons.get(i).statusString == null) {
+                            BoolRule rule = BoolRule.newInstance("dp"+ConditionMoodButtons.get(i).SwitchButton, ConditionMoodButtons.get(i).status);
+                            SceneCondition cond = SceneCondition.createDevCondition(ConditionMoodButtons.get(i).Switch, String.valueOf(ConditionMoodButtons.get(i).SwitchButton),rule);
+                            condS.add(cond);
+                        }
+                        else {
+                            EnumRule rr = EnumRule.newInstance("dp"+ConditionMoodButtons.get(i).SwitchButton,ConditionMoodButtons.get(i).statusString);
+                            SceneCondition cond = SceneCondition.createDevCondition(ConditionMoodButtons.get(i).Switch, String.valueOf(ConditionMoodButtons.get(i).SwitchButton),rr);
+                            condS.add(cond);
+                        }
+                    }
+                }
+                for (int i = 0; i< TaskMoodButtons.size(); i++) {
+                    HashMap<String, Object> taskMap = new HashMap<>();
+                    if (TaskMoodButtons.get(i).statusString == null) {
+                        taskMap.put(String.valueOf(TaskMoodButtons.get(i).SwitchButton), TaskMoodButtons.get(i).status);
+                        SceneTask task = TuyaHomeSdk.getSceneManagerInstance().createDpTask(TaskMoodButtons.get(i).Switch.devId, taskMap);
+                        tasks.add(task);
+                    }
+                    else {
+                        taskMap.put(String.valueOf(TaskMoodButtons.get(i).SwitchButton), TaskMoodButtons.get(i).statusString);
+                        SceneTask task = TuyaHomeSdk.getSceneManagerInstance().createDpTask(TaskMoodButtons.get(i).Switch.devId, taskMap);
+                        tasks.add(task);
+                    }
+                }
+                TuyaHomeSdk.getSceneManagerInstance().createScene(
+                        homeBean.getHomeId(),
+                        RoomManager.Room.RoomNumber+modeName,
+                        false,
+                        RoomManager.IMAGES.get(0),
+                        condS,
+                        tasks,
+                        null,
+                        SceneBean.MATCH_TYPE_OR,
+                        new ITuyaResultCallback<SceneBean>() {
                             @Override
-                            public void onSuccess() {
-                                Log.d("MoodCreation", "enable Scene Success");
-                                counter[0]++;
-                                RoomManager.MY_SCENES.add(sceneBean);
-                                new MessageDialog("Scene created","Done",act);
+                            public void onSuccess(SceneBean sceneBean) {
+                                Log.d("MoodCreation", "create Scene Success");
+                                Moods.MoodsScenes.add(sceneBean);
+                                TuyaHomeSdk.newSceneInstance(sceneBean.getId()).enableScene(sceneBean.getId(), new IResultCallback() {
+                                    @Override
+                                    public void onSuccess() {
+                                        loading.stop();
+                                        Log.d("MoodCreation", "enable Scene Success");
+                                        RoomManager.MY_SCENES.add(sceneBean);
+                                        MyApp.SCENES.add(sceneBean);
+                                        new MessageDialog("Scene created","Done",act,true);
+                                    }
+                                    @Override
+                                    public void onError(String errorCode, String errorMessage) {
+                                        loading.stop();
+                                        Log.d("MoodCreation", errorMessage + " " + errorCode);
+                                        new MessageDialog(errorMessage + " " + errorCode,"Failed",act);
+
+                                    }
+                                });
                             }
                             @Override
                             public void onError(String errorCode, String errorMessage) {
+                                loading.stop();
                                 Log.d("MoodCreation", errorMessage + " " + errorCode);
                                 new MessageDialog(errorMessage + " " + errorCode,"Failed",act);
-
                             }
                         });
-                    }
-                    @Override
-                    public void onError(String errorCode, String errorMessage) {
-                        Log.d("MoodCreation", errorMessage + " " + errorCode);
-                        new MessageDialog(errorMessage + " " + errorCode,"Failed",act);
-                    }
-                });
+            }
+
+            @Override
+            public void onFail(String error) {
+                loading.stop();
+                new MessageDialog(error,"Failed",act);
+            }
+        });
+
     }
 
-    void createButtonStatusDialogSelector(Activity act, String titleText, Button b, DeviceBean d,int buttonNumber){
-        Dialog D = new Dialog(act);
-        D.setContentView(R.layout.mood_button_status);
-        TextView title = D.findViewById(R.id.textView69);
-        RadioButton on = D.findViewById(R.id.radioButton);
-        RadioButton off = D.findViewById(R.id.radioButton2);
-        title.setText(titleText);
-        on.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            SelectedButtons.add(b);
-            b.setBackgroundResource(R.drawable.btn_bg_normal_selected);
-            Buttons.add(new MoodBtn(d,buttonNumber,true));
-            D.dismiss();
-        });
-        off.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            SelectedButtons.add(b);
-            b.setBackgroundResource(R.drawable.btn_bg_normal_selected);
-            Buttons.add(new MoodBtn(d,buttonNumber,false));
-            D.dismiss();
-        });
-        D.show();
+    void createButtonStatusDialogSelector(Activity act, String titleText, Button bb, DeviceBean d,int buttonNumber) {
+        if (d.getCategoryCode().equals("zig_wxkg")) {
+            new MessageDialog("this device should be a condition not an action","must be condition",act);
+        }
+        else if (d.getCategoryCode().equals("zig_cl")) {
+            Dialog D = new Dialog(act);
+            D.setContentView(R.layout.moos_dp_value_dialog);
+            TextView title = D.findViewById(R.id.textView69);
+            title.setText(titleText);
+            LinearLayout options = D.findViewById(R.id.optionsLayout);
+            TuyaHomeSdk.getSceneManagerInstance().getDeviceConditionOperationList(d.devId, new ITuyaResultCallback<List<TaskListBean>>() {
+                @Override
+                public void onSuccess(List<TaskListBean> result) {
+                    for (TaskListBean t:result) {
+                        if (buttonNumber == t.getDpId()) {
+                            Object[] keys = t.getTasks().keySet().toArray();
+                            for (Object o:keys) {
+                                RadioButton r = new RadioButton(act);
+                                r.setText(String.valueOf(o));
+                                r.setTextColor(getResources().getColor(R.color.white,null));
+                                r.setOnCheckedChangeListener((compoundButton, b) -> {
+                                    if (b) {
+                                        SelectedTaskButtons.add(bb);
+                                        bb.setBackgroundResource(R.drawable.btn_bg_normal_selected);
+                                        TaskMoodButtons.add(new MoodBtn(d,buttonNumber,String.valueOf(o)));
+                                        D.dismiss();
+                                    }
+                                });
+                                options.addView(r);
+                            }
+                            D.show();
+                        }
+                    }
+                }
+
+                @Override
+                public void onError(String errorCode, String errorMessage) {
+
+                }
+            });
+        }
+        else {
+            Dialog D = new Dialog(act);
+            D.setContentView(R.layout.mood_button_status);
+            TextView title = D.findViewById(R.id.textView69);
+            RadioButton on = D.findViewById(R.id.radioButton);
+            RadioButton off = D.findViewById(R.id.radioButton2);
+            title.setText(titleText);
+            on.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                SelectedTaskButtons.add(bb);
+                bb.setBackgroundResource(R.drawable.btn_bg_normal_selected);
+                TaskMoodButtons.add(new MoodBtn(d,buttonNumber,true));
+                D.dismiss();
+            });
+            off.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                SelectedTaskButtons.add(bb);
+                bb.setBackgroundResource(R.drawable.btn_bg_normal_selected);
+                TaskMoodButtons.add(new MoodBtn(d,buttonNumber,false));
+                D.dismiss();
+            });
+            D.show();
+        }
     }
 
-    void createPhysicalButtonStatusDialogSelector(Activity act, String titleText, Button b, DeviceBean d,int buttonNumber){
-        Dialog D = new Dialog(act);
-        D.setContentView(R.layout.mood_button_status);
-        TextView title = D.findViewById(R.id.textView69);
-        RadioButton on = D.findViewById(R.id.radioButton);
-        RadioButton off = D.findViewById(R.id.radioButton2);
-        title.setText(titleText);
-        on.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            MoodButton = b ;
-            BTN = new MoodBtn(d,buttonNumber,true);
-            b.setBackgroundResource(R.drawable.btn_bg_normal_selected0);
-            PhysicalButton.setChecked(false);
-            SelectedButtons.remove(b);
-            D.dismiss();
-        });
-        off.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            MoodButton = b ;
-            BTN = new MoodBtn(d,buttonNumber,false);
-            b.setBackgroundResource(R.drawable.btn_bg_normal_selected0);
-            PhysicalButton.setChecked(false);
-            SelectedButtons.remove(b);
-            D.dismiss();
-        });
-        D.show();
+    void createPhysicalButtonStatusDialogSelector(Activity act, String titleText, Button bb, DeviceBean d,int buttonNumber) {
+        if (d.getCategoryCode().equals("zig_wxkg")) {
+            Dialog D = new Dialog(act);
+            D.setContentView(R.layout.moos_dp_value_dialog);
+            TextView title = D.findViewById(R.id.textView69);
+            title.setText(titleText);
+            LinearLayout options = D.findViewById(R.id.optionsLayout);
+            TuyaHomeSdk.getSceneManagerInstance().getDeviceConditionOperationList(d.devId, new ITuyaResultCallback<List<TaskListBean>>() {
+                @Override
+                public void onSuccess(List<TaskListBean> result) {
+                    for (TaskListBean t:result) {
+                        if (buttonNumber == t.getDpId()) {
+                            Object[] keys = t.getTasks().keySet().toArray();
+                            for (Object o:keys) {
+                                RadioButton r = new RadioButton(act);
+                                r.setText(String.valueOf(o));
+                                r.setTextColor(getResources().getColor(R.color.white,null));
+                                r.setOnCheckedChangeListener((compoundButton, b) -> {
+                                    if (b) {
+                                        //MoodButton = bb ;
+                                        SelectedConditionButtons.add(bb);
+                                        //BTN = new MoodBtn(d,buttonNumber,String.valueOf(o));
+                                        ConditionMoodButtons.add(new MoodBtn(d,buttonNumber,true));
+                                        bb.setBackgroundResource(R.drawable.btn_bg_normal_selected0);
+                                        //PhysicalButton.setChecked(false);
+                                        SelectedTaskButtons.remove(bb);
+                                        D.dismiss();
+                                    }
+                                });
+                                options.addView(r);
+                            }
+                            D.show();
+                        }
+                    }
+                }
+
+                @Override
+                public void onError(String errorCode, String errorMessage) {
+
+                }
+            });
+        }
+        else {
+            Dialog D = new Dialog(act);
+            D.setContentView(R.layout.mood_button_status);
+            TextView title = D.findViewById(R.id.textView69);
+            RadioButton on = D.findViewById(R.id.radioButton);
+            RadioButton off = D.findViewById(R.id.radioButton2);
+            title.setText(titleText);
+            on.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                //MoodButton = bb ;
+                SelectedConditionButtons.add(bb);
+                //BTN = new MoodBtn(d,buttonNumber,true);
+                ConditionMoodButtons.add(new MoodBtn(d,buttonNumber,true));
+                bb.setBackgroundResource(R.drawable.btn_bg_normal_selected0);
+                //PhysicalButton.setChecked(false);
+                SelectedTaskButtons.remove(bb);
+                D.dismiss();
+            });
+            off.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                //MoodButton = bb ;
+                SelectedConditionButtons.add(bb);
+                //BTN = new MoodBtn(d,buttonNumber,false);
+                ConditionMoodButtons.add(new MoodBtn(d,buttonNumber,true));
+                bb.setBackgroundResource(R.drawable.btn_bg_normal_selected0);
+                //PhysicalButton.setChecked(false);
+                SelectedTaskButtons.remove(bb);
+                D.dismiss();
+            });
+            D.show();
+        }
     }
 
     View.OnClickListener createButtonClickListener(Activity act,String title,Button bu,DeviceBean d,int buNumber) {
         return view -> {
             if (PhysicalButton.isChecked()) {
-                createPhysicalButtonStatusDialogSelector(act,title,bu,d,buNumber);
+                if (SelectedConditionButtons.contains(bu)) {
+                    SelectedConditionButtons.remove(bu);
+                    bu.setBackgroundResource(R.drawable.btn_bg_selector);
+                    for (int i = 0; i< ConditionMoodButtons.size(); i++) {
+                        if (ConditionMoodButtons.get(i).Switch == d && ConditionMoodButtons.get(i).SwitchButton == buNumber) {
+                            ConditionMoodButtons.remove(i);
+                            break;
+                        }
+                    }
+                }
+                else {
+                    createPhysicalButtonStatusDialogSelector(act,title,bu,d,buNumber);
+                }
             }
             else {
-                if (SelectedButtons.contains(bu)) {
-                    SelectedButtons.remove(bu);
+                if (SelectedTaskButtons.contains(bu)) {
+                    SelectedTaskButtons.remove(bu);
                     bu.setBackgroundResource(R.drawable.btn_bg_selector);
-                    for (int i=0;i<Buttons.size();i++) {
-                        if (Buttons.get(i).Switch == d && Buttons.get(i).SwitchButton == buNumber) {
-                            Buttons.remove(i);
+                    for (int i = 0; i< TaskMoodButtons.size(); i++) {
+                        if (TaskMoodButtons.get(i).Switch == d && TaskMoodButtons.get(i).SwitchButton == buNumber) {
+                            TaskMoodButtons.remove(i);
                             break;
                         }
                     }
@@ -667,6 +824,30 @@ public class MakeMood extends AppCompatActivity {
                 }
             }
         };
+    }
+
+    void getCurtainDetails(DeviceBean d,LinearLayout layout) {
+        TuyaHomeSdk.getSceneManagerInstance().getDeviceConditionOperationList(d.devId, new ITuyaResultCallback<List<TaskListBean>>() {
+            @Override
+            public void onSuccess(List<TaskListBean> result) {
+                for (TaskListBean t:result) {
+                    if (t.getName().equals("Control")) {
+                        Log.d("deviceDetails",t.getName()+" "+t.getSchemaBean().property+" "+t.getSchemaBean().name+" "+t.getSchemaBean().id+" "+t.getSchemaBean().type+" "+t.getOperators().get(0)+" "+t.getTasks().keySet());
+                        Button b = new Button(act);
+                        b.setBackgroundResource(R.drawable.btn_bg_normal);
+                        b.setText(t.getName());
+                        b.setTextColor(getResources().getColor(R.color.white,null));
+                        b.setOnClickListener(createButtonClickListener(act,"Curtain "+t.getDpId(),b,d,(int)t.getDpId()));
+                        layout.addView(b);
+                    }
+                }
+            }
+
+            @Override
+            public void onError(String errorCode, String errorMessage) {
+
+            }
+        });
     }
 
 }

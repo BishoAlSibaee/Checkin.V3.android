@@ -1,0 +1,25 @@
+<resources>
+    <string name="app_name">Checkin serviceapp</string>
+    <string name="confermationDialog_Caption">Confermation Dialog</string>
+    <string name="confermationDialog_text">are you sure</string>
+
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="in">in</string>
+    <string name="out">out</string>
+    <string name="mainPage">Main</string>
+    <string name="roomsPage">Rooms</string>
+    <string name="projectName">Project Name</string>
+    <string name="facilityName">Facility Name</string>
+    <string name="department">Department</string>
+<!--    messages-->
+
+    <string name="restartDialogTitle">Restart App !?</string>
+    <string name="restartDialogMessage">Do you want to restart app</string>
+
+    <string name="noInternetTitle">No Internet</string>
+    <string name="noInternetMessage">No Internet Connection please connect and try again</string>
+
+    <string name="restartGettingDataTitle">Getting Data Failed</string>
+    <string name="restartGettingDataMessage">Do you want to try getting data again ?</string>
+</resources>

@@ -1,0 +1,24 @@
+<resources>
+    <string name="app_name">Checkin serviceapp</string>
+    <string name="confermationDialog_Caption">تأكيد</string>
+    <string name="confermationDialog_text">هل انت متأكد ؟</string>
+
+    <string name="yes">نعم</string>
+    <string name="no">لا</string>
+    <string name="in">in</string>
+    <string name="out">out</string>
+    <string name="mainPage">الرئيسية</string>
+    <string name="roomsPage">الغرف</string>
+    <string name="projectName">اسم المشروع</string>
+    <string name="facilityName">اسم المنشأة</string>
+    <string name="department">القسم</string>
+
+    <string name="restartDialogTitle">اعادة تشغيل التطبيق !؟</string>
+    <string name="restartDialogMessage">هل تريد اعادة تشغيل التطبيق</string>
+
+    <string name="noInternetTitle">لا يوجد اتصال بالانترنت</string>
+    <string name="noInternetMessage">لا يوجد اتصال بالانترنت يرجى الاتصال والمحاولة مرة اخرى</string>
+
+    <string name="restartGettingDataTitle">فشل جلب البيانات</string>
+    <string name="restartGettingDataMessage">هل تريد المحاولة مرة أخرى ؟</string>
+</resources>

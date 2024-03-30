@@ -173,7 +173,7 @@
                     android:layout_gravity="center_vertical"
                     android:layout_weight="1"
                     android:fontFamily="@font/aclonica"
-                    android:gravity="end"
+                    android:gravity="center"
                     android:textColor="@color/light_blue_A200"
                     android:textSize="20sp"
                     android:textStyle="bold" />

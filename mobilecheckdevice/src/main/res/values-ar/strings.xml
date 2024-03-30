@@ -1,11 +1,28 @@
 <resources>
     <string name="app_name">MobileCheckDevice</string>
-    <string name="cleanup">Cleanup</string>
-    <string name="laundry">Laundry</string>
-    <string name="dnd">DND</string>
+    <string name="cleanup">نظافة</string>
+    <string name="laundry">المغسلة</string>
+    <string name="dnd">عدم الازعاج</string>
     <string name="checkout">Checkout</string>
-    <string name="roomService">RoomService</string>
-    <string name="roomsTemplate">Room Templates</string>
+    <string name="roomService">خدمة الغرف</string>
+    <string name="template">نموذج</string>
+    <string name="yes">نعم</string>
+    <string name="no">لا</string>
+    <string name="search">بحث</string>
+    <string name="templates">النماذج</string>
+    <string name="addTemplate">اضافة نموذج</string>
+    <string name="applyTemplateOnRoom">تطبيق النموذج على غرفة</string>
+    <string name="addMood">اضافة مود</string>
+    <string name="addMultiControl">اضافة تحكم متعدد</string>
+    <string name="roomsAddedToTemplate">الغرف المضافة للنموذج</string>
+    <string name="moods">المودات</string>
+    <string name="multiControls">التحكم المتعدد</string>
+    <string name="addRooms">اضافة غرف</string>
+    <string name="addedRooms">الغرف المضافة</string>
+    <string name="enable">تفعيل</string>
+    <string name="disable">تعطيل</string>
+    <string name="rooms">الغرف</string>
+    <string name="devices">الاجهزة</string>
 
 
 <!--    Messages -->

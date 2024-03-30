@@ -11,7 +11,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.tuya.smart.sdk.bean.DeviceBean;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class ScreenButtonsSwitches_Adapter extends RecyclerView.Adapter<ScreenButtonsSwitches_Adapter.HOLDER> {
@@ -37,23 +36,23 @@ public class ScreenButtonsSwitches_Adapter extends RecyclerView.Adapter<ScreenBu
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                ScreenButtons.SelectedSwitch = list.get(position);
-                ScreenButtons.Buttons.clear();
-                List keys = new ArrayList(list.get(position).getDps().keySet());
-                if (keys.contains("1")) {
-                    ScreenButtons.Buttons.add("1") ;
-                }
-                if (keys.contains("2")) {
-                    ScreenButtons.Buttons.add("2") ;
-                }
-                if (keys.contains("3")) {
-                    ScreenButtons.Buttons.add("3") ;
-                }
-                if (keys.contains("4")) {
-                    ScreenButtons.Buttons.add("4") ;
-                }
-                ScreenButtons.ButtonsAdapter = new ScreenButtonsButtons_Adapter(ScreenButtons.Buttons);
-                ScreenButtons.SwitchesButtons.setAdapter(ScreenButtons.ButtonsAdapter);
+//                ScreenButtons.SelectedSwitch = list.get(position);
+//                ScreenButtons.Buttons.clear();
+//                List keys = new ArrayList(list.get(position).getDps().keySet());
+//                if (keys.contains("1")) {
+//                    ScreenButtons.Buttons.add("1") ;
+//                }
+//                if (keys.contains("2")) {
+//                    ScreenButtons.Buttons.add("2") ;
+//                }
+//                if (keys.contains("3")) {
+//                    ScreenButtons.Buttons.add("3") ;
+//                }
+//                if (keys.contains("4")) {
+//                    ScreenButtons.Buttons.add("4") ;
+//                }
+//                ScreenButtons.ButtonsAdapter = new ScreenButtonsButtons_Adapter(ScreenButtons.Buttons);
+//                ScreenButtons.SwitchesButtons.setAdapter(ScreenButtons.ButtonsAdapter);
             }
         });
     }

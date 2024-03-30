@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/dark_gray"
+    android:background="@color/colorPrimary"
     android:orientation="vertical"
     tools:context=".Login">
 
@@ -13,7 +13,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_weight="1"
-        android:background="#242323"
+        android:background="@color/colorPrimary"
         android:orientation="vertical"
         android:visibility="visible">
 
@@ -98,7 +98,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
-            android:background="@color/black"
+            android:background="@drawable/mainbtn_main"
             android:onClick="LogIn"
             android:text="Login" />
 

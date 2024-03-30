@@ -3,22 +3,24 @@ package com.syriasoft.hotelservices;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.Handler;
-import android.widget.Spinner;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
+
 import com.android.volley.Request;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
@@ -40,15 +42,19 @@ import com.tuya.smart.home.sdk.callback.ITuyaGetHomeListCallback;
 import com.tuya.smart.home.sdk.callback.ITuyaHomeResultCallback;
 import com.tuya.smart.sdk.bean.DeviceBean;
 import com.wang.avi.AVLoadingIndicatorView;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
+
 import retrofit2.Call;
 import retrofit2.Callback;
 
@@ -222,6 +228,7 @@ public class LogIn extends AppCompatActivity {
                                                     }
                                                     else {
                                                         int RoomNumber = Integer.parseInt(pref.getString("RoomNumber", null));
+                                                        Log.d("savedRoom" , RoomNumber+"");
                                                         for (int i=0;i<Rooms.size();i++) {
                                                             if (RoomNumber == Rooms.get(i).RoomNumber) {
                                                                 MyApp.Room = Rooms.get(i) ;
@@ -650,13 +657,14 @@ public class LogIn extends AppCompatActivity {
                                     }
                                     else {
                                         int RoomNumber = Integer.parseInt(pref.getString("RoomNumber", null));
+                                        Log.d("continueResp",RoomNumber+"");
                                         for (int i=0;i<Rooms.size();i++) {
                                             if (RoomNumber == Rooms.get(i).RoomNumber) {
                                                 MyApp.Room = Rooms.get(i) ;
                                                 break;
                                             }
                                         }
-                                        CurrentOperation.setText("getting room "+MyApp.Room.RoomNumber+" devices");
+                                        CurrentOperation.setText(MessageFormat.format("getting room {0} devices", MyApp.Room.RoomNumber));
                                         onlyLogInToTuya(new RequestCallback() {
                                             @Override
                                             public void onSuccess() {
@@ -709,8 +717,14 @@ public class LogIn extends AppCompatActivity {
     }
 
     private void getTheLock(RequestCallback callback) {
+        Log.d("loginLock" , "start");
+        if (LockUser.equals("no")) {
+            Log.d("loginLock" , "project has no bluetooth locks");
+            return;
+        }
         ApiService apiService = RetrofitAPIManager.provideClientApi();
         pass = DigitUtil.getMD5(LockPassword);
+        Log.d("loginLock" , LockUser+" "+pass);
         Call<String> call = apiService.auth(ApiService.CLIENT_ID, ApiService.CLIENT_SECRET, "password",LockUser, pass, ApiService.REDIRECT_URI);
         call.enqueue(new Callback<String>() {
             @Override
@@ -745,12 +759,18 @@ public class LogIn extends AppCompatActivity {
                                             callback.onSuccess();
                                         }
                                         catch (JSONException e) {
+                                            Log.d("loginLock" , e.getMessage());
                                             callback.onFail("Lock list Failed "+e.getMessage());
                                         }
                                     }
                                     else {
+                                        Log.d("loginLock" , "Lock list Failed ");
                                         callback.onFail("Lock list Failed ");
                                     }
+                                }
+                                else {
+                                    Log.d("loginLock" , "json null ");
+                                    callback.onFail("json null ");
                                 }
                             }
                             @Override
@@ -778,9 +798,11 @@ public class LogIn extends AppCompatActivity {
     }
 
     private void onlyLogInToTuya(RequestCallback callback) {
+        Log.d("tuyaLogin","start");
         TuyaHomeSdk.getUserInstance().loginWithEmail("966",TuyaUser,TuyaPassword, new ILoginCallback() {
             @Override
             public void onSuccess (User user) {
+                Log.d("tuyaLogin","success ");
                 TuyaHomeSdk.getHomeManagerInstance().queryHomeList(new ITuyaGetHomeListCallback() {
                     @Override
                     public void onError(String errorCode, String error) {
@@ -800,6 +822,7 @@ public class LogIn extends AppCompatActivity {
                             callback.onFail("Tuya home not found");
                         }
                         else {
+                            Log.d("tuyaLogin",MyApp.HOME.getName());
                             getMyDevices(new RequestCallback() {
                                 @Override
                                 public void onSuccess() {
@@ -817,13 +840,14 @@ public class LogIn extends AppCompatActivity {
             }
             @Override
             public void onError (String code, String error) {
+                Log.d("tuyaLogin","failed "+error+" "+code);
                 callback.onFail(error +" "+code);
             }
         });
     }
 
     private void getProjects(loginCallback callback) {
-        String projectsUrl = "https://ratco-solutions.com/Checkin/getProjects.php";
+        String projectsUrl = "https://www.ratco-solutions.com/Checkin/getProjects.php";
         StringRequest re = new StringRequest(Request.Method.POST, projectsUrl, response -> {
             Log.d("getProjectsResp" , response);
             if (response != null ) {
@@ -893,11 +917,10 @@ public class LogIn extends AppCompatActivity {
         onlyLogInToTuya(new RequestCallback() {
             @Override
             public void onSuccess() {
-                CurrentOperation.setText("getting room "+MyApp.Room.RoomNumber+" lock");
                 getTheLock(new RequestCallback() {
                     @Override
                     public void onSuccess() {
-                        CurrentOperation.setText("logging in room");
+                        CurrentOperation.setText(MessageFormat.format("logging in room {0}", MyApp.Room.RoomNumber));
                         String url = ProjectURL + "roomsManagement/loginRoom";
                         StringRequest re = new StringRequest(Request.Method.POST, url, response -> {
                             Log.d("continueResp",response);
@@ -906,8 +929,8 @@ public class LogIn extends AppCompatActivity {
                                     JSONObject resp = new JSONObject(response);
                                     if (resp.getString("result").equals("success")) {
                                         Toast.makeText(act,"Room Register Success",Toast.LENGTH_LONG).show();
-                                        editor.putString("RoomNumber" , String.valueOf(MyApp.Room.RoomNumber));
-                                        editor.putString("RoomID" , String.valueOf(MyApp.Room.id));
+                                        editor.putString("RoomNumber" , String.valueOf(FloorRooms.get(rooms.getSelectedItemPosition()).RoomNumber));
+                                        editor.putString("RoomID" , String.valueOf(FloorRooms.get(rooms.getSelectedItemPosition()).id));
                                         editor.apply();
                                         startActivity(new Intent(act,FullscreenActivity.class));
                                     }
@@ -916,6 +939,7 @@ public class LogIn extends AppCompatActivity {
                                         new messageDialog("Login Failed " + resp.getString("error"),"Failed",act);
                                     }
                                 } catch (JSONException e) {
+                                    Log.d("continueResp",e.getMessage());
                                     loading.setVisibility(View.INVISIBLE);
                                     new messageDialog("Login Failed " + e.getMessage(),"Failed",act);
                                 }
@@ -937,6 +961,7 @@ public class LogIn extends AppCompatActivity {
                     }
                     @Override
                     public void onFail(String error) {
+                        Log.d("continueResp",error);
                         loading.setVisibility(View.INVISIBLE);
                         new messageDialog(error,"Failed",act);
                     }
@@ -944,6 +969,7 @@ public class LogIn extends AppCompatActivity {
             }
             @Override
             public void onFail(String error) {
+                Log.d("continueResp",error);
                 loading.setVisibility(View.INVISIBLE);
                 new messageDialog(error,"Failed",act);
             }
@@ -959,6 +985,7 @@ public class LogIn extends AppCompatActivity {
                     ToastMaker.MakeToast("no devices" , act );
                 }
                 else {
+                    Log.d("tuyaLogin"," devices "+TheDevicesList.size());
                     for (int i=0;i<TheDevicesList.size();i++) {
                         if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"Power")) {
                             MyApp.Room.setPOWER_B(TheDevicesList.get(i));
@@ -1025,6 +1052,7 @@ public class LogIn extends AppCompatActivity {
                             MyApp.Room.setLOCK(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getLOCK_B().getDevId()));
                         }
                     }
+                    //Log.d("tuyaLogin"," devices "+MyApp.Room.getSERVICE1_B().getName());
                     callback.onSuccess();
                 }
             }

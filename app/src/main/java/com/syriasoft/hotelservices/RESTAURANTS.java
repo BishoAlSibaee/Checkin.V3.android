@@ -83,8 +83,6 @@ public class RESTAURANTS extends AppCompatActivity {
         blink();
         defineViews();
         setFirebaseReferences();
-        KeepScreenFull();
-        setLockButton();
         windowInsetsController = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
         if (windowInsetsController != null) {
             windowInsetsController.hide(WindowInsetsCompat.Type.systemBars());
@@ -111,6 +109,8 @@ public class RESTAURANTS extends AppCompatActivity {
             }
         };
         backHomeThread.run();
+        setLockButton();
+        KeepScreenFull();
     }
 
     void setFirebaseReferences() {
@@ -633,7 +633,7 @@ public class RESTAURANTS extends AppCompatActivity {
 
     void setLockButton() {
         LinearLayout doorLayout = findViewById(R.id.Door_Button);
-        if (MyApp.BluetoothLock == null && MyApp.Room.getLOCK_B() == null) {
+        if (MyApp.Room.getLOCK_B() == null) {
             doorLayout.setVisibility(View.GONE);
         }
         else {

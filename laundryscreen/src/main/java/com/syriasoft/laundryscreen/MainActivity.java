@@ -23,18 +23,11 @@ import android.widget.GridView;
 
 import androidx.annotation.NonNull;
 
-import com.android.volley.Request;
-import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -83,70 +76,70 @@ public class MainActivity extends Activity
     }
 
     private void getRooms() {
-        StringRequest re = new StringRequest(Request.Method.GET, getRoomsUrl, response -> {
-            Log.d("rooms" , response);
-            try {
-                JSONArray arr = new JSONArray(response);
-                list.clear();
-                FireRooms.clear();
-                for (int i=0;i<arr.length();i++) {
-                    JSONObject row = arr.getJSONObject(i);
-                    int id = row.getInt("id");
-                    int rNum = row.getInt("RoomNumber");
-                    int Hotel = row.getInt("hotel");
-                    int b = row.getInt("Building");
-                    int bId = row.getInt("building_id");
-                    int f = row.getInt("Floor");
-                    int fId = row.getInt("floor_id");
-                    String rType = row.getString("RoomType");
-                    int ss = row.getInt("SuiteStatus");
-                    int sn = row.getInt("SuiteNumber");
-                    int si = row.getInt("SuiteId");
-                    int rn = row.getInt("ReservationNumber");
-                    int rs = row.getInt("roomStatus");
-                    int t = row.getInt("Tablet");
-                    String dep = row.getString("dep");
-                    int c = row.getInt("Cleanup");
-                    int l = row.getInt("Laundry");
-                    int roomS = row.getInt("RoomService");
-                    int ch = row.getInt("Checkout");
-                    int res = row.getInt("Restaurant");
-                    int sos = row.getInt("SOS");
-                    int dnd = row.getInt("DND");
-                    int PowerSwitch = row.getInt("PowerSwitch");
-                    int DoorSensor = row.getInt("DoorSensor");
-                    int MotionSensor = row.getInt("MotionSensor");
-                    int Thermostat = row.getInt("Thermostat");
-                    int zbgateway = row.getInt("ZBGateway");
-                    int CurtainSwitch = row.getInt("CurtainSwitch");
-                    int ServiceSwitch = row.getInt("ServiceSwitch");
-                    int lock = row.getInt("lock");
-                    int Switch1 = row.getInt("Switch1");
-                    int Switch2 = row.getInt("Switch2");
-                    int Switch3 = row.getInt("Switch3");
-                    int Switch4 = row.getInt("Switch4");
-                    String LockGateway = row.getString("LockGateway");
-                    String LockName = row.getString("LockName");
-                    int po = row.getInt("powerStatus");
-                    int cu = row.getInt("curtainStatus");
-                    int doo = row.getInt("doorStatus");
-                    int temp = row.getInt("temp");
-                    String token =row.getString("token");
-                    ROOM room = new ROOM(id,rNum,Hotel,b,bId,f,fId,rType,ss,sn,si,rn,rs,t,dep,c,l,roomS,ch,res,sos,dnd,PowerSwitch,DoorSensor,MotionSensor,Thermostat,zbgateway,CurtainSwitch,ServiceSwitch,lock,Switch1,Switch2,Switch3,Switch4,LockGateway,LockName,po,cu,doo,temp,token);
-                    room.printRoomOnLog();
-                    Rooms.add(room);
-                    FireRooms.add(database.getReference(Project+"/B"+room.Building+"/F"+room.Floor+"/R"+room.RoomNumber));
-                }
-                Log.d("roomCount" , "room "+Rooms.size()+" fires "+FireRooms.size());
-            }
-            catch (JSONException e) {
-                Log.d("rooms" , e.getMessage());
-            }
-            LaundryListener = new ValueEventListener[Rooms.size()];
-            setRoomsListeners();
-        }, error -> {
-        });
-        Volley.newRequestQueue(act).add(re);
+//        StringRequest re = new StringRequest(Request.Method.GET, getRoomsUrl, response -> {
+//            Log.d("rooms" , response);
+//            try {
+//                JSONArray arr = new JSONArray(response);
+//                list.clear();
+//                FireRooms.clear();
+//                for (int i=0;i<arr.length();i++) {
+//                    JSONObject row = arr.getJSONObject(i);
+//                    int id = row.getInt("id");
+//                    int rNum = row.getInt("RoomNumber");
+//                    int Hotel = row.getInt("hotel");
+//                    int b = row.getInt("Building");
+//                    int bId = row.getInt("building_id");
+//                    int f = row.getInt("Floor");
+//                    int fId = row.getInt("floor_id");
+//                    String rType = row.getString("RoomType");
+//                    int ss = row.getInt("SuiteStatus");
+//                    int sn = row.getInt("SuiteNumber");
+//                    int si = row.getInt("SuiteId");
+//                    int rn = row.getInt("ReservationNumber");
+//                    int rs = row.getInt("roomStatus");
+//                    int t = row.getInt("Tablet");
+//                    String dep = row.getString("dep");
+//                    int c = row.getInt("Cleanup");
+//                    int l = row.getInt("Laundry");
+//                    int roomS = row.getInt("RoomService");
+//                    int ch = row.getInt("Checkout");
+//                    int res = row.getInt("Restaurant");
+//                    int sos = row.getInt("SOS");
+//                    int dnd = row.getInt("DND");
+//                    int PowerSwitch = row.getInt("PowerSwitch");
+//                    int DoorSensor = row.getInt("DoorSensor");
+//                    int MotionSensor = row.getInt("MotionSensor");
+//                    int Thermostat = row.getInt("Thermostat");
+//                    int zbgateway = row.getInt("ZBGateway");
+//                    int CurtainSwitch = row.getInt("CurtainSwitch");
+//                    int ServiceSwitch = row.getInt("ServiceSwitch");
+//                    int lock = row.getInt("lock");
+//                    int Switch1 = row.getInt("Switch1");
+//                    int Switch2 = row.getInt("Switch2");
+//                    int Switch3 = row.getInt("Switch3");
+//                    int Switch4 = row.getInt("Switch4");
+//                    String LockGateway = row.getString("LockGateway");
+//                    String LockName = row.getString("LockName");
+//                    int po = row.getInt("powerStatus");
+//                    int cu = row.getInt("curtainStatus");
+//                    int doo = row.getInt("doorStatus");
+//                    int temp = row.getInt("temp");
+//                    String token =row.getString("token");
+//                    ROOM room = new ROOM(id,rNum,Hotel,b,bId,f,fId,rType,ss,sn,si,rn,rs,t,dep,c,l,roomS,ch,res,sos,dnd,PowerSwitch,DoorSensor,MotionSensor,Thermostat,zbgateway,CurtainSwitch,ServiceSwitch,lock,Switch1,Switch2,Switch3,Switch4,LockGateway,LockName,po,cu,doo,temp,token);
+//                    room.printRoomOnLog();
+//                    Rooms.add(room);
+//                    FireRooms.add(database.getReference(Project+"/B"+room.Building+"/F"+room.Floor+"/R"+room.RoomNumber));
+//                }
+//                Log.d("roomCount" , "room "+Rooms.size()+" fires "+FireRooms.size());
+//            }
+//            catch (JSONException e) {
+//                Log.d("rooms" , e.getMessage());
+//            }
+//            LaundryListener = new ValueEventListener[Rooms.size()];
+//            setRoomsListeners();
+//        }, error -> {
+//        });
+//        Volley.newRequestQueue(act).add(re);
     }
 
     private void setRoomsListeners() {

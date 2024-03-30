@@ -12,7 +12,7 @@ public class RoomTemplate {
     private ROOM room ;
     private List<MultiControlBean> multiControls ;
     private List<SceneBean> moods ;
-    private List<ScreenButton> screenButtons ;
+    private List<SwitchButton> switchButtons;
 
     public RoomTemplate(@NonNull ROOM room) {
         this.room = room;
@@ -26,8 +26,8 @@ public class RoomTemplate {
         this.moods = moods;
     }
 
-    public void setScreenButtons(@NonNull List<ScreenButton> screenButtons) {
-        this.screenButtons = screenButtons;
+    public void setScreenButtons(@NonNull List<SwitchButton> switchButtons) {
+        this.switchButtons = switchButtons;
     }
 
     public ROOM getRoom() {
@@ -42,8 +42,8 @@ public class RoomTemplate {
         return moods;
     }
 
-    public List<ScreenButton> getScreenButtons() {
-        return screenButtons;
+    public List<SwitchButton> getScreenButtons() {
+        return switchButtons;
     }
 
     public boolean saveTemplateToDB(DatabaseReference dbr) {

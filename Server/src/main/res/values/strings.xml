@@ -1,0 +1,21 @@
+<resources>
+    <string name="app_name">CHECKIN ServerDevice</string>
+
+
+    <string name="search">Search</string>
+    <string name="rooms">Rooms</string>
+    <string name="devices">Devices</string>
+    <string name="gettingProjects">Getting Projects</string>
+    <string name="loading">Loading ..</string>
+    <string name="addControlDevice">Add Control Device</string>
+    <string name="loginToT">Login To T</string>
+    <string name="gettingHomes">Getting Homes</string>
+    <string name="loginProject">Login Project</string>
+
+    <string name="openProject..">Open Project ?</string>
+    <string name="enterPasswordToOpen" >Enter The Password To Open</string>
+    <string name="password">password</string>
+    <string name="cancel">Cancel</string>
+    <string name="ok">Ok</string>
+    <string name="open">Open</string>
+</resources>

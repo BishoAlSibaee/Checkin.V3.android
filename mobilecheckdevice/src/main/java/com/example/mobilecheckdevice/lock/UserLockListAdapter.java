@@ -17,7 +17,7 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
-import com.example.mobilecheckdevice.lodingDialog;
+import com.example.mobilecheckdevice.LoadingDialog;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -98,7 +98,7 @@ public class UserLockListAdapter extends  RecyclerView.Adapter<UserLockListAdapt
                         {
                             dialog.dismiss();
                             String url = "https://bait-elmoneh.online/hotel-service/setLockName.php" ;
-                            final lodingDialog loading = new lodingDialog(_holder.itemView.getContext());
+                            final LoadingDialog loading = new LoadingDialog(_holder.itemView.getContext());
                             StringRequest re = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
                                 @Override
                                 public void onResponse(String response)

@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.syriasoft.hotelservices">
+
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.SET_ALARM"/>
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-permission android:name="android.permission.BLUETOOTH"/>
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"/>
+
+    <application android:name="hotelservices.syriasoft.cleanup.MyApp"
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:theme="@style/Theme.AppCompat.Light.NoActionBar"
+        android:supportsRtl="true"
+        tools:replace="android:allowBackup,android:supportsRtl">
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/provider_paths" />
+        </provider>
+
+        <meta-data
+            android:name="TUYA_SMART_APPKEY"
+            android:value="xd7vyjqr8qes4ej9vw4m" />
+
+        <meta-data
+            android:name="TUYA_SMART_SECRET"
+            android:value="yckws7gwmdh7xvav4p8a7f87px595xc7" />
+
+        <activity
+            android:name="hotelservices.syriasoft.cleanup.ROOMS"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true"
+            android:screenOrientation="portrait" />
+
+        <activity
+            android:name="hotelservices.syriasoft.cleanup.MiniBarCheck"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true"
+            android:screenOrientation="portrait" />
+
+        <activity
+            android:name="hotelservices.syriasoft.cleanup.RestaurantOrderItems"
+            android:exported="true"
+            android:configChanges="keyboardHidden|orientation|screenSize" />
+
+        <activity
+            android:name="hotelservices.syriasoft.cleanup.RestaurantOrders"
+            android:exported="true"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:theme="@style/AppTheme" />
+
+        <activity
+            android:name="hotelservices.syriasoft.cleanup.LogIn"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <receiver
+            android:name="hotelservices.syriasoft.cleanup.Alarm"
+            android:process=":remote"
+            android:exported="true" />
+
+        <receiver android:name="hotelservices.syriasoft.cleanup.RECIEVER" />
+
+        <service
+            android:name="hotelservices.syriasoft.cleanup.SOSService"
+            android:exported="false"
+            android:enabled="true" />
+
+        <service
+            android:name="hotelservices.syriasoft.cleanup.ReceivingService"
+            android:enabled="true" />
+
+        <service android:name="hotelservices.syriasoft.cleanup.messagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/logo_icon" />
+
+        <activity
+            android:name="hotelservices.syriasoft.cleanup.MainActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:icon="@drawable/service_logo"
+            android:label="Checkin"
+            android:exported="true"
+            android:roundIcon="@mipmap/ic_launcher_round"
+            android:screenOrientation="portrait"
+            android:theme="@style/AppTheme" />
+    </application>
+
+</manifest>

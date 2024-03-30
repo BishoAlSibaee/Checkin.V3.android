@@ -16,8 +16,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.tuya.smart.home.sdk.TuyaHomeSdk;
-import com.tuya.smart.home.sdk.bean.scene.dev.TaskListBean;
-import com.tuya.smart.home.sdk.callback.ITuyaResultCallback;
 import com.tuya.smart.sdk.api.IDevListener;
 import com.tuya.smart.sdk.api.IResultCallback;
 import com.tuya.smart.sdk.api.ITuyaDevice;
@@ -175,118 +173,18 @@ public class Devices_Adapter extends BaseAdapter {
             d.show();
             d.setOnDismissListener(dialog -> view.setBackgroundColor(Color.LTGRAY));
             return false;
-
         });
         convertView.setOnClickListener(v -> {
-            Log.d("IR" , list.get(position).getCategoryCode());
             Log.d("SelectedDeviceInfo","name: "+list.get(position).getName()+" dps: "+list.get(position).getDps()+" category: "+list.get(position).getDeviceCategory()+" id "+list.get(position).devId);
             if (list.get(position).getIsOnline()) {
-                Toast.makeText(finalConvertView.getContext(),"online "+list.get(position).devId,Toast.LENGTH_SHORT).show();
                 net.setImageResource(android.R.drawable.presence_online);
-                    Log.d("rgbDevice","found");
-//                    TuyaHomeSdk.newDeviceInstance(list.get(position).devId).publishDps("{\"1\": true}", new IResultCallback() {
-//                        @Override
-//                        public void onError(String code, String error) {
-//                            Log.d("rgbDevice",error+" 1");
-//                        }
-//
-//                        @Override
-//                        public void onSuccess() {
-//                            Log.d("rgbDevice","success 1");
-//                        }
-//                    });
-//                    TuyaHomeSdk.newDeviceInstance(list.get(position).devId).publishDps("{\"34\": true}", new IResultCallback() {
-//                        @Override
-//                        public void onError(String code, String error) {
-//                            Log.d("rgbDevice",error+" 34");
-//                        }
-//
-//                        @Override
-//                        public void onSuccess() {
-//                            Log.d("rgbDevice","success 34");
-//                        }
-//                    });
-//                    TuyaHomeSdk.newDeviceInstance(list.get(position).devId).publishDps("{\"33\": \"ff5500\"}", new IResultCallback() {
-//                        @Override
-//                        public void onError(String code, String error) {
-//                            Log.d("rgbDevice",error+" error 3 "+code);
-//                        }
-//
-//                        @Override
-//                        public void onSuccess() {
-//                            Log.d("rgbDevice","success 3");
-//                        }
-//                    });
-//                    TuyaHomeSdk.newDeviceInstance(list.get(position).devId).publishDps("{\"35\": \"ff5500\"}", new IResultCallback() {
-//                        @Override
-//                        public void onError(String code, String error) {
-//                            Log.d("rgbDevice",error+" error 3 "+code);
-//                        }
-//
-//                        @Override
-//                        public void onSuccess() {
-//                            Log.d("rgbDevice","success 3");
-//                        }
-//                    })
-                    TuyaHomeSdk.getSceneManagerInstance().getDeviceConditionOperationList(list.get(position).devId, new ITuyaResultCallback<List<TaskListBean>>() {
-                        @Override
-                        public void onSuccess(List<TaskListBean> result) {
-                            for (TaskListBean t:result) {
-                                Log.d("rgbDevice",t.getDpId()+" "+t.getType()+" "+t.getSchemaBean().name+" "+t.getSchemaBean().property+" "+t.getSchemaBean().type+" "+t.getSchemaBean().schemaType+" "+t.getSchemaBean().code+" "+t.getSchemaBean().mode+" "+t.getSchemaBean().id);
-                            }
-                        }
-
-                        @Override
-                        public void onError(String errorCode, String errorMessage) {
-
-                        }
-                    });
-
-                    TuyaHomeSdk.newDeviceInstance(list.get(position).devId).publishDps("{\"1\" :true}", new IResultCallback() {
-                        @Override
-                        public void onError(String code, String error) {
-                            Log.d("rgbDevice","1 "+error);
-                        }
-
-                        @Override
-                        public void onSuccess() {
-                            Log.d("rgbDevice","1 success");
-                        }
-                    });
-
-                    TuyaHomeSdk.newDeviceInstance(list.get(position).devId).publishDps("{\"3\" :\"500\"}", new IResultCallback() {
-                        @Override
-                        public void onError(String code, String error) {
-                            Log.d("rgbDevice","3 "+error);
-                        }
-
-                        @Override
-                        public void onSuccess() {
-                            Log.d("rgbDevice","3 success");
-                        }
-                    });
-
-                    TuyaHomeSdk.newDeviceInstance(list.get(position).devId).publishDps("{\"4\" :\"500\"}", new IResultCallback() {
-                        @Override
-                        public void onError(String code, String error) {
-                            Log.d("rgbDevice","4 "+error);
-                        }
-
-                        @Override
-                        public void onSuccess() {
-                            Log.d("rgbDevice","4 success");
-                        }
-                    });
-
-
             }
             else {
-                Toast.makeText(finalConvertView.getContext(),"offline "+list.get(position).devId,Toast.LENGTH_SHORT).show();
+                Toast.makeText(finalConvertView.getContext(),"offline",Toast.LENGTH_SHORT).show();
                 net.setImageResource(android.R.drawable.ic_delete);
             }
         });
 
         return convertView;
-
     }
 }

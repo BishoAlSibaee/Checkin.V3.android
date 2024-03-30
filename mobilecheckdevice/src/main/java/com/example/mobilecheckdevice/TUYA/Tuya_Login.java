@@ -12,6 +12,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.mobilecheckdevice.LoadingDialog;
 import com.tuya.smart.android.user.api.ILoginCallback;
 import com.tuya.smart.android.user.bean.User;
 import com.tuya.smart.home.sdk.TuyaHomeSdk;
@@ -45,7 +46,7 @@ public class Tuya_Login extends AppCompatActivity {
 
     public void goLogIn()
     {
-        final com.example.mobilecheckdevice.lodingDialog d = new com.example.mobilecheckdevice.lodingDialog(act);
+        final LoadingDialog d = new LoadingDialog(act);
         String country_text , email_text , password_text ;
 
         if (Country.getText().toString().length()>0)

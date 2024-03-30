@@ -18,7 +18,7 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
-import com.example.mobilecheckdevice.lodingDialog;
+import com.example.mobilecheckdevice.LoadingDialog;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -84,7 +84,7 @@ public class UserGatewayListAdapter extends  RecyclerView.Adapter<UserGatewayLis
                         @Override
                         public void onClick(DialogInterface dialog, int which)
                         {
-                            final lodingDialog d = new lodingDialog(_holder.itemView.getContext());
+                            final LoadingDialog d = new LoadingDialog(_holder.itemView.getContext());
                             String url = "https://bait-elmoneh.online/hotel-service/setLockGatewayName.php";
                             StringRequest re = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
                                 @Override

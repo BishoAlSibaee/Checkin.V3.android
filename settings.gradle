@@ -1,2 +1,3 @@
-include ':hotelservicesstandalone',':app', ':laundryscreen', ':cleanup','mobilecheckdevice'
+include ':Server',':app', ':laundryscreen', ':HouseKeeping','mobilecheckdevice'
 include ':projectscontrol'
+

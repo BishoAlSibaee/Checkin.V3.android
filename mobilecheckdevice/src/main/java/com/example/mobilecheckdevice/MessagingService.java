@@ -26,59 +26,6 @@ public class MessagingService extends FirebaseMessagingService {
     public void onMessageReceived(@NonNull RemoteMessage remoteMessage) {
         if (remoteMessage.getData().get("title") != null ) {
             Log.d("MessageRecieved" , remoteMessage.getData().get("title"));
-            String title =  remoteMessage.getData().get("title");
-            if (title.equals("poweroff")) {
-                int roomNumber;
-                if (remoteMessage.getData().get("room") != null) {
-                    roomNumber = Integer.parseInt(remoteMessage.getData().get("room").toString());
-                    ROOM r = ROOM.searchRoomInList(MyApp.ROOMS,roomNumber);
-                    ROOM.powerOffRoom(r,MyApp.app);
-                }
-            }
-//            else if (title.equals("checkin")) {
-//                String room = remoteMessage.getData().get("room") ;
-//                for (int i = 0; i<Rooms.ROOMS.size(); i++) {
-//                    if (room.equals(String.valueOf(Rooms.ROOMS.get(i).RoomNumber))) {
-//                        Rooms.checkInModeRoom(Rooms.ROOMS.get(i));
-//                    }
-//                }
-//            }
-            else if(title.equals("opendoor")) {
-                String room = remoteMessage.getData().get("room") ;
-                for (int i = 0; i< Rooms.ROOMS.size(); i++) {
-                    if (Rooms.ROOMS.get(i).RoomNumber == Integer.parseInt(room)) {
-                        Rooms.OpenTheDoor(Rooms.ROOMS.get(i), new RequestOrder() {
-                            @Override
-                            public void onSuccess(String token) {
-
-                            }
-
-                            @Override
-                            public void onFailed(String error) {
-
-                            }
-                        });
-                    }
-                }
-            }
-
-            else if (title.equals("poweron")) {
-                int roomNumber;
-                if (remoteMessage.getData().get("room") != null) {
-                    roomNumber = Integer.parseInt(remoteMessage.getData().get("room").toString());
-                    ROOM r = ROOM.searchRoomInList(MyApp.ROOMS,roomNumber);
-                    ROOM.powerOnRoom(r,MyApp.app);
-                }
-            }
-
-            else if (title.equals("bycard")) {
-                int roomNumber;
-                if (remoteMessage.getData().get("room") != null) {
-                    roomNumber = Integer.parseInt(remoteMessage.getData().get("room").toString());
-                    ROOM r = ROOM.searchRoomInList(MyApp.ROOMS,roomNumber);
-                    ROOM.powerByCard(r,MyApp.app);
-                }
-            }
         }
     }
 

@@ -4,17 +4,20 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/teal_700"
+    android:background="@color/colorPrimary"
     android:orientation="vertical"
     android:padding="10dp"
-    tools:context=".RoomTemplates">
+    tools:context=".ProjectTemplates">
 
     <TextView
         android:id="@+id/textView26"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@color/wight"
         android:gravity="center"
-        android:text="@string/roomsTemplate"
+        android:paddingTop="3dp"
+        android:paddingBottom="3dp"
+        android:text="@string/templates"
         android:textColor="@color/lightGray"
         android:textSize="20sp"
         android:textStyle="bold" />
@@ -22,22 +25,34 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="20dp"
         android:orientation="horizontal">
 
         <Button
             android:id="@+id/button32"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="add new template"
+            android:background="@drawable/button_trans"
+            android:drawableEnd="@android:drawable/ic_menu_add"
+            android:drawablePadding="10dp"
             android:onClick="addNewTemplate"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
+            android:text="@string/addTemplate"
             android:textAllCaps="false" />
     </LinearLayout>
 
     <LinearLayout
         android:id="@+id/templatesLayout"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:orientation="vertical"></LinearLayout>
+        android:layout_height="match_parent"
+        android:layout_marginTop="20dp"
+        android:background="@color/wight"
+        android:orientation="vertical">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/templatesRecycler"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+    </LinearLayout>
 </LinearLayout>

@@ -1,6 +1,7 @@
 package com.example.mobilecheckdevice;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -15,12 +16,11 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
+import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.example.mobilecheckdevice.Interface.RequestCallback;
 import com.tuya.smart.android.user.api.ILoginCallback;
 import com.tuya.smart.android.user.bean.User;
 import com.tuya.smart.home.sdk.TuyaHomeSdk;
@@ -38,155 +38,118 @@ import java.util.List;
 import java.util.Map;
 
 public class Login extends AppCompatActivity {
-    private Spinner PROJECTS_SPINNER, homes;
+    private Spinner PROJECTS_SPINNER;
     private String[] Names ;
-    private Activity act = this ;
-    private String projectsUrl = "https://ratco-solutions.com/Checkin/getProjects.php";
-    private String projectLoginUrl = "users/loginProject" ;
+    private Activity act;
+    private final String projectLoginUrl = "users/loginProject" ;
     private EditText password ;
-    static HotelDB THEHOTELDB ;
-    private List<HomeBean> Homs;
-    public static HomeBean THEHOME ;
-    private String COUNTRY_CODE = "966";
+    static HotelDB THE_HOTEL_DB;
+    private List<HomeBean> Homes;
     List<PROJECT> projects ;
     PROJECT THE_PROJECT ;
     SharedPreferences pref ;
     SharedPreferences.Editor editor ;
-    String projectName , tuyaUser , tuyaPassword , lockUser , lockPassword ,Device_ID , Device_Name ;
+    String projectName , tuyaUser , tuyaPassword , lockUser , lockPassword;
+    RequestQueue Q;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.login);
+        act = this ;
+        Q = Volley.newRequestQueue(act);
         PROJECTS_SPINNER = findViewById(R.id.spinner);
-        homes = findViewById(R.id.spinner2);
         pref = getSharedPreferences("MyProject", MODE_PRIVATE);
         editor = getSharedPreferences("MyProject", MODE_PRIVATE).edit();
-        THEHOTELDB = new HotelDB(act);
+        THE_HOTEL_DB = new HotelDB(act);
         projects = new ArrayList<>();
-        getProjects(new loginCallback() {
+        getProjects(new RequestCallback() {
             @Override
             public void onSuccess() {
                 goNext();
             }
-
             @Override
-            public void onFailed() {
-                Toast.makeText(act,"get projects failed",Toast.LENGTH_LONG).show();
+            public void onFail(String error) {
+                AlertDialog.Builder b = new AlertDialog.Builder(act);
+                b.setTitle("Get Projects Failed").setMessage("getting projects failed ..\n"+error+" \ntry again ??")
+                        .setNegativeButton("Cancel", (dialogInterface, i) -> act.finish()).setPositiveButton("Yes", (dialogInterface, i) -> {
+                            act.finish();
+                            Intent intent = new Intent(act,Login.class);
+                            startActivity(intent);
+                        }).create().show();
             }
         });
+//        TuyaHomeSdk.getUserInstance().sendVerifyCodeWithUserName("basharse@hotmail.com", "", "966", 1, new IResultCallback() {
+//            @Override
+//            public void onError(String code, String error) {
+//                Log.d("makeNweUser",code+" "+error);
+//            }
+//
+//            @Override
+//            public void onSuccess() {
+//                Log.d("makeNweUser","check email");
+//            }
+//        });
+//        TuyaHomeSdk.getUserInstance().registerAccountWithEmail("966", "basharse@hotmail.com", "Ratco@", "886811", new IRegisterCallback() {
+//            @Override
+//            public void onSuccess(User user) {
+//                Log.d("makeNweUser","user created");
+//            }
+//
+//            @Override
+//            public void onError(String code, String error) {
+//                Log.d("makeNweUser",code+" "+error);
+//            }
+//        });
     }
 
-    private void getProjects(loginCallback callback) {
-        StringRequest re = new StringRequest(Request.Method.POST, projectsUrl , new Response.Listener<String>() {
-            @Override
-            public void onResponse(String response) {
-                Log.d("getProjectsResp" , response);
-                if (response != null ) {
-                    try {
-                        JSONArray arr = new JSONArray(response);
-                        Names = new String[arr.length()];
-                        for(int i=0;i<arr.length();i++) {
-                            JSONObject row = arr.getJSONObject(i);
-                            projects.add(new PROJECT(row.getInt("id"),row.getString("projectName"),row.getString("city"),row.getString("salesman"),row.getString("TuyaUser"),row.getString("TuyaPassword"),row.getString("LockUser"),row.getString("LockPassword"),row.getString("url")));
-                            Names[i] = row.getString("projectName");
-                        }
+    /* 1
+    * getting the registered projects in the main projects table */
+    private void getProjects(RequestCallback callback) {
+        String projectsUrl = "https://ratco-solutions.com/Checkin/getProjects.php";
+        StringRequest re = new StringRequest(Request.Method.POST, projectsUrl, response -> {
+            Log.d("getProjectsResp" , response);
+            if (response != null ) {
+                try {
+                    JSONArray arr = new JSONArray(response);
+                    Names = new String[arr.length()];
+                    for(int i=0;i<arr.length();i++) {
+                        JSONObject row = arr.getJSONObject(i);
+                        projects.add(new PROJECT(row.getInt("id"),row.getString("projectName"),row.getString("city"),row.getString("salesman"),row.getString("TuyaUser"),row.getString("TuyaPassword"),row.getString("LockUser"),row.getString("LockPassword"),row.getString("url")));
+                        Names[i] = row.getString("projectName");
                     }
-                    catch (JSONException e) {
-                        e.printStackTrace();
-                        Log.d("getProjectsResp" , e.toString());
-                        callback.onFailed();
-                    }
-                    ArrayAdapter<String> adapter = new ArrayAdapter<String>(act,R.layout.spinners_item,Names);
-                    PROJECTS_SPINNER.setAdapter(adapter);
-                    PROJECTS_SPINNER.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-                        @Override
-                        public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-                            THE_PROJECT = projects.get(PROJECTS_SPINNER.getSelectedItemPosition());
-                            MyApp.THE_PROJECT = projects.get(PROJECTS_SPINNER.getSelectedItemPosition());
-                        }
-
-                        @Override
-                        public void onNothingSelected(AdapterView<?> adapterView) {
-
-                        }
-                    });
-                    callback.onSuccess();
                 }
+                catch (JSONException e) {
+                    e.printStackTrace();
+                    Log.d("getProjectsResp" , e.toString());
+                    callback.onFail(e.getMessage());
+                }
+                ArrayAdapter<String> adapter = new ArrayAdapter<>(act,R.layout.spinners_item,Names);
+                PROJECTS_SPINNER.setAdapter(adapter);
+                PROJECTS_SPINNER.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                    @Override
+                    public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                        THE_PROJECT = projects.get(PROJECTS_SPINNER.getSelectedItemPosition());
+                        MyApp.THE_PROJECT = projects.get(PROJECTS_SPINNER.getSelectedItemPosition());
+                    }
+
+                    @Override
+                    public void onNothingSelected(AdapterView<?> adapterView) {
+
+                    }
+                });
+                callback.onSuccess();
             }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Log.d("getProjectsResp" , error.toString());
-                callback.onFailed();
-            }
+        }, error -> {
+            Log.d("getProjectsResp" , error.toString());
+            callback.onFail(error.toString());
         });
-        Volley.newRequestQueue(act).add(re);
+        Q.add(re);
     }
 
-    public void LogIn(View view) {
-        if (THE_PROJECT != null ) {
-            Log.d("projectIs" ,THE_PROJECT.projectName+" "+THE_PROJECT.TuyaUser+" "+THE_PROJECT.TuyaPassword);
-            final lodingDialog loading = new lodingDialog(act);
-            final String pass = password.getText().toString();
-            StringRequest re = new StringRequest(Request.Method.POST, THE_PROJECT.url + projectLoginUrl, new Response.Listener<String>() {
-                @Override
-                public void onResponse(String response) {
-                    Log.d("projectIs" ,response);
-                    loading.stop();
-                    if (response != null) {
-                        try {
-                            JSONObject resp = new JSONObject(response);
-                            if (resp.getString("result").equals("success")) {
-                                Toast.makeText(act,"Login Success",Toast.LENGTH_LONG).show();
-                                editor.putString("projectName" , THE_PROJECT.projectName);
-                                editor.putString("tuyaUser" , THE_PROJECT.TuyaUser);
-                                editor.putString("tuyaPassword" , THE_PROJECT.TuyaPassword);
-                                editor.putString("lockUser" , THE_PROJECT.LockUser);
-                                editor.putString("lockPassword" , THE_PROJECT.LockPassword);
-                                editor.putString("url" , THE_PROJECT.url);
-                                editor.apply();
-                                Device_ID = pref.getString("Device_Id", null);
-                                MyApp.Device_Id = Device_ID ;
-                                Device_Name = pref.getString("Device_Name", null);
-                                MyApp.Device_Name = Device_Name ;
-                                MyApp.my_token = resp.getString("token");
-                                THE_PROJECT = projects.get(PROJECTS_SPINNER.getSelectedItemPosition());
-                                MyApp.THE_PROJECT = projects.get(PROJECTS_SPINNER.getSelectedItemPosition());
-                                Log.d("GettingRooms","start "+MyApp.THE_PROJECT.url);
-                                logInFunction(THE_PROJECT);
-                            }
-                            else {
-                                Toast.makeText(act,"Login Failed " + resp.getString("error"),Toast.LENGTH_LONG).show();
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                            Toast.makeText(act,"Login Failed " + e,Toast.LENGTH_LONG).show();
-                        }
-                    }
-                }
-            }, new Response.ErrorListener() {
-                @Override
-                public void onErrorResponse(VolleyError error) {
-                    Log.d("projectIs" ,error.toString());
-                    loading.stop();
-                }
-            }) {
-                @Override
-                protected Map<String, String> getParams() throws AuthFailureError {
-                    Map<String,String> par = new HashMap<>();
-                    par.put( "password" , pass ) ;
-                    par.put( "project_name" , THE_PROJECT.projectName ) ;
-                    return par;
-                }
-            };
-            Volley.newRequestQueue(act).add(re);
-        }
-        else {
-            Toast.makeText(act,"please select project",Toast.LENGTH_LONG).show();
-        }
-    }
-
+    /* 2
+    * if there is project saved in shared preferences save it and go to tuya login
+    * if not show the login form */
     private void goNext() {
         projectName = pref.getString("projectName", null);
         tuyaUser = pref.getString("tuyaUser", null);
@@ -202,37 +165,22 @@ public class Login extends AppCompatActivity {
         }
         else {
             for (int i=0;i<projects.size();i++) {
-                Log.d("projects" , projects.get(i).projectName + " " +projectName);
                 if (projectName.equals(projects.get(i).projectName)) {
                     THE_PROJECT = projects.get(i);
-                    Device_ID = pref.getString("Device_Id", null);
-                    MyApp.Device_Id = Device_ID;
-                    Device_Name = pref.getString("Device_Name", null);
-                    MyApp.Device_Name = Device_Name;
                     MyApp.THE_PROJECT = projects.get(i);
                     logInFunction(THE_PROJECT);
-//                    if (Device_ID == null && Device_Name == null) {
-//                        addControlDevice(new loginCallback() {
-//                            @Override
-//                            public void onSuccess() {
-//                                logInFunction(THE_PROJECT);
-//                            }
-//                            @Override
-//                            public void onFailed() {
-//                                Toast.makeText(act,"Add Device Failed",Toast.LENGTH_LONG).show();
-//                            }
-//                        });
-//                    }
-//                    else {
-//                        logInFunction(THE_PROJECT);
-//                    }
+                    break;
                 }
             }
         }
     }
 
+    /* 3
+    * login to tuya and get the registered homes and get the the project homes
+    * if he did not find project homes , make one */
     void logInFunction(PROJECT p) {
-        Log.d("tuyaLoginResp", p.TuyaUser +" "+p.TuyaPassword);
+        MyApp.ProjectHomes.clear();
+        String COUNTRY_CODE = "966";
         TuyaHomeSdk.getUserInstance().loginWithEmail(COUNTRY_CODE,p.TuyaUser ,p.TuyaPassword , new ILoginCallback() {
             @Override
             public void onSuccess (User user) {
@@ -241,29 +189,30 @@ public class Login extends AppCompatActivity {
                 TuyaHomeSdk.getHomeManagerInstance().queryHomeList(new ITuyaGetHomeListCallback() {
                     @Override
                     public void onError(String errorCode, String error) {
-                        Toast.makeText(act,"TUya Login Failed" + error,Toast.LENGTH_LONG).show();
+                        Log.d("tuyaLoginResp",error+" "+errorCode);
+                        AlertDialog.Builder b = new AlertDialog.Builder(act);
+                        b.setTitle("Tuya Login Error")
+                                .setMessage("login to tuya failed \n "+error+" \n try again ?")
+                                .setNegativeButton("Cancel", (dialogInterface, i) -> act.finish())
+                                .setPositiveButton("Yes", (dialogInterface, i) -> logInFunction(MyApp.THE_PROJECT))
+                                .create().show();
                     }
                     @Override
                     public void onSuccess(List<HomeBean> homeBeans) {
                         MyApp.homeBeans = homeBeans ;
-                        Homs = homeBeans ;
-                        for(int i=0;i<Homs.size();i++) {
-                            Log.d("tuyaLoginResp",Homs.get(i).getName());
+                        Homes = homeBeans ;
+                        for(int i = 0; i< Homes.size(); i++) {
+                            Log.d("tuyaLoginResp", Homes.get(i).getName());
                             if (MyApp.THE_PROJECT.projectName.equals("apiTest")) {
-                                if (Homs.get(i).getName().equals("Test")) {
-                                    THEHOME = Homs.get(i) ;
-                                    MyApp.HOME = Homs.get(i);
-                                    break;
+                                if (Homes.get(i).getName().contains("Test")) {
+                                    MyApp.ProjectHomes.add(new CheckInHome(Homes.get(i),null));
                                 }
                             }
-                            else if (MyApp.THE_PROJECT.projectName.contains(Homs.get(i).getName())) {
-                                THEHOME = Homs.get(i) ;
-                                MyApp.HOME = Homs.get(i);
-                                break;
+                            else if (Homes.get(i).getName().contains(MyApp.THE_PROJECT.projectName)) {
+                                MyApp.ProjectHomes.add(new CheckInHome(Homes.get(i),null));
                             }
                         }
-                        if (THEHOME != null ) {
-                            Log.d("homeFind" , "found "+THEHOME.getName());
+                        if (MyApp.ProjectHomes.size() > 0 ) {
                             Intent i = new Intent(act , Rooms.class);
                             act.startActivity(i);
                             act.finish();
@@ -272,8 +221,7 @@ public class Login extends AppCompatActivity {
                             TuyaHomeSdk.getHomeManagerInstance().createHome(MyApp.THE_PROJECT.projectName, 0, 0,"ksa",new ArrayList<>(), new ITuyaHomeResultCallback() {
                                 @Override
                                 public void onSuccess(HomeBean bean) {
-                                    THEHOME = bean ;
-                                    MyApp.HOME = bean;
+                                    MyApp.ProjectHomes.add(new CheckInHome(bean,null));
                                     Intent i = new Intent(act , Rooms.class);
                                     act.startActivity(i);
                                     act.finish();
@@ -292,56 +240,69 @@ public class Login extends AppCompatActivity {
             @Override
             public void onError (String code, String error) {
                 Log.d("tuyaLoginResp",error+" "+code);
+                AlertDialog.Builder b = new AlertDialog.Builder(act);
+                b.setTitle("Tuya Login Error")
+                        .setMessage("login to tuya failed \n "+error+" \n try again ?")
+                        .setNegativeButton("Cancel", (dialogInterface, i) -> act.finish()).setPositiveButton("Yes", (dialogInterface, i) -> logInFunction(MyApp.THE_PROJECT)).create().show();
             }
         });
+    }
+
+    /*login to new project and save project information to shared preferences then login to tuya and get project homes*/
+    public void LogIn(View view) {
+        if (THE_PROJECT != null ) {
+            final LoadingDialog loading = new LoadingDialog(act);
+            final String pass = password.getText().toString();
+            StringRequest re = new StringRequest(Request.Method.POST, THE_PROJECT.url + projectLoginUrl, response -> {
+                Log.d("projectIs" ,response);
+                loading.stop();
+                if (response != null) {
+                    try {
+                        JSONObject resp = new JSONObject(response);
+                        if (resp.getString("result").equals("success")) {
+                            Toast.makeText(act,"Login Success",Toast.LENGTH_LONG).show();
+                            editor.putString("projectName" , THE_PROJECT.projectName);
+                            editor.putString("tuyaUser" , THE_PROJECT.TuyaUser);
+                            editor.putString("tuyaPassword" , THE_PROJECT.TuyaPassword);
+                            editor.putString("lockUser" , THE_PROJECT.LockUser);
+                            editor.putString("lockPassword" , THE_PROJECT.LockPassword);
+                            editor.putString("url" , THE_PROJECT.url);
+                            editor.apply();
+                            MyApp.my_token = resp.getString("token");
+                            THE_PROJECT = projects.get(PROJECTS_SPINNER.getSelectedItemPosition());
+                            MyApp.THE_PROJECT = projects.get(PROJECTS_SPINNER.getSelectedItemPosition());
+                            Log.d("GettingRooms","start "+MyApp.THE_PROJECT.url);
+                            logInFunction(THE_PROJECT);
+                        }
+                        else {
+                            new MessageDialog(resp.getString("error"),"Login Failed ",act);
+                        }
+                    } catch (JSONException e) {
+                        new MessageDialog(e.getMessage(),"Login Failed ",act);
+                    }
+                }
+            }, error -> {
+                loading.stop();
+                new MessageDialog(error.toString(),"Login Failed ",act);
+            }) {
+                @Override
+                protected Map<String, String> getParams() {
+                    Map<String,String> par = new HashMap<>();
+                    par.put( "password" , pass ) ;
+                    par.put( "project_name" , THE_PROJECT.projectName ) ;
+                    return par;
+                }
+            };
+            Q.add(re);
+        }
+        else {
+            new MessageDialog("please select project","Select Project",act);
+        }
     }
 
     public void Continue(View view) {
         Intent i = new Intent(act , Rooms.class);
         act.startActivity(i);
-    }
-
-    public void addControlDevice(loginCallback callback) {
-        StringRequest re = new StringRequest(Request.Method.GET, THE_PROJECT.url + "roomsManagement/addControlDevice", new Response.Listener<String>() {
-            @Override
-            public void onResponse(String response) {
-                Log.d("addControlDevice" , response);
-                if (response != null) {
-                    try {
-                        JSONObject resp = new JSONObject(response);
-                        if (resp.getString("result").equals("success")) {
-                            Log.d("addControlDevice" , resp.getString("result"));
-                            JSONObject device = resp.getJSONObject("device");
-                            editor.putString("Device_Id" , String.valueOf(device.getInt("id")));
-                            editor.putString("Device_Name" , device.getString("name"));
-                            MyApp.Device_Id = String.valueOf(device.getInt("id"));
-                            MyApp.Device_Name = device.getString("name");
-                            editor.apply();
-                            callback.onSuccess();
-                        }
-                        else {
-                            Log.d("addControlDevice" , resp.getString("error"));
-                            callback.onFailed();
-                        }
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                        Log.d("addControlDevice" , e.toString());
-                        callback.onFailed();
-                    }
-                }
-                else {
-                    Log.d("addControlDevice" , "response null");
-                    callback.onFailed();
-                }
-            }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Log.d("addControlDevice" , error.toString());
-                callback.onFailed();
-            }
-        });
-        Volley.newRequestQueue(act).add(re);
     }
 }
 

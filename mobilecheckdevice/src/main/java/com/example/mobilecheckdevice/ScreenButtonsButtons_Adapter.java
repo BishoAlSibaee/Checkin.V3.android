@@ -60,17 +60,17 @@ public class ScreenButtonsButtons_Adapter extends RecyclerView.Adapter<ScreenBut
                                 //ToastMaker.MakeToast("please enter button name",holder.itemView.getContext());
                             }
                             else {
-                                if (ScreenButtons.SelectedSwitch != null ) {
-                                    String xx = ScreenButtons.SelectedSwitch.getName().split("Switch")[1];
-//                                    if (FullscreenActivity.lightsDB.insertButtonToScreen(Integer.parseInt(xx),Integer.parseInt(list.get(position)),input.getText().toString())) {
-//                                        //ToastMaker.MakeToast("button added successfully",holder.itemView.getContext());
-//                                        dialog.dismiss();
-//                                    }
-//                                    else {
-//                                        //ToastMaker.MakeToast("error .. not saved",holder.itemView.getContext());
-//                                    }
-
-                                }
+//                                if (ScreenButtons.SelectedSwitch != null ) {
+//                                    String xx = ScreenButtons.SelectedSwitch.getName().split("Switch")[1];
+////                                    if (FullscreenActivity.lightsDB.insertButtonToScreen(Integer.parseInt(xx),Integer.parseInt(list.get(position)),input.getText().toString())) {
+////                                        //ToastMaker.MakeToast("button added successfully",holder.itemView.getContext());
+////                                        dialog.dismiss();
+////                                    }
+////                                    else {
+////                                        //ToastMaker.MakeToast("error .. not saved",holder.itemView.getContext());
+////                                    }
+//
+//                                }
                             }
                         }
                     }).create().show();

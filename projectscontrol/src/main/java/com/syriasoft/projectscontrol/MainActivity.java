@@ -31,6 +31,11 @@ import com.syriasoft.projectscontrol.RequestCallBacks.FloorsCallback;
 import com.syriasoft.projectscontrol.RequestCallBacks.RequestCallback;
 import com.syriasoft.projectscontrol.RequestCallBacks.RoomsCallback;
 import com.syriasoft.projectscontrol.RequestCallBacks.ServerDevicesCallBack;
+import com.syriasoft.projectscontrol.RequestCallBacks.TuyaUserCallback;
+import com.tuya.smart.android.user.api.IRegisterCallback;
+import com.tuya.smart.android.user.bean.User;
+import com.tuya.smart.home.sdk.TuyaHomeSdk;
+import com.tuya.smart.sdk.api.IResultCallback;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -65,8 +70,19 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         setActivity();
-        getActiveProjects();
+        //getActiveProjects();
         Thread.setDefaultUncaughtExceptionHandler(new DefaultExceptionHandler(this));
+        createTuyaAccount("checkinmaden@gmail.com", "Ratco@RDH", "350860", new TuyaUserCallback() {
+            @Override
+            public void onSuccess(User user) {
+
+            }
+
+            @Override
+            public void onFail(String error) {
+
+            }
+        });
     }
 
     void setActivity() {
@@ -281,5 +297,46 @@ public class MainActivity extends AppCompatActivity {
     public void goToProjects(View view) {
         Intent i = new Intent(act,Projects.class);
         startActivity(i);
+    }
+
+    void sendTuyaVerificationCodeToEmail(String email, RequestCallback callback) {
+        TuyaHomeSdk.getUserInstance().sendVerifyCodeWithUserName(email, "", "966", 1, new IResultCallback() {
+            @Override
+            public void onError(String code, String error) {
+                callback.onFailed(error);
+            }
+
+            @Override
+            public void onSuccess() {
+                callback.onSuccess("sent");
+            }
+        });
+    }
+    static void verifyTuyaVerificationCode(String email,String code , RequestCallback callback) {
+        TuyaHomeSdk.getUserInstance().checkCodeWithUserName(email, "", "966", code, 1, new IResultCallback() {
+            @Override
+            public void onError(String code, String error) {
+                callback.onFailed(error);
+            }
+
+            @Override
+            public void onSuccess() {
+                callback.onSuccess("done");
+            }
+        });
+    }
+
+    static void createTuyaAccount(String email, String password, String code, TuyaUserCallback callback) {
+        TuyaHomeSdk.getUserInstance().registerAccountWithEmail("966", email, password, code, new IRegisterCallback() {
+            @Override
+            public void onSuccess(User user) {
+                callback.onSuccess(user);
+            }
+
+            @Override
+            public void onError(String code, String error) {
+                callback.onFail(error);
+            }
+        });
     }
 }

@@ -15,9 +15,9 @@ import java.util.List;
 
 public class ScreenButtons_Adapter extends RecyclerView.Adapter<ScreenButtons_Adapter.HOLDER> {
 
-    List<ScreenButton> list ;
+    List<SwitchButton> list ;
 
-    ScreenButtons_Adapter(List<ScreenButton> list) {
+    ScreenButtons_Adapter(List<SwitchButton> list) {
         this.list = list ;
     }
 
@@ -31,7 +31,7 @@ public class ScreenButtons_Adapter extends RecyclerView.Adapter<ScreenButtons_Ad
 
     @Override
     public void onBindViewHolder(@NonNull HOLDER holder, @SuppressLint("RecyclerView") int position) {
-        holder.switche.setText(list.get(position).Switch+"");
+        //holder.switche.setText(list.get(position).Switch+"");
         holder.button.setText(list.get(position).button+"");
         holder.name.setText(list.get(position).name);
         holder.itemView.setOnLongClickListener(new View.OnLongClickListener() {
@@ -51,7 +51,7 @@ public class ScreenButtons_Adapter extends RecyclerView.Adapter<ScreenButtons_Ad
                             public void onClick(DialogInterface dialog, int which) {
                                 //FullscreenActivity.lightsDB.deleteButtonFromScreen(list.get(position).Switch,list.get(position).button,list.get(position).name);
                                 //ScreenButtons.CurrentAdapter = new ScreenButtons_Adapter(FullscreenActivity.lightsDB.getScreenButtons());
-                                ScreenButtons.CurrentButtonsRecycler.setAdapter(ScreenButtons.CurrentAdapter);
+                                //ScreenButtons.CurrentButtonsRecycler.setAdapter(ScreenButtons.CurrentAdapter);
                             }
                         }).create().show();
                 return false;

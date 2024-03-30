@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 apply plugin: 'com.google.gms.google-services'
 
 android {
-    compileSdkVersion 30
+    compileSdkVersion 33
     buildToolsVersion "30.0.2"
 
     compileOptions {
@@ -13,7 +13,7 @@ android {
     defaultConfig {
         applicationId "com.syriasoft.hotelservices"
         minSdkVersion 23
-        targetSdkVersion 30
+        targetSdkVersion 33
         versionCode 2
         versionName "2.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -36,6 +36,20 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    signingConfigs {
+        debug {
+            storeFile file('MyKey.jks')
+            storePassword 'Bisho777'
+            keyAlias 'Bisho'
+            keyPassword 'Bisho777'
+        }
+        release {
+            storeFile file('MyKey.jks')
+            storePassword 'Bisho777'
+            keyAlias 'Bisho'
+            keyPassword 'Bisho777'
         }
     }
 }
@@ -64,7 +78,8 @@ dependencies {
     implementation 'com.alibaba:fastjson:1.1.67.android'
     implementation 'com.squareup.okhttp3:okhttp-urlconnection:3.14.9'
     implementation 'com.google.code.gson:gson:2.8.5'
-    implementation 'com.tuya.smart:tuyasmart:3.25.0'
+    //implementation 'com.tuya.smart:tuyasmart:3.25.0'
+    implementation 'com.tuya.smart:tuyasmart:4.0.3'
     implementation 'com.wang.avi:library:2.1.3'
     implementation 'com.mikhaellopez:circularimageview:4.2.0'
     implementation 'com.github.marcinmoskala:ArcSeekBar:0.31'

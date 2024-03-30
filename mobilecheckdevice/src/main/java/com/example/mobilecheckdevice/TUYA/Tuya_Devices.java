@@ -21,7 +21,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.mobilecheckdevice.R;
-import com.example.mobilecheckdevice.lodingDialog;
+import com.example.mobilecheckdevice.LoadingDialog;
 import com.tuya.smart.android.hardware.bean.HgwBean;
 import com.tuya.smart.home.sdk.TuyaHomeSdk;
 import com.tuya.smart.home.sdk.api.IGwSearchListener;
@@ -58,7 +58,7 @@ public class Tuya_Devices extends AppCompatActivity {
     public static ITuyaDevice AC ,  mDevice , zDevice[] , zDeviceX ,CurrentDevice ;
     public static ITuyaGateway mgate ;
     LinearLayout renameLayout ;
-    lodingDialog dd ;
+    LoadingDialog dd ;
     LinearLayoutManager  ll;
     RecyclerView devices ;
     public static DeviceBean ACbean , powerBean , zgatwayBean , zdeviceBean[] ;
@@ -101,7 +101,7 @@ public class Tuya_Devices extends AppCompatActivity {
 
     public void deviceSearch(View view)
     {
-        final lodingDialog d = new lodingDialog(act);
+        final LoadingDialog d = new LoadingDialog(act);
         ActivatorBuilder builder = new ActivatorBuilder()
                 .setSsid(selectedNetwork)
                 .setContext(this)
@@ -151,7 +151,7 @@ public class Tuya_Devices extends AppCompatActivity {
     {
         if (DeviceType.getSelectedItem().toString() != null )
         {
-            final lodingDialog d = new lodingDialog(act);
+            final LoadingDialog d = new LoadingDialog(act);
             CurrentDevice.renameDevice(DeviceType.getSelectedItem().toString(), new IResultCallback() {
                 @Override
                 public void onError(String code, String error)
@@ -180,7 +180,7 @@ public class Tuya_Devices extends AppCompatActivity {
 
     public void searchGatway(View view)
     {
-        final lodingDialog d = new lodingDialog(act);
+        final LoadingDialog d = new LoadingDialog(act);
         ITuyaGwSearcher mTuyaGwSearcher = TuyaHomeSdk.getActivatorInstance().newTuyaGwActivator().newSearcher();
         mTuyaGwSearcher.registerGwSearchListener(new IGwSearchListener()
         {
@@ -296,7 +296,7 @@ public class Tuya_Devices extends AppCompatActivity {
 
     public void searchZDevice(View view)
     {
-        lodingDialog d = new lodingDialog(act);
+        LoadingDialog d = new LoadingDialog(act);
         /*TuyaGwSubDevActivatorBuilder builder = new TuyaGwSubDevActivatorBuilder()
                 .setDevId(Tuya_Devices.zgatwayBean.devId)
                 .setTimeOut(100)
@@ -339,7 +339,7 @@ public class Tuya_Devices extends AppCompatActivity {
 
     public void searchWifiNetworks(View view)
     {
-        dd = new lodingDialog(act) ;
+        dd = new LoadingDialog(act) ;
         mainWifi.startScan();
     }
 
