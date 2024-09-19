@@ -1,13 +1,15 @@
-apply plugin: 'com.android.application'
-apply plugin: 'com.google.gms.google-services'
+plugins {
+    id 'com.android.application'
+    id 'com.google.gms.google-services'
+}
 
 android {
-    compileSdkVersion 30
+    compileSdkVersion 33
 
     defaultConfig {
         applicationId "com.example.mobilecheckdevice"
         minSdkVersion 23
-        targetSdkVersion 30
+        targetSdkVersion 33
         versionCode 1
         versionName "1.0"
 
@@ -46,6 +48,7 @@ android {
             keyPassword 'Bisho777'
         }
     }
+    namespace 'com.example.mobilecheckdevice'
 }
 
 dependencies {
@@ -80,6 +83,7 @@ dependencies {
 }
 
 repositories {
+    maven { url 'https://repo1.maven.org/maven2' }
     mavenLocal()
     jcenter()
     maven { url 'https://maven-other.tuya.com/repository/maven-releases/' }

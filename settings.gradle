@@ -1,3 +1,4 @@
-include ':Server',':app', ':laundryscreen', ':HouseKeeping','mobilecheckdevice'
+include ':Server',':app', ':HouseKeeping','mobilecheckdevice'
 include ':projectscontrol'
-
+//, ':laundryscreen'
+include ':checkin'

@@ -1,6 +1,6 @@
-package com.example.hotelservicesstandalone.Classes.Interfaces;
+package com.syriasoft.checkin.Classes.Interfaces;
 
-import com.example.hotelservicesstandalone.Classes.Property.Building;
+import com.syriasoft.checkin.Classes.Property.Building;
 
 import java.util.List;
 

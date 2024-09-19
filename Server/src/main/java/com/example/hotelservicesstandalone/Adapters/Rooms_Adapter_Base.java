@@ -1,4 +1,4 @@
-package com.example.hotelservicesstandalone;
+package com.example.hotelservicesstandalone.Adapters;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -9,6 +9,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.example.hotelservicesstandalone.Classes.Property.Room;
+import com.example.hotelservicesstandalone.R;
 
 import java.util.List;
 
@@ -61,7 +62,7 @@ public class Rooms_Adapter_Base extends BaseAdapter
             ac.setImageResource(R.drawable.ac);
         }
         if (room.isHasPower()) {
-            power.setImageResource(R.drawable.power);
+            power.setImageResource(R.drawable.power_);
         }
         if (room.isHasGateway()) {
             gateway.setImageResource(R.drawable.gateway);

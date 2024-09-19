@@ -1,10 +1,9 @@
-package com.example.hotelservicesstandalone.Classes.Property;
+package com.syriasoft.checkin.Classes.Property;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.StringRequest;
-import com.example.hotelservicesstandalone.Classes.Interfaces.GetBuildingsCallback;
-import com.example.hotelservicesstandalone.MyApp;
+import com.syriasoft.checkin.Classes.Interfaces.GetBuildingsCallback;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -46,8 +45,8 @@ public class Building {
         this.floorsList = floors;
     }
 
-    public static void getBuildings(RequestQueue queue,GetBuildingsCallback result) {
-        queue.add(new StringRequest(Request.Method.GET, MyApp.My_PROJECT.url+getBuildingsUrl, response -> {
+    public static void getBuildings(RequestQueue queue,GetBuildingsCallback result,String projectUrl) {
+        queue.add(new StringRequest(Request.Method.GET, projectUrl+getBuildingsUrl, response -> {
             try {
                 List<Building> buildings = new ArrayList<>();
                 JSONArray arr = new JSONArray(response);

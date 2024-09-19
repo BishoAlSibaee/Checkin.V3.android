@@ -1,16 +1,16 @@
-package com.example.hotelservicesstandalone.Classes.Devices;
+package com.syriasoft.checkin.Classes.Devices;
 
 import android.util.Log;
 
 import androidx.annotation.NonNull;
 
-import com.example.hotelservicesstandalone.Classes.Enumes.DeviceTypes;
-import com.example.hotelservicesstandalone.Classes.Enumes.DpTypes;
-import com.example.hotelservicesstandalone.Classes.Interfaces.SetInitialValues;
-import com.example.hotelservicesstandalone.Classes.Interfaces.getDeviceDataCallback;
-import com.example.hotelservicesstandalone.Classes.Interfaces.getDeviceInfo;
-import com.example.hotelservicesstandalone.Classes.Property.Room;
-import com.example.hotelservicesstandalone.Classes.Tuya;
+import com.syriasoft.checkin.Classes.Enumes.DeviceTypes;
+import com.syriasoft.checkin.Classes.Enumes.DpTypes;
+import com.syriasoft.checkin.Classes.Interfaces.SetInitialValues;
+import com.syriasoft.checkin.Classes.Interfaces.getDeviceDataCallback;
+import com.syriasoft.checkin.Classes.Interfaces.getDeviceInfo;
+import com.syriasoft.checkin.Classes.Property.Room;
+import com.syriasoft.checkin.Classes.Tuya;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;

@@ -1,15 +1,16 @@
-package com.example.hotelservicesstandalone.Classes.Devices;
+package com.syriasoft.checkin.Classes.Devices;
 
+import android.content.Context;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
 
-import com.example.hotelservicesstandalone.Classes.Interfaces.ACListener;
-import com.example.hotelservicesstandalone.Classes.Interfaces.DeviceAction;
-import com.example.hotelservicesstandalone.Classes.Interfaces.Listen;
-import com.example.hotelservicesstandalone.Classes.Interfaces.SetFirebaseDevicesControl;
-import com.example.hotelservicesstandalone.Classes.Interfaces.SetInitialValues;
-import com.example.hotelservicesstandalone.Classes.Property.Room;
+import com.syriasoft.checkin.Classes.Interfaces.ACListener;
+import com.syriasoft.checkin.Classes.Interfaces.DeviceAction;
+import com.syriasoft.checkin.Classes.Interfaces.Listen;
+import com.syriasoft.checkin.Classes.Interfaces.SetFirebaseDevicesControl;
+import com.syriasoft.checkin.Classes.Interfaces.SetInitialValues;
+import com.syriasoft.checkin.Classes.Property.Room;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -277,7 +278,7 @@ public class CheckinAC extends CheckinDevice implements SetInitialValues, Listen
     }
 
     @Override
-    public void setFirebaseDevicesControl(DatabaseReference controlReference) {
+    public void setFirebaseDevicesControl(Context c,String projectUrl,DatabaseReference controlReference) {
         acControlListenerPower = controlReference.child(device.name).child("power").addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {

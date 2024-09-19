@@ -1,4 +1,4 @@
-package com.example.hotelservicesstandalone;
+package com.example.hotelservicesstandalone.Services;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -11,6 +11,8 @@ import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.example.hotelservicesstandalone.Classes.Property.Room;
+import com.example.hotelservicesstandalone.Login;
+import com.example.hotelservicesstandalone.MyApp;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 import com.tuya.smart.sdk.api.IResultCallback;

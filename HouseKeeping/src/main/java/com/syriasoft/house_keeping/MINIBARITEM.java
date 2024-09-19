@@ -1,4 +1,4 @@
-package com.syriasoft.housekeeping;
+package com.syriasoft.house_keeping;
 
 public class MINIBARITEM {
     int id;

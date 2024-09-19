@@ -1,4 +1,4 @@
-package com.example.hotelservicesstandalone;
+package com.example.hotelservicesstandalone.Services;
 
 import android.app.Service;
 import android.content.Intent;
@@ -7,10 +7,13 @@ import android.util.Log;
 
 import androidx.annotation.Nullable;
 
+import com.example.hotelservicesstandalone.Classes.ErrorRegister;
 import com.example.hotelservicesstandalone.Interface.RequestCallback;
+import com.example.hotelservicesstandalone.MyApp;
 
 import java.util.Calendar;
 import java.util.Locale;
+import java.util.Objects;
 
 public class ErrorService extends Service {
 
@@ -23,24 +26,26 @@ public class ErrorService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d("unExpectedCrash","service started");
-        String project = intent.getExtras().getString("project");
+        String project = Objects.requireNonNull(intent.getExtras()).getString("project");
         int room = intent.getExtras().getInt("room");
         String errorMsg = intent.getExtras().getString("errorMsg");
         String activityName = intent.getExtras().getString("activityName");
         long x = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
-        ErrorRegister.insertError(MyApp.app, project, room, x, 0, errorMsg, activityName, new RequestCallback() {
-            @Override
-            public void onSuccess() {
-                Log.d("unExpectedCrash","error inserted");
-                stopSelf();
-            }
+        if (MyApp.isInternetConnected) {
+            ErrorRegister.insertError(MyApp.app, project, room, x, 0, errorMsg, activityName, new RequestCallback() {
+                @Override
+                public void onSuccess() {
+                    Log.d("unExpectedCrash","error inserted");
+                    stopSelf();
+                }
 
-            @Override
-            public void onFail(String error) {
-                Log.d("unExpectedCrash",error);
-                stopSelf();
-            }
-        });
+                @Override
+                public void onFail(String error) {
+                    Log.d("unExpectedCrash",error);
+                    stopSelf();
+                }
+            });
+        }
         return super.onStartCommand(intent, flags, startId);
     }
 

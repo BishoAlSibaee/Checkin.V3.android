@@ -6,7 +6,6 @@ import android.os.Looper;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
@@ -113,6 +112,9 @@ public class ROOM {
     private DeviceBean SWITCH6_B;
     private DeviceBean SWITCH7_B;
     private DeviceBean SWITCH8_B;
+    private DeviceBean SHUTTER3;
+    private DeviceBean SHUTTER1;
+    private DeviceBean SHUTTER2;
     private DeviceBean LOCK_B ;
     private ITuyaDevice POWER;
     private ITuyaDevice AC;
@@ -133,6 +135,7 @@ public class ROOM {
     private ITuyaDevice LOCK ;
     private ITuyaGateway WiredZBGateway ;
     private LockObj Lock ;
+    HomeBean Home;
     ValueEventListener CleanupListener , LaundryListener , CheckoutListener , DNDListener , SetPointIntervalListener , DoorWarningListener , roomStatusListener , CheckInModeTimeListener , CheckOutModeTimeListener , ClientInListener ;
 
 
@@ -266,6 +269,30 @@ public class ROOM {
 
     public void setSWITCH8_B(DeviceBean SWITCH8_B) {
         this.SWITCH8_B = SWITCH8_B;
+    }
+
+    public DeviceBean getSHUTTER3() {
+        return SHUTTER3;
+    }
+
+    public DeviceBean getSHUTTER1() {
+        return SHUTTER1;
+    }
+
+    public DeviceBean getSHUTTER2() {
+        return SHUTTER2;
+    }
+
+    public void setSHUTTER1(DeviceBean SHUTTER1) {
+        this.SHUTTER1 = SHUTTER1;
+    }
+
+    public void setSHUTTER2(DeviceBean SHUTTER2) {
+        this.SHUTTER2 = SHUTTER2;
+    }
+
+    public void setSHUTTER3(DeviceBean SHUTTER3) {
+        this.SHUTTER3 = SHUTTER3;
     }
 
     public void setSWITCH5(ITuyaDevice SWITCH5) {
@@ -506,7 +533,7 @@ public class ROOM {
         }
     }
 
-    void setDoorSensorStatus(String id,String status,Context c) {
+    void setDoorSensorStatus(final String id, final String status, Context c) {
         String url = MyApp.THE_PROJECT.url + "roomsManagement/modifyRoomDoorSensorInstalled";
         StringRequest tabR = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
             @Override
@@ -522,7 +549,7 @@ public class ROOM {
                     }
                 } catch (JSONException e) {
                     e.printStackTrace();
-                    Log.e("doorSensor" , "doorSensor update failed "+e.toString());
+                    Log.e("doorSensor" , "doorSensor update failed "+e);
                 }
             }
         }, new Response.ErrorListener() {
@@ -533,8 +560,8 @@ public class ROOM {
         })
         {
             @Override
-            protected Map<String, String> getParams() throws AuthFailureError {
-                Map<String,String> Params = new HashMap<String,String>();
+            protected Map<String, String> getParams()  {
+                Map<String,String> Params = new HashMap<>();
                 Params.put("room_id",id);
                 Params.put("room_status" , status);
                 return Params;
@@ -543,7 +570,7 @@ public class ROOM {
         Volley.newRequestQueue(c).add(tabR);
     }
 
-    void setServiceSwitchStatus(String id,String status,Context c) {
+    void setServiceSwitchStatus(final String id, final String status, Context c) {
         String url = MyApp.THE_PROJECT.url + "roomsManagement/modifyRoomServiceSwitchInstalled";
         StringRequest tabR = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
             @Override
@@ -559,7 +586,7 @@ public class ROOM {
                     }
                 } catch (JSONException e) {
                     e.printStackTrace();
-                    Log.e("serviceSwitch" , "serviceSwitch update failed "+e.toString());
+                    Log.e("serviceSwitch" , "serviceSwitch update failed "+e);
                 }
             }
         }, new Response.ErrorListener() {
@@ -569,8 +596,8 @@ public class ROOM {
             }
         }) {
             @Override
-            protected Map<String, String> getParams() throws AuthFailureError {
-                Map<String,String> Params = new HashMap<String,String>();
+            protected Map<String, String> getParams() {
+                Map<String,String> Params = new HashMap<>();
                 Params.put("room_id", id);
                 Params.put("room_status" , status);
                 return Params;
@@ -579,7 +606,7 @@ public class ROOM {
         Volley.newRequestQueue(c).add(tabR);
     }
 
-    void setThermostatStatus(String id,String status,Context c) {
+    void setThermostatStatus(final String id, final String status, Context c) {
         String url = MyApp.THE_PROJECT.url + "roomsManagement/modifyRoomThermostatInstalled";
         StringRequest tabR = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
             @Override
@@ -595,7 +622,7 @@ public class ROOM {
                     }
                 } catch (JSONException e) {
                     e.printStackTrace();
-                    Log.e("thermostat" , "thermostat update failed "+e.toString());
+                    Log.e("thermostat" , "thermostat update failed "+e);
                 }
             }
         }, new Response.ErrorListener() {
@@ -605,8 +632,8 @@ public class ROOM {
             }
         }) {
             @Override
-            protected Map<String, String> getParams() throws AuthFailureError {
-                Map<String,String> Params = new HashMap<String,String>();
+            protected Map<String, String> getParams()  {
+                Map<String,String> Params = new HashMap<>();
                 Params.put("room_id", id);
                 Params.put("room_status" , status);
                 return Params;
@@ -615,7 +642,7 @@ public class ROOM {
         Volley.newRequestQueue(c).add(tabR);
     }
 
-    void setPowerSwitchStatus(String id,String status,Context c) {
+    void setPowerSwitchStatus(final String id, final String status, Context c) {
         String url = MyApp.THE_PROJECT.url + "roomsManagement/modifyRoomPowerSwitchInstalled";
         StringRequest tabR = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
             @Override
@@ -631,7 +658,7 @@ public class ROOM {
                     }
                 } catch (JSONException e) {
                     e.printStackTrace();
-                    Log.e("power " , "power update failed "+e.toString());
+                    Log.e("power " , "power update failed "+e);
                 }
             }
         }, new Response.ErrorListener() {
@@ -642,8 +669,8 @@ public class ROOM {
         })
         {
             @Override
-            protected Map<String, String> getParams() throws AuthFailureError {
-                Map<String,String> Params = new HashMap<String,String>();
+            protected Map<String, String> getParams()  {
+                Map<String,String> Params = new HashMap<>();
                 Params.put("room_id", id);
                 Params.put("room_status" , status);
                 return Params;
@@ -652,7 +679,7 @@ public class ROOM {
         Volley.newRequestQueue(c).add(tabR);
     }
 
-    void setCurtainSwitchStatus(String id,String status,Context c) {
+    void setCurtainSwitchStatus(final String id, final String status, Context c) {
         String url = MyApp.THE_PROJECT.url + "roomsManagement/modifyRoomCurtainInstalled";
         StringRequest tabR = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
             @Override
@@ -668,7 +695,7 @@ public class ROOM {
                     }
                 } catch (JSONException e) {
                     e.printStackTrace();
-                    Log.e("curtain" , "curtain update failed "+e.toString());
+                    Log.e("curtain" , "curtain update failed "+e);
                 }
             }
         }, new Response.ErrorListener() {
@@ -678,7 +705,7 @@ public class ROOM {
             }
         }) {
             @Override
-            protected Map<String, String> getParams() throws AuthFailureError {
+            protected Map<String, String> getParams()  {
                 Map<String,String> Params = new HashMap<String,String>();
                 Params.put("room_id", id);
                 Params.put("room_status" , status);
@@ -688,7 +715,7 @@ public class ROOM {
         Volley.newRequestQueue(c).add(tabR);
     }
 
-    void setMotionSensorStatus(String id,String status,Context c) {
+    void setMotionSensorStatus(final String id, final String status, Context c) {
         String url = MyApp.THE_PROJECT.url + "roomsManagement/modifyRoomMotionSensorInstalled";
         StringRequest tabR = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
             @Override
@@ -704,7 +731,7 @@ public class ROOM {
                     }
                 } catch (JSONException e) {
                     e.printStackTrace();
-                    Log.e("motion" , "motion update failed "+e.toString());
+                    Log.e("motion" , "motion update failed "+e);
                 }
             }
         }, new Response.ErrorListener() {
@@ -714,8 +741,8 @@ public class ROOM {
             }
         }) {
             @Override
-            protected Map<String, String> getParams() throws AuthFailureError {
-                Map<String,String> Params = new HashMap<String,String>();
+            protected Map<String, String> getParams() {
+                Map<String,String> Params = new HashMap<>();
                 Params.put("room_id", id);
                 Params.put("room_status" , status);
                 return Params;
@@ -724,7 +751,7 @@ public class ROOM {
         Volley.newRequestQueue(c).add(tabR);
     }
 
-    void setSwitch1Status(String id,String status,Context c) {
+    void setSwitch1Status(final String id, final String status, Context c) {
         String url = MyApp.THE_PROJECT.url + "roomsManagement/modifyRoomSwitch1Installed";
         StringRequest tabR = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
             @Override
@@ -740,7 +767,7 @@ public class ROOM {
                     }
                 } catch (JSONException e) {
                     e.printStackTrace();
-                    Log.e("switch1" , "switch1 update failed "+e.toString());
+                    Log.e("switch1" , "switch1 update failed "+e);
                 }
             }
         }, new Response.ErrorListener() {
@@ -750,8 +777,8 @@ public class ROOM {
             }
         }) {
             @Override
-            protected Map<String, String> getParams() throws AuthFailureError {
-                Map<String,String> Params = new HashMap<String,String>();
+            protected Map<String, String> getParams()  {
+                Map<String,String> Params = new HashMap<>();
                 Params.put("room_id", id);
                 Params.put("room_status" , status);
                 return Params;
@@ -760,7 +787,7 @@ public class ROOM {
         Volley.newRequestQueue(c).add(tabR);
     }
 
-    void setSwitch2Status(String id,String status,Context c) {
+    void setSwitch2Status(final String id, final String status, Context c) {
         String url = MyApp.THE_PROJECT.url + "roomsManagement/modifyRoomSwitch2Installed";
         StringRequest tabR = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
             @Override
@@ -776,7 +803,7 @@ public class ROOM {
                     }
                 } catch (JSONException e) {
                     e.printStackTrace();
-                    Log.e("switch2" , "switch2 update failed "+e.toString());
+                    Log.e("switch2" , "switch2 update failed "+e);
                 }
             }
         }, new Response.ErrorListener() {
@@ -786,8 +813,8 @@ public class ROOM {
             }
         }) {
             @Override
-            protected Map<String, String> getParams() throws AuthFailureError {
-                Map<String,String> Params = new HashMap<String,String>();
+            protected Map<String, String> getParams()  {
+                Map<String,String> Params = new HashMap<>();
                 Params.put("room_id", id);
                 Params.put("room_status" , status);
                 return Params;
@@ -796,7 +823,7 @@ public class ROOM {
         Volley.newRequestQueue(c).add(tabR);
     }
 
-    void setSwitch3Status(String id,String status,Context c) {
+    void setSwitch3Status(final String id, final String status, Context c) {
         String url = MyApp.THE_PROJECT.url + "roomsManagement/modifyRoomSwitch3Installed";
         StringRequest tabR = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
             @Override
@@ -812,7 +839,7 @@ public class ROOM {
                     }
                 } catch (JSONException e) {
                     e.printStackTrace();
-                    Log.e("switch3" , "switch3 update failed "+e.toString());
+                    Log.e("switch3" , "switch3 update failed "+e);
                 }
             }
         }, new Response.ErrorListener() {
@@ -822,8 +849,8 @@ public class ROOM {
             }
         }) {
             @Override
-            protected Map<String, String> getParams() throws AuthFailureError {
-                Map<String,String> Params = new HashMap<String,String>();
+            protected Map<String, String> getParams()  {
+                Map<String,String> Params = new HashMap<>();
                 Params.put("room_id", id);
                 Params.put("room_status" , status);
                 return Params;
@@ -832,7 +859,7 @@ public class ROOM {
         Volley.newRequestQueue(c).add(tabR);
     }
 
-    void setSwitch4Status(String id,String status,Context c) {
+    void setSwitch4Status(final String id, final String status, Context c) {
         String url = MyApp.THE_PROJECT.url + "roomsManagement/modifyRoomSwitch4Installed";
         StringRequest tabR = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
             @Override
@@ -848,7 +875,7 @@ public class ROOM {
                     }
                 } catch (JSONException e) {
                     e.printStackTrace();
-                    Log.e("switch4" , "switch4 update failed "+e.toString());
+                    Log.e("switch4" , "switch4 update failed "+e);
                 }
             }
         }, new Response.ErrorListener() {
@@ -858,8 +885,8 @@ public class ROOM {
             }
         }) {
             @Override
-            protected Map<String, String> getParams() throws AuthFailureError {
-                Map<String,String> Params = new HashMap<String,String>();
+            protected Map<String, String> getParams()  {
+                Map<String,String> Params = new HashMap<>();
                 Params.put("room_id", id);
                 Params.put("room_status" , status);
                 return Params;
@@ -868,7 +895,7 @@ public class ROOM {
         Volley.newRequestQueue(c).add(tabR);
     }
 
-    void setSwitch5Status(String id,String status,Context c) {
+    void setSwitch5Status(final String id, final String status, Context c) {
         String url = MyApp.THE_PROJECT.url + "roomsManagement/modifyRoomSwitch5Installed";
         StringRequest tabR = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
             @Override
@@ -884,7 +911,7 @@ public class ROOM {
                     }
                 } catch (JSONException e) {
                     e.printStackTrace();
-                    Log.e("switch5" , "switch5 update failed "+e.toString());
+                    Log.e("switch5" , "switch5 update failed "+e);
                 }
             }
         }, new Response.ErrorListener() {
@@ -894,8 +921,8 @@ public class ROOM {
             }
         }) {
             @Override
-            protected Map<String, String> getParams() throws AuthFailureError {
-                Map<String,String> Params = new HashMap<String,String>();
+            protected Map<String, String> getParams() {
+                Map<String,String> Params = new HashMap<>();
                 Params.put("room_id", id);
                 Params.put("room_status" , status);
                 return Params;
@@ -904,7 +931,7 @@ public class ROOM {
         Volley.newRequestQueue(c).add(tabR);
     }
 
-    void setSwitch6Status(String id,String status,Context c) {
+    void setSwitch6Status(final String id, final String status, Context c) {
         String url = MyApp.THE_PROJECT.url + "roomsManagement/modifyRoomSwitch4Installed";
         StringRequest tabR = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
             @Override
@@ -920,7 +947,7 @@ public class ROOM {
                     }
                 } catch (JSONException e) {
                     e.printStackTrace();
-                    Log.e("switch4" , "switch4 update failed "+e.toString());
+                    Log.e("switch4" , "switch4 update failed "+e);
                 }
             }
         }, new Response.ErrorListener() {
@@ -930,8 +957,8 @@ public class ROOM {
             }
         }) {
             @Override
-            protected Map<String, String> getParams() throws AuthFailureError {
-                Map<String,String> Params = new HashMap<String,String>();
+            protected Map<String, String> getParams() {
+                Map<String,String> Params = new HashMap<>();
                 Params.put("room_id", id);
                 Params.put("room_status" , status);
                 return Params;
@@ -940,7 +967,7 @@ public class ROOM {
         Volley.newRequestQueue(c).add(tabR);
     }
 
-    void setSwitch7Status(String id,String status,Context c) {
+    void setSwitch7Status(final String id, final String status, Context c) {
         String url = MyApp.THE_PROJECT.url + "roomsManagement/modifyRoomSwitch4Installed";
         StringRequest tabR = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
             @Override
@@ -956,7 +983,7 @@ public class ROOM {
                     }
                 } catch (JSONException e) {
                     e.printStackTrace();
-                    Log.e("switch4" , "switch4 update failed "+e.toString());
+                    Log.e("switch4" , "switch4 update failed "+e);
                 }
             }
         }, new Response.ErrorListener() {
@@ -966,8 +993,8 @@ public class ROOM {
             }
         }) {
             @Override
-            protected Map<String, String> getParams() throws AuthFailureError {
-                Map<String,String> Params = new HashMap<String,String>();
+            protected Map<String, String> getParams()  {
+                Map<String,String> Params = new HashMap<>();
                 Params.put("room_id", id);
                 Params.put("room_status" , status);
                 return Params;
@@ -976,7 +1003,7 @@ public class ROOM {
         Volley.newRequestQueue(c).add(tabR);
     }
 
-    void setSwitch8Status(String id,String status,Context c) {
+    void setSwitch8Status(final String id, final String status, Context c) {
         String url = MyApp.THE_PROJECT.url + "roomsManagement/modifyRoomSwitch4Installed";
         StringRequest tabR = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
             @Override
@@ -992,7 +1019,7 @@ public class ROOM {
                     }
                 } catch (JSONException e) {
                     e.printStackTrace();
-                    Log.e("switch4" , "switch4 update failed "+e.toString());
+                    Log.e("switch4" , "switch4 update failed "+e);
                 }
             }
         }, new Response.ErrorListener() {
@@ -1002,8 +1029,8 @@ public class ROOM {
             }
         }) {
             @Override
-            protected Map<String, String> getParams() throws AuthFailureError {
-                Map<String,String> Params = new HashMap<String,String>();
+            protected Map<String, String> getParams() {
+                Map<String,String> Params = new HashMap<>();
                 Params.put("room_id", id);
                 Params.put("room_status" , status);
                 return Params;
@@ -1012,7 +1039,7 @@ public class ROOM {
         Volley.newRequestQueue(c).add(tabR);
     }
 
-    void setZBGatewayStatus(String id,String status,Context c) {
+    void setZBGatewayStatus(final String id, final String status, Context c) {
         String url = MyApp.THE_PROJECT.url + "roomsManagement/modifyRoomGatewayInstalled";
         StringRequest tabR = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
             @Override
@@ -1028,7 +1055,7 @@ public class ROOM {
                     }
                 } catch (JSONException e) {
                     e.printStackTrace();
-                    Log.e("gateway" , "gateway update failed "+e.toString());
+                    Log.e("gateway" , "gateway update failed "+e);
                 }
             }
         }, new Response.ErrorListener() {
@@ -1038,8 +1065,8 @@ public class ROOM {
             }
         }) {
             @Override
-            protected Map<String, String> getParams() throws AuthFailureError {
-                Map<String,String> Params = new HashMap<String,String>();
+            protected Map<String, String> getParams()  {
+                Map<String,String> Params = new HashMap<>();
                 Params.put("room_id", id);
                 Params.put("room_status" , status);
                 return Params;
@@ -1059,7 +1086,7 @@ public class ROOM {
         return null ;
     }
 
-    public static void powerOnRoom(ROOM THEROOM,Context c) {
+    public static void powerOnRoom(final ROOM THEROOM, final Context c) {
         if (THEROOM.getPOWER() != null ) {
             THEROOM.getPOWER().publishDps("{\"1\": true,\"2\": true}", new IResultCallback() {
                 @Override
@@ -1075,7 +1102,7 @@ public class ROOM {
         }
     }
 
-    public static void powerOffRoom(ROOM THEROOM,Context c) {
+    public static void powerOffRoom(final ROOM THEROOM, final Context c) {
         new Handler(Looper.getMainLooper()).post(new Runnable() {
             @Override
             public void run() {
@@ -1113,7 +1140,7 @@ public class ROOM {
         });
     }
 
-    public static void powerByCard(ROOM THEROOM,Context c) {
+    public static void powerByCard(final ROOM THEROOM, final Context c) {
         new Handler(Looper.getMainLooper()).post(new Runnable() {
             @Override
             public void run() {
@@ -1176,6 +1203,15 @@ public class ROOM {
         if (room.getSWITCH8_B() != null) {
             devices.add(room.getSWITCH8_B());
         }
+        if (room.getSHUTTER1() != null) {
+            devices.add(room.getSHUTTER1());
+        }
+        if (room.getSHUTTER2() != null) {
+            devices.add(room.getSHUTTER2());
+        }
+        if (room.getSHUTTER3() != null) {
+            devices.add(room.getSHUTTER3());
+        }
         if (room.getDOORSENSOR_B() != null) {
             devices.add(room.getDOORSENSOR_B());
         }
@@ -1194,7 +1230,7 @@ public class ROOM {
         return devices;
     }
 
-    public static void searchRoomInHome(CheckInHome homeBean , ROOM room, SearchHomeCallBack callBack) {
+    public static void searchRoomInHome(CheckInHome homeBean , final ROOM room, final SearchHomeCallBack callBack) {
         TuyaHomeSdk.newHomeInstance(homeBean.Home.getHomeId()).getHomeDetail(new ITuyaHomeResultCallback() {
             @Override
             public void onSuccess(HomeBean bean) {
@@ -1218,9 +1254,9 @@ public class ROOM {
         });
     }
 
-    public static void getRoomHome(ROOM room,List<CheckInHome> homes,HomeBeanCallBack callBack) {
+    public static void getRoomHome(ROOM room, final List<CheckInHome> homes, final HomeBeanCallBack callBack) {
        for (int i=0;i<homes.size();i++) {
-           int finalI = i;
+           final int finalI = i;
            ROOM.searchRoomInHome(homes.get(i), room, new SearchHomeCallBack() {
                @Override
                public void onSuccess(boolean result) {
@@ -1260,7 +1296,7 @@ public class ROOM {
     public DeviceBean searchDeviceNameInRoomDevices(String deviceName) {
         List<DeviceBean> roomDevices = ROOM.getRoomDevices(this);
         for (DeviceBean d : roomDevices) {
-            if (d.getName().contains(deviceName)) {
+            if (d.getName().equals(deviceName)) {
                 return d;
             }
         }

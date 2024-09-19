@@ -1,4 +1,4 @@
-package com.syriasoft.housekeeping.Adapters;
+package com.syriasoft.house_keeping.Adapters;
 
 import android.content.Context;
 import android.graphics.Color;
@@ -14,9 +14,9 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
 import com.syriasoft.hotelservices.R;
-import com.syriasoft.housekeeping.MyApp;
-import com.syriasoft.housekeeping.ROOM;
-import com.syriasoft.housekeeping.cleanOrder;
+import com.syriasoft.house_keeping.MyApp;
+import com.syriasoft.house_keeping.ROOM;
+import com.syriasoft.house_keeping.cleanOrder;
 
 import java.util.Calendar;
 import java.util.List;

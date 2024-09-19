@@ -1,7 +1,10 @@
 package com.syriasoft.projectscontrol;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -11,6 +14,7 @@ import android.widget.Spinner;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -58,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
     RequestQueue Q;
     List<ServerDevice> AllServerDevices ;
     RecyclerView DevicesRecycler;
-    LoadingDialog loadingDialog;
+    //LoadingDialog loadingDialog;
     FirebaseDatabase FirebaseDB;
     DevicesAdapter Adapter;
     public static List<ServerDevice> SelectedDevicesList ;
@@ -69,20 +73,42 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        act = this;
+//        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.SCHEDULE_EXACT_ALARM) != PackageManager.PERMISSION_GRANTED) {
+//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+//                ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.SCHEDULE_EXACT_ALARM},42);
+//            }
+//        }
         setActivity();
-        //getActiveProjects();
-        Thread.setDefaultUncaughtExceptionHandler(new DefaultExceptionHandler(this));
-        createTuyaAccount("checkinmaden@gmail.com", "Ratco@RDH", "350860", new TuyaUserCallback() {
-            @Override
-            public void onSuccess(User user) {
+        getActiveProjects();
 
+//        setActivity();
+//        getActiveProjects();
+//        createTuyaAccount("checkinmaden@gmail.com", "Ratco@RDH", "350860", new TuyaUserCallback() {
+//            @Override
+//            public void onSuccess(User user) {
+//
+//            }
+//
+//            @Override
+//            public void onFail(String error) {
+//
+//            }
+//        });
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == 42) {
+            if (permissions[0].equals(Manifest.permission.SCHEDULE_EXACT_ALARM)) {
+                if (grantResults[0] != PackageManager.PERMISSION_GRANTED) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        ActivityCompat.requestPermissions(act, new String[]{Manifest.permission.SCHEDULE_EXACT_ALARM}, 42);
+                    }
+                }
             }
-
-            @Override
-            public void onFail(String error) {
-
-            }
-        });
+        }
     }
 
     void setActivity() {
@@ -94,14 +120,14 @@ public class MainActivity extends AppCompatActivity {
         DevicesRecycler = findViewById(R.id.devicesRecycler);
         DevicesRecycler.setLayoutManager(new LinearLayoutManager(act,RecyclerView.VERTICAL,false));
         getDevicesUrl = "roomsManagement/getServerDevices";
-        loadingDialog = new LoadingDialog(act);
-        FirebaseDB = FirebaseDatabase.getInstance("https://hotelservices-ebe66.firebaseio.com/");
+        //loadingDialog = new LoadingDialog(act);
+        FirebaseDB = FirebaseDatabase.getInstance("https://checkin-62774-default-rtdb.asia-southeast1.firebasedatabase.app/");
         Adapter = new DevicesAdapter(AllServerDevices);
     }
 
     void getActiveProjects() {
         AllServerDevices.clear();
-        loadingDialog.show();
+        //loadingDialog.show();
         String projectsUrl = "https://ratco-solutions.com/Checkin/getProjects.php";
         StringRequest re = new StringRequest(Request.Method.POST, projectsUrl, new Response.Listener<String>() {
             @Override
@@ -119,94 +145,102 @@ public class MainActivity extends AppCompatActivity {
                             Names[i+1] = row.getString("projectName");
                         }
                         MyApp.Projects = Projects;
-                        for (PROJECT p :Projects) {
-                            p.getProjectBuildings(Q, new BuildingsCallback() {
+                        for (int i=0;i<Projects.size();i++) {
+                            PROJECT p = Projects.get(i);
+                            Timer t= new Timer();
+                            t.schedule(new TimerTask() {
                                 @Override
-                                public void onSuccess(List<BUILDING> buildings) {
-                                    p.getProjectFloors(Q, new FloorsCallback() {
+                                public void run() {
+                                    p.getProjectBuildings(Q, new BuildingsCallback() {
                                         @Override
-                                        public void onSuccess(List<FLOOR> floors) {
-                                            p.getProjectRooms(Q, new RoomsCallback() {
+                                        public void onSuccess(List<BUILDING> buildings) {
+                                            p.getProjectFloors(Q, new FloorsCallback() {
                                                 @Override
-                                                public void onSuccess(List<ROOM> rooms) {
-                                                    p.getProjectServerDevices(Q, new ServerDevicesCallBack() {
+                                                public void onSuccess(List<FLOOR> floors) {
+                                                    p.getProjectRooms(Q, new RoomsCallback() {
                                                         @Override
-                                                        public void onSuccess(List<ServerDevice> devices) {
-                                                            loadingDialog.close();
-                                                            AllServerDevices.addAll(devices);
-                                                            p.ServerDevices = devices;
-                                                            if (Projects.indexOf(p) == Projects.size()-1) {
-                                                                ArrayAdapter<String> adapter = new ArrayAdapter<>(act,R.layout.support_simple_spinner_dropdown_item,Names);
-                                                                Spinner PROJECTS_SPINNER = findViewById(R.id.spinner);
-                                                                PROJECTS_SPINNER.setAdapter(adapter);
-                                                                PROJECTS_SPINNER.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-                                                                    @Override
-                                                                    public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-                                                                        if (Names[i].equals("all")) {
-                                                                            SelectedDevicesList = AllServerDevices;
-                                                                            Adapter = new DevicesAdapter(AllServerDevices);
-                                                                            DevicesRecycler.setAdapter(Adapter);
-                                                                        }
-                                                                        else {
-                                                                            THE_PROJECT = Projects.get(PROJECTS_SPINNER.getSelectedItemPosition()-1);
-                                                                            SelectedDevicesList = THE_PROJECT.ServerDevices;
-                                                                            Adapter = new DevicesAdapter(THE_PROJECT.ServerDevices);
-                                                                            DevicesRecycler.setAdapter(Adapter);
-                                                                        }
-                                                                    }
+                                                        public void onSuccess(List<ROOM> rooms) {
+                                                            p.getProjectServerDevices(Q, new ServerDevicesCallBack() {
+                                                                @Override
+                                                                public void onSuccess(List<ServerDevice> devices) {
+                                                                    //loadingDialog.close();
+                                                                    AllServerDevices.addAll(devices);
+                                                                    p.ServerDevices = devices;
+                                                                    if (Projects.indexOf(p) == Projects.size()-1) {
+                                                                        ArrayAdapter<String> adapter = new ArrayAdapter<>(act,R.layout.support_simple_spinner_dropdown_item,Names);
+                                                                        Spinner PROJECTS_SPINNER = findViewById(R.id.spinner);
+                                                                        PROJECTS_SPINNER.setAdapter(adapter);
+                                                                        PROJECTS_SPINNER.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                                                                            @Override
+                                                                            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                                                                                if (Names[i].equals("all")) {
+                                                                                    SelectedDevicesList = AllServerDevices;
+                                                                                    Adapter = new DevicesAdapter(AllServerDevices);
+                                                                                    DevicesRecycler.setAdapter(Adapter);
+                                                                                }
+                                                                                else {
+                                                                                    THE_PROJECT = Projects.get(PROJECTS_SPINNER.getSelectedItemPosition()-1);
+                                                                                    SelectedDevicesList = THE_PROJECT.ServerDevices;
+                                                                                    Adapter = new DevicesAdapter(THE_PROJECT.ServerDevices);
+                                                                                    DevicesRecycler.setAdapter(Adapter);
+                                                                                }
+                                                                            }
 
-                                                                    @Override
-                                                                    public void onNothingSelected(AdapterView<?> adapterView) {
+                                                                            @Override
+                                                                            public void onNothingSelected(AdapterView<?> adapterView) {
 
+                                                                            }
+                                                                        });
                                                                     }
-                                                                });
-                                                            }
-                                                            setWorkingFirebaseListeners(p);
+                                                                    setWorkingFirebaseListeners(p);
+                                                                }
+
+                                                                @Override
+                                                                public void onFailed(String error) {
+                                                                    //loadingDialog.close();
+                                                                    new MessageDialog("error getting devices "+error, p.projectName+" error",act);
+                                                                }
+                                                            });
                                                         }
 
                                                         @Override
-                                                        public void onFailed(String error) {
-                                                            loadingDialog.close();
-                                                            new MessageDialog("error getting devices "+error, p.projectName+" error",act);
+                                                        public void onFail(String error) {
+                                                            new MessageDialog("error getting rooms "+error, p.projectName+" error",act);
                                                         }
                                                     });
                                                 }
 
                                                 @Override
                                                 public void onFail(String error) {
-                                                    new MessageDialog("error getting rooms "+error, p.projectName+" error",act);
+                                                    new MessageDialog("error getting floors "+error, p.projectName+" error",act);
                                                 }
                                             });
                                         }
 
                                         @Override
                                         public void onFail(String error) {
-                                            new MessageDialog("error getting floors "+error, p.projectName+" error",act);
+                                            new MessageDialog("error getting buildings "+error, p.projectName+" error",act);
                                         }
                                     });
                                 }
+                            },10000L*i);
 
-                                @Override
-                                public void onFail(String error) {
-                                    new MessageDialog("error getting buildings "+error, p.projectName+" error",act);
-                                }
-                            });
                         }
                     }
                     catch (JSONException e) {
-                        loadingDialog.close();
-                        e.printStackTrace();
+                        //loadingDialog.close();
                         Log.d("getProjectsResp" , e.toString());
                     }
                 }
                 else {
-                    loadingDialog.close();
+                    //.close();
+                    Log.d("getProjectsResp" , "response null");
                 }
             }
         }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
-                loadingDialog.close();
+                //loadingDialog.close();
                 Log.d("getProjectsResp" , error.toString());
             }
         });
@@ -231,7 +265,7 @@ public class MainActivity extends AppCompatActivity {
             }
     }
 
-    void setDeviceWorkingListener(ServerDevice device,DatabaseReference workingReference) {
+    void setDeviceWorkingListener(ServerDevice device, DatabaseReference workingReference) {
         workingReference.child("working").addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -254,7 +288,7 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
                 Log.d("workingTimer","checking value "+device.ProjectName+" "+device.name);
                 long now = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
-                long interval = 1000*60*device.taskInterval;
+                long interval = 1000L *60*device.taskInterval;
                 long nowInterval = now - device.checkValue ;
                 Log.d("workingTimer",nowInterval+" "+interval);
                 if (nowInterval >= interval) {

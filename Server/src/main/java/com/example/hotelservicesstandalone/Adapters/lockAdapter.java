@@ -1,7 +1,6 @@
-package com.example.hotelservicesstandalone;
+package com.example.hotelservicesstandalone.Adapters;
 
 import android.app.Dialog;
-import android.bluetooth.BluetoothDevice;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -20,13 +19,13 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.example.hotelservicesstandalone.Locks;
+import com.example.hotelservicesstandalone.R;
+import com.example.hotelservicesstandalone.Rooms;
 import com.example.hotelservicesstandalone.lock.ApiService;
 import com.example.hotelservicesstandalone.lock.LockObj;
-import com.ttlock.bl.sdk.api.ExtendedBluetoothDevice;
 import com.ttlock.bl.sdk.api.TTLockClient;
 import com.ttlock.bl.sdk.callback.ResetLockCallback;
-import com.ttlock.bl.sdk.constant.TTLockConfigType;
-import com.ttlock.bl.sdk.device.TTDevice;
 import com.ttlock.bl.sdk.entity.LockError;
 
 import org.json.JSONException;
@@ -42,7 +41,7 @@ public class lockAdapter extends RecyclerView.Adapter<lockAdapter.HOLDER> {
 
     ArrayList<LockObj> list ;
 
-    lockAdapter( ArrayList<LockObj> list) {
+    public lockAdapter(ArrayList<LockObj> list) {
         this.list = list ;
     }
 

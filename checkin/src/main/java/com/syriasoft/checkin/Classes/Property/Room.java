@@ -1,5 +1,6 @@
-package com.example.hotelservicesstandalone.Classes.Property;
+package com.syriasoft.checkin.Classes.Property;
 
+import android.content.Context;
 import android.util.Log;
 import android.widget.TextView;
 
@@ -8,31 +9,30 @@ import androidx.annotation.NonNull;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.StringRequest;
-import com.example.hotelservicesstandalone.Classes.ControlDevice;
-import com.example.hotelservicesstandalone.Classes.Devices.CheckinAC;
-import com.example.hotelservicesstandalone.Classes.Devices.CheckinCurtain;
-import com.example.hotelservicesstandalone.Classes.Devices.CheckinDevice;
-import com.example.hotelservicesstandalone.Classes.Devices.CheckinDoorSensor;
-import com.example.hotelservicesstandalone.Classes.Devices.CheckinGateway;
-import com.example.hotelservicesstandalone.Classes.Devices.CheckinLock;
-import com.example.hotelservicesstandalone.Classes.Devices.CheckinMotionSensor;
-import com.example.hotelservicesstandalone.Classes.Devices.CheckinPower;
-import com.example.hotelservicesstandalone.Classes.Devices.CheckinServiceSwitch;
-import com.example.hotelservicesstandalone.Classes.Devices.CheckinSwitch;
-import com.example.hotelservicesstandalone.Classes.Enumes.DeviceTypes;
-import com.example.hotelservicesstandalone.Classes.Interfaces.ACListener;
-import com.example.hotelservicesstandalone.Classes.Interfaces.CurtainListener;
-import com.example.hotelservicesstandalone.Classes.Interfaces.DoorListener;
-import com.example.hotelservicesstandalone.Classes.Interfaces.GetReservationType;
-import com.example.hotelservicesstandalone.Classes.Interfaces.LockListener;
-import com.example.hotelservicesstandalone.Classes.Interfaces.MotionListener;
-import com.example.hotelservicesstandalone.Classes.Interfaces.PowerListener;
-import com.example.hotelservicesstandalone.Classes.Interfaces.ServiceListener;
-import com.example.hotelservicesstandalone.Classes.Interfaces.SwitchListener;
-import com.example.hotelservicesstandalone.Classes.PROJECT_VARIABLES;
-import com.example.hotelservicesstandalone.Classes.Tuya;
-import com.example.hotelservicesstandalone.Interface.RequestCallback;
-import com.example.hotelservicesstandalone.MyApp;
+import com.syriasoft.checkin.Classes.ControlDevice;
+import com.syriasoft.checkin.Classes.Devices.CheckinAC;
+import com.syriasoft.checkin.Classes.Devices.CheckinCurtain;
+import com.syriasoft.checkin.Classes.Devices.CheckinDevice;
+import com.syriasoft.checkin.Classes.Devices.CheckinDoorSensor;
+import com.syriasoft.checkin.Classes.Devices.CheckinGateway;
+import com.syriasoft.checkin.Classes.Devices.CheckinLock;
+import com.syriasoft.checkin.Classes.Devices.CheckinMotionSensor;
+import com.syriasoft.checkin.Classes.Devices.CheckinPower;
+import com.syriasoft.checkin.Classes.Devices.CheckinServiceSwitch;
+import com.syriasoft.checkin.Classes.Devices.CheckinSwitch;
+import com.syriasoft.checkin.Classes.Enumes.DeviceTypes;
+import com.syriasoft.checkin.Classes.Interfaces.ACListener;
+import com.syriasoft.checkin.Classes.Interfaces.CurtainListener;
+import com.syriasoft.checkin.Classes.Interfaces.DoorListener;
+import com.syriasoft.checkin.Classes.Interfaces.GetReservationType;
+import com.syriasoft.checkin.Classes.Interfaces.LockListener;
+import com.syriasoft.checkin.Classes.Interfaces.MotionListener;
+import com.syriasoft.checkin.Classes.Interfaces.PowerListener;
+import com.syriasoft.checkin.Classes.Interfaces.ServiceListener;
+import com.syriasoft.checkin.Classes.Interfaces.SwitchListener;
+import com.syriasoft.checkin.Classes.PROJECT_VARIABLES;
+import com.syriasoft.checkin.Classes.Tuya;
+import com.syriasoft.checkin.Interface.RequestCallback;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -192,10 +192,10 @@ public class Room {
         }
     }
 
-    public void setFireRoom(FirebaseDatabase database) {
-        fireRoom = database.getReference(MyApp.My_PROJECT.projectName+"/B"+building.buildingNo+"/F"+floor.floorNumber+"/R"+RoomNumber);
-        devicesControlReference = database.getReference(MyApp.My_PROJECT.projectName+"Devices/"+RoomNumber);
-        devicesDataReference = database.getReference(MyApp.My_PROJECT.projectName+"DevicesData/"+RoomNumber);
+    public void setFireRoom(FirebaseDatabase database,String projectName) {
+        fireRoom = database.getReference(projectName+"/B"+building.buildingNo+"/F"+floor.floorNumber+"/R"+RoomNumber);
+        devicesControlReference = database.getReference(projectName+"Devices/"+RoomNumber);
+        devicesDataReference = database.getReference(projectName+"DevicesData/"+RoomNumber);
         fireRoom.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -455,7 +455,7 @@ public class Room {
         return devs;
     }
 
-    public void setRoomDevicesListener(TextView tv,RequestQueue CLEANUP_QUEUE,RequestQueue LAUNDRY_QUEUE,RequestQueue CHECKOUT_QUEUE) {
+    public void setRoomDevicesListener(TextView tv,RequestQueue CLEANUP_QUEUE,RequestQueue LAUNDRY_QUEUE,RequestQueue CHECKOUT_QUEUE,String projectUrl) {
         if (isHasPower()) {
             Log.d("deviceListener"+RoomNumber,"power set");
             power.listen(new PowerListener() {
@@ -496,7 +496,7 @@ public class Room {
                 public void cleanup() {
                     Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
                     if (roomStatus == 2) {
-                        addCleanupOrder(CLEANUP_QUEUE);
+                        addCleanupOrder(CLEANUP_QUEUE,projectUrl);
                     }
                     ControlDevice.setCurrentAction(tv,"Cleanup on room " + RoomNumber);
                 }
@@ -505,7 +505,7 @@ public class Room {
                 public void cancelCleanup() {
                     Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
                     if (roomStatus == 2) {
-                        cancelServiceOrder(CLEANUP_QUEUE,"Cleanup");
+                        cancelServiceOrder(CLEANUP_QUEUE,"Cleanup",projectUrl);
                     }
                     ControlDevice.setCurrentAction(tv,"Cleanup canceled room " + RoomNumber);
                 }
@@ -514,7 +514,7 @@ public class Room {
                 public void laundry() {
                     Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
                     if (roomStatus == 2) {
-                        addLaundryOrder(LAUNDRY_QUEUE);
+                        addLaundryOrder(LAUNDRY_QUEUE,projectUrl);
                     }
                     ControlDevice.setCurrentAction(tv,"Laundry on room " + RoomNumber);
                 }
@@ -523,7 +523,7 @@ public class Room {
                 public void cancelLaundry() {
                     Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
                     if (roomStatus == 2) {
-                        cancelServiceOrder(LAUNDRY_QUEUE, "Laundry");
+                        cancelServiceOrder(LAUNDRY_QUEUE, "Laundry",projectUrl);
                     }
                     ControlDevice.setCurrentAction(tv,"Laundry canceled room " + RoomNumber);
                 }
@@ -550,7 +550,7 @@ public class Room {
                 public void checkout() {
                     Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
                     if (roomStatus == 2) {
-                        addCheckoutOrder(CHECKOUT_QUEUE);
+                        addCheckoutOrder(CHECKOUT_QUEUE,projectUrl);
                     }
                     ControlDevice.setCurrentAction(tv,"Checkout on room " + RoomNumber);
                 }
@@ -559,7 +559,7 @@ public class Room {
                 public void cancelCheckout() {
                     Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
                     if (roomStatus == 2) {
-                        cancelServiceOrder(CHECKOUT_QUEUE, "Checkout");
+                        cancelServiceOrder(CHECKOUT_QUEUE, "Checkout",projectUrl);
                     }
                     ControlDevice.setCurrentAction(tv,"Checkout canceled room " + RoomNumber);
                 }
@@ -1142,13 +1142,13 @@ public class Room {
             });
         }
     }
-    public void addCleanupOrder(RequestQueue Q) {
+    public void addCleanupOrder(RequestQueue Q,String projectUrl) {
         if (getMainServiceSwitch().lastCleanup == 0) {
             Cleanup = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
             fireRoom.child("Cleanup").setValue(Cleanup);
         }
         fireRoom.child("dep").setValue("Cleanup");
-        String url = MyApp.My_PROJECT.url + "reservations/addCleanupOrderControlDevice"+addCleanupCounter ;
+        String url = projectUrl + "reservations/addCleanupOrderControlDevice"+addCleanupCounter ;
         StringRequest addOrder = new StringRequest(Request.Method.POST,url, response -> {
             try {
                 JSONObject result = new JSONObject(response);
@@ -1213,14 +1213,14 @@ public class Room {
             });
         }
     }
-    public void addLaundryOrder(RequestQueue Q) {
+    public void addLaundryOrder(RequestQueue Q,String projectUrl) {
         if (getMainServiceSwitch().lastLaundry == 0) {
             Laundry = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
             fireRoom.child("Laundry").setValue(Laundry);
         }
         fireRoom.child("dep").setValue("Laundry");
         Log.d("addLaundryRsp" , "started");
-        String url = MyApp.My_PROJECT.url + "reservations/addLaundryOrderControlDevice"+addLaundryCounter;
+        String url = projectUrl + "reservations/addLaundryOrderControlDevice"+addLaundryCounter;
         StringRequest addOrder = new StringRequest(Request.Method.POST,url, response -> {
             Log.d("addLaundryRsp" , response);
             try {
@@ -1283,13 +1283,13 @@ public class Room {
             });
         }
     }
-    public void addCheckoutOrder (RequestQueue Q) {
+    public void addCheckoutOrder (RequestQueue Q,String projectUrl) {
         if (getMainServiceSwitch().lastCheckout == 0) {
             Checkout = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
             fireRoom.child("Checkout").setValue(Checkout);
         }
         fireRoom.child("dep").setValue("Checkout");
-        String url = MyApp.My_PROJECT.url + "reservations/addCheckoutOrderControlDevice"+addCheckoutCounter;
+        String url = projectUrl + "reservations/addCheckoutOrderControlDevice"+addCheckoutCounter;
         StringRequest addOrder = new StringRequest(Request.Method.POST,url, response -> {
             Log.d("addCheckoutRsp" , response);
             try {
@@ -1394,7 +1394,7 @@ public class Room {
         },seconds* 1000L);
     }
 
-    public void cancelServiceOrder(RequestQueue Q,String type) {
+    public void cancelServiceOrder(RequestQueue Q,String type,String projectUrl) {
         switch (type) {
             case "Cleanup":
                 Cleanup = 0;
@@ -1414,7 +1414,7 @@ public class Room {
                 break;
         }
         Log.d("remove"+type+"Order" , "pressed");
-        String url = MyApp.My_PROJECT.url + "reservations/cancelServiceOrderControlDevice"+cancelOrderCounter;
+        String url = projectUrl + "reservations/cancelServiceOrderControlDevice"+cancelOrderCounter;
         StringRequest removeOrder = new StringRequest(Request.Method.POST,url, response -> {
             Log.d("remove"+type+"Order" , "response "+response);
             try {
@@ -1571,9 +1571,9 @@ public class Room {
         }
     }
 
-    public static void setRoomsFireRooms(List<Room> rooms,FirebaseDatabase database) {
+    public static void setRoomsFireRooms(List<Room> rooms,FirebaseDatabase database,String projectName) {
         for (Room r :rooms) {
-            r.setFireRoom(database);
+            r.setFireRoom(database,projectName);
         }
     }
 
@@ -1589,33 +1589,33 @@ public class Room {
         }
     }
 
-    public static void setRoomsFireRoomsDevicesControlListener(List<Room> rooms) {
+    public static void setRoomsFireRoomsDevicesControlListener(Context c, String projectUrl, List<Room> rooms) {
         for (Room room : rooms) {
             if (room.isHasPower()) {
-                room.power.setFirebaseDevicesControl(room.devicesControlReference);
+                room.power.setFirebaseDevicesControl(c,projectUrl,room.devicesControlReference);
             }
             if (room.isHasCurtain()) {
                 for (CheckinCurtain cc : room.curtains) {
-                    cc.setFirebaseDevicesControl(room.devicesControlReference);
+                    cc.setFirebaseDevicesControl(c,projectUrl,room.devicesControlReference);
                 }
             }
             if (room.isHasAC()) {
                 for (CheckinAC ca : room.acs) {
-                    ca.setFirebaseDevicesControl(room.devicesControlReference);
+                    ca.setFirebaseDevicesControl(c,projectUrl,room.devicesControlReference);
                 }
             }
             if (room.isHasLock()) {
                 for (CheckinLock cl : room.locks) {
-                    cl.setFirebaseDevicesControl(room.devicesControlReference);
+                    cl.setFirebaseDevicesControl(c,projectUrl,room.devicesControlReference);
                 }
             }
             if (room.isHasSwitch()) {
                 for (CheckinSwitch cs : room.switches) {
-                    cs.setFirebaseDevicesControl(room.devicesControlReference);
+                    cs.setFirebaseDevicesControl(c,projectUrl,room.devicesControlReference);
                 }
             }
             if (room.isHasServiceSwitch()) {
-                room.getMainServiceSwitch().setFirebaseDevicesControl(room.fireRoom);
+                room.getMainServiceSwitch().setFirebaseDevicesControl(c,projectUrl,room.fireRoom);
             }
         }
     }
@@ -1659,10 +1659,10 @@ public class Room {
         return devs;
     }
 
-    public static void setRoomsDevicesListener(List<Room> rooms,TextView tv,RequestQueue CQ,RequestQueue LQ,RequestQueue CHQ) {
+    public static void setRoomsDevicesListener(List<Room> rooms,TextView tv,RequestQueue CQ,RequestQueue LQ,RequestQueue CHQ,String projectUrl) {
         for (Room room:rooms) {
             Log.d("deviceListener"+room.RoomNumber,"started");
-            room.setRoomDevicesListener(tv,CQ,LQ,CHQ);
+            room.setRoomDevicesListener(tv,CQ,LQ,CHQ,projectUrl);
         }
     }
 

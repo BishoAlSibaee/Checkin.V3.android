@@ -1,16 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    package="com.example.hotelservicesstandalone">
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
-    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
-    <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" />
-    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <uses-permission android:name="android.permission.INTERNET"/>
-
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
         android:name=".MyApp"
@@ -21,8 +17,11 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.HotelServices"
         tools:replace="android:allowBackup,android:supportsRtl">
-
-        <activity android:name=".Locks"/>
+        <activity
+            android:name=".ReceptionScreen"
+            android:exported="false"
+            android:theme="@style/Theme.AppCompat.NoActionBar"/>
+        <activity android:name=".Locks" />
 
         <meta-data
             android:name="TUYA_SMART_APPKEY"
@@ -41,11 +40,13 @@
             android:theme="@style/Theme.AppCompat.NoActionBar" />
         <activity
             android:name=".Login"
-            android:theme="@style/Theme.AppCompat.NoActionBar"
+            android:exported="true"
             android:screenOrientation="landscape"
-            android:exported="true">
+            android:theme="@style/Theme.AppCompat.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+                <action android:name="com.syriasoft.server.Login" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
                 <category android:name="android.intent.category.HOME" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -53,19 +54,34 @@
             </intent-filter>
         </activity>
 
+        <service android:name=".Services.KeepAliveService_Test"
+            android:enabled="true" />
+
         <service
-            android:name=".MessagingService"
+            android:name=".Services.MessagingService"
             android:enabled="true"
-            android:exported="false">
+            android:exported="true">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
+
+        <service android:name=".Services.RerunService"
+            android:enabled="true"/>
+
         <service
-            android:name=".ErrorService"
+            android:name=".Services.ErrorService"
             android:enabled="true"
-            android:exported="false"
-            />
+            android:exported="false" />
+
+        <receiver android:name=".Services.checkWorkingReceiver"
+            android:enabled="true"
+            android:exported="true"
+            android:permission="TODO">
+            <intent-filter>
+                <action android:name=".Login"/>
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>

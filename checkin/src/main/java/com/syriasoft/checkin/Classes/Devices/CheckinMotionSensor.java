@@ -1,13 +1,13 @@
-package com.example.hotelservicesstandalone.Classes.Devices;
+package com.syriasoft.checkin.Classes.Devices;
 
 import android.util.Log;
 
-import com.example.hotelservicesstandalone.Classes.Enumes.DpTypes;
-import com.example.hotelservicesstandalone.Classes.Interfaces.DeviceAction;
-import com.example.hotelservicesstandalone.Classes.Interfaces.Listen;
-import com.example.hotelservicesstandalone.Classes.Interfaces.MotionListener;
-import com.example.hotelservicesstandalone.Classes.Interfaces.SetInitialValues;
-import com.example.hotelservicesstandalone.Classes.Property.Room;
+import com.syriasoft.checkin.Classes.Enumes.DpTypes;
+import com.syriasoft.checkin.Classes.Interfaces.DeviceAction;
+import com.syriasoft.checkin.Classes.Interfaces.Listen;
+import com.syriasoft.checkin.Classes.Interfaces.MotionListener;
+import com.syriasoft.checkin.Classes.Interfaces.SetInitialValues;
+import com.syriasoft.checkin.Classes.Property.Room;
 import com.tuya.smart.sdk.api.IDevListener;
 import com.tuya.smart.sdk.bean.DeviceBean;
 

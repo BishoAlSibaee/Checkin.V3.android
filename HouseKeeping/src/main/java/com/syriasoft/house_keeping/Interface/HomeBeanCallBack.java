@@ -1,4 +1,4 @@
-package com.syriasoft.housekeeping.Interface;
+package com.syriasoft.house_keeping.Interface;
 
 import com.tuya.smart.home.sdk.bean.HomeBean;
 

@@ -12,4 +12,5 @@
     <color name="colorPrimary">#060d3c</color>
     <color name="trans">#85818181</color>
     <color name="wight">#22FFFFFF</color>
+    <color name="background">#212F3C</color>
 </resources>

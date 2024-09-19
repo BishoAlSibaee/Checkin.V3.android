@@ -5,10 +5,7 @@
 
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"><![CDATA[
-    //tools:context="com.syriasoft.hotelservices.lock.UserLockActivity">xmlns:tools="http://schemas.android.com/tools"
-
-    ]]>
+    android:orientation="vertical">
 
     <Button
         android:id="@+id/btn_scan_gw"

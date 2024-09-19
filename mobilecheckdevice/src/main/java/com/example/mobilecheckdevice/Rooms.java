@@ -25,10 +25,12 @@ import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.StringRequest;
@@ -67,9 +69,11 @@ import com.tuya.smart.home.sdk.callback.ITuyaHomeResultCallback;
 import com.tuya.smart.home.sdk.callback.ITuyaResultCallback;
 import com.tuya.smart.sdk.api.IResultCallback;
 import com.tuya.smart.sdk.bean.DeviceBean;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -78,6 +82,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
+
 import retrofit2.Call;
 import retrofit2.Callback;
 
@@ -602,6 +607,10 @@ public class Rooms extends AppCompatActivity {
                             for (DeviceBean d : homeBean.getDeviceList()) {
                                 if (MyApp.searchDeviceInList(Devices,d.devId) == null) {
                                     Devices.add(d);
+                                    ROOM r = getRoomFromDeviceName(d,ROOMS);
+                                    if (r != null) {
+                                        r.Home = MyApp.ProjectHomes.get(finalI).Home;
+                                    }
                                 }
                             }
                             if (x[0] == MyApp.ProjectHomes.size()) {
@@ -616,7 +625,7 @@ public class Rooms extends AppCompatActivity {
                         }
                     });
                 }
-            }, (long) i * 4 * 1000);
+            }, (long) i * 1000);
         }
     }
 
@@ -762,6 +771,18 @@ public class Rooms extends AppCompatActivity {
                 ROOMS.get(i).setSWITCH8_B(Switch8);
                 ROOMS.get(i).setSWITCH8(TuyaHomeSdk.newDeviceInstance(ROOMS.get(i).getSWITCH8_B().devId));
                 ROOMS.get(i).Switch8 = 1 ;
+            }
+            DeviceBean Shutter1 = searchRoomDevice(Devices,ROOMS.get(i),"Shutter1");
+            if (Shutter1 != null) {
+                ROOMS.get(i).setSHUTTER1(Shutter1);
+            }
+            DeviceBean Shutter2 = searchRoomDevice(Devices,ROOMS.get(i),"Shutter2");
+            if (Shutter2 != null) {
+                ROOMS.get(i).setSHUTTER2(Shutter2);
+            }
+            DeviceBean Shutter3 = searchRoomDevice(Devices,ROOMS.get(i),"Shutter3");
+            if (Shutter3 != null) {
+                ROOMS.get(i).setSHUTTER3(Shutter3);
             }
             DeviceBean lock = searchRoomDevice(Devices,ROOMS.get(i),"Lock") ;
             if (lock == null) {
@@ -962,6 +983,20 @@ public class Rooms extends AppCompatActivity {
                                 Log.d("scenesAre","total: "+SCENES.size());
                                 for(SceneBean s : SCENES) {
                                     Log.d("scenesAre",s.getName());
+//                                    if (s.getName().equals("إغلاق ستارة") || s.getName().equals("فتح ستارة")) {
+//                                        Log.d("scenesAre",s.getName());
+//                                        TuyaHomeSdk.newSceneInstance(s.getId()).deleteScene(new IResultCallback() {
+//                                            @Override
+//                                            public void onError(String code, String error) {
+//                                                Log.d("scenesAre",error);
+//                                            }
+//
+//                                            @Override
+//                                            public void onSuccess() {
+//                                                Log.d("scenesAre","deleted");
+//                                            }
+//                                        });
+//                                    }
                                 }
                             }
                         }
@@ -972,7 +1007,7 @@ public class Rooms extends AppCompatActivity {
                         }
                     });
                 }
-            },(long) i * 1000 * 10);
+            },(long) i * 1000);
 
         }
     }
@@ -1102,104 +1137,6 @@ public class Rooms extends AppCompatActivity {
 
     }
 
-    static void sortDevicesList(List<DeviceBean> devices) {
-        for (int i = 0; i < devices.size(); i++) {
-            for (int j = 1; j < (devices.size() - i); j++) {
-                String numberOnly = getRoomNumberFromDeviceName(devices.get(j - 1));
-                String numberOnly0= getRoomNumberFromDeviceName(devices.get(j));
-                Log.d("sortDevices",numberOnly+" "+numberOnly0);
-                int x = 0 ;
-                int y = 0 ;
-                try {
-                    if (!numberOnly.isEmpty()) {
-                        x = Integer.parseInt(numberOnly);
-                    }
-                    if (!numberOnly0.isEmpty()) {
-                        y = Integer.parseInt(numberOnly0);
-                    }
-                    if (x > y) {
-                        Collections.swap(devices, j, j - 1);
-                    }
-                }
-                catch (Exception e) {
-                    Log.d("sortDevices",numberOnly+" "+numberOnly0);
-                }
-            }
-        }
-    }
-
-    static void sort(List<DeviceBean> devices) {
-        int n = devices.size();
-        for (int i = 1; i < n; ++i) {
-            DeviceBean key = devices.get(i);
-            int j = i - 1;
-
-            /* Move elements of arr[0..i-1], that are
-               greater than key, to one position ahead
-               of their current position */
-            String numberOnly = getRoomNumberFromDeviceName(key);
-            String numberOnly0 = getRoomNumberFromDeviceName(devices.get(j));
-            int x = 0 ;
-            int y = 0 ;
-            try {
-                if (!numberOnly.isEmpty()) {
-                    x = Integer.parseInt(numberOnly);
-                }
-                if (!numberOnly0.isEmpty()) {
-                    y = Integer.parseInt(numberOnly0);
-                }
-
-                while (j >= 0 && y > x) {
-                    DeviceBean j1 = devices.get(j+1);
-                    j1 = devices.get(j);
-                    j = j - 1;
-                }
-                DeviceBean j1 = devices.get(j+1);
-                j1 = key;
-            }
-            catch (Exception e) {
-                Log.d("sortDevices",numberOnly+" "+numberOnly0);
-            }
-
-
-        }
-    }
-
-    static void sortSelection(List<DeviceBean> devices) {
-        int n = devices.size();
-
-        // One by one move boundary of unsorted sub array
-        for (int i = 0; i < n-1; i++)
-        {
-            // Find the minimum element in unsorted array
-            int min_idx = i;
-
-            for (int j = i+1; j < n; j++) {
-                String numberOnly = getRoomNumberFromDeviceName(devices.get(min_idx));
-                String numberOnly0 = getRoomNumberFromDeviceName(devices.get(j));
-                int x = 0 ;
-                int y = 0 ;
-                try {
-                    if (!numberOnly.isEmpty()) {
-                        x = Integer.parseInt(numberOnly);
-                    }
-                    if (!numberOnly0.isEmpty()) {
-                        y = Integer.parseInt(numberOnly0);
-                    }
-                }
-                catch (Exception e) {
-                    Log.d("sortDevices",numberOnly+" "+numberOnly0);
-                }
-                if (y < x)
-                    min_idx = j;
-            }
-
-            // Swap the found minimum element with the first
-            // element
-            Collections.swap(devices, min_idx, i);
-        }
-    }
-
     static String getRoomNumberFromDeviceName(DeviceBean d) {
         String n = "";
         if (d.getName().contains("Z")) {
@@ -1227,6 +1164,40 @@ public class Rooms extends AppCompatActivity {
             n = d.getName().split("L")[0];
         }
         return n;
+    }
+
+    static ROOM getRoomFromDeviceName(DeviceBean d,List<ROOM> rooms) {
+        String n = "";
+        if (d.getName().contains("Z")) {
+            n = d.getName().split("Z")[0];
+        }
+        else if (d.getName().contains("P")) {
+            n = d.getName().split("P")[0];
+        }
+        else if (d.getName().contains("M")) {
+            n = d.getName().split("M")[0];
+        }
+        else if (d.getName().contains("D")) {
+            n = d.getName().split("D")[0];
+        }
+        else if (d.getName().contains("S")) {
+            n = d.getName().split("S")[0];
+        }
+        else if (d.getName().contains("A")) {
+            n = d.getName().split("A")[0];
+        }
+        else if (d.getName().contains("C")) {
+            n = d.getName().split("C")[0];
+        }
+        else if (d.getName().contains("L")) {
+            n = d.getName().split("L")[0];
+        }
+        for (ROOM r:rooms) {
+            if (String.valueOf(r.RoomNumber).equals(n)) {
+                return r;
+            }
+        }
+        return null;
     }
 
     static int partition(List<DeviceBean> devices, int low, int high) {

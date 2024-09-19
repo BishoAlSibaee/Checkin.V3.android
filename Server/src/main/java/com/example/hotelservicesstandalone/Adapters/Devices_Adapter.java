@@ -1,4 +1,4 @@
-package com.example.hotelservicesstandalone;
+package com.example.hotelservicesstandalone.Adapters;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -9,9 +9,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.example.hotelservicesstandalone.Classes.Devices.CheckinDevice;
-import com.tuya.smart.home.sdk.TuyaHomeSdk;
-import com.tuya.smart.sdk.api.IDevListener;
-import com.tuya.smart.sdk.api.ITuyaDevice;
+import com.example.hotelservicesstandalone.R;
 
 import java.util.List;
 
@@ -21,7 +19,7 @@ public class Devices_Adapter extends BaseAdapter {
     LayoutInflater inflater ;
     Context c ;
 
-    Devices_Adapter(List<CheckinDevice> list ,Context c ) {
+    public Devices_Adapter(List<CheckinDevice> list, Context c) {
         this.list = list ;
         this.c = c ;
         inflater = LayoutInflater.from(c);
@@ -48,9 +46,7 @@ public class Devices_Adapter extends BaseAdapter {
         convertView = inflater.inflate(R.layout.device_unit , null);
 
         TextView name = convertView.findViewById(R.id.deviceUnit_deviceName);
-        TextView order = convertView.findViewById(R.id.order);
         ImageView net = convertView.findViewById(R.id.deviceUnit_net);
-        ITuyaDevice mDevice = TuyaHomeSdk.newDeviceInstance(d.devId);
         name.setText(d.getName());
 
         if (d.getIsOnline()) {
@@ -60,49 +56,37 @@ public class Devices_Adapter extends BaseAdapter {
             net.setImageResource(android.R.drawable.ic_delete);
         }
 
-//        String STATUS = "" ;
-//        List kkk = null;
-//        List vvv = null;
-//        if (d.getDps() != null) {
-//            kkk = new ArrayList(d.getDps().keySet());
-//            vvv = new ArrayList(d.getDps().values());
-//        }
+//        mDevice.registerDevListener(new IDevListener() {
+//            @Override
+//            public void onDpUpdate(String devId, String dpStr) {
+//                order.setText(dpStr);
+//            }
 //
-//        for (int i=0;i<kkk.size();i++) {
-//            STATUS = MessageFormat.format("{0} [{1} {2}] ", STATUS, kkk.get(i), vvv.get(i));
-//        }
-
-        mDevice.registerDevListener(new IDevListener() {
-            @Override
-            public void onDpUpdate(String devId, String dpStr) {
-                order.setText(dpStr);
-            }
-
-            @Override
-            public void onRemoved(String devId) {
-
-            }
-
-            @Override
-            public void onStatusChanged(String devId, boolean online) {
-                if (online) {
-                    net.setImageResource(android.R.drawable.presence_online);
-                }
-                else {
-                    net.setImageResource(android.R.drawable.ic_delete);
-                }
-            }
-
-            @Override
-            public void onNetworkStatusChanged(String devId, boolean status) {
-
-            }
-
-            @Override
-            public void onDevInfoUpdate(String devId) {
-
-            }
-        });
+//            @Override
+//            public void onRemoved(String devId) {
+//
+//            }
+//
+//            @Override
+//            public void onStatusChanged(String devId, boolean online) {
+//                if (online) {
+//                    net.setImageResource(android.R.drawable.presence_online);
+//                }
+//                else {
+//                    net.setImageResource(android.R.drawable.ic_delete);
+//                }
+//            }
+//
+//            @Override
+//            public void onNetworkStatusChanged(String devId, boolean status) {
+//
+//            }
+//
+//            @Override
+//            public void onDevInfoUpdate(String devId) {
+//
+//            }
+//        });
 
         return convertView;
 

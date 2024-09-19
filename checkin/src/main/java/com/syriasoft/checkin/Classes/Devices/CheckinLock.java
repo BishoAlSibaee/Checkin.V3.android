@@ -1,4 +1,4 @@
-package com.example.hotelservicesstandalone.Classes.Devices;
+package com.syriasoft.checkin.Classes.Devices;
 
 import android.content.Context;
 import android.util.Log;
@@ -9,16 +9,15 @@ import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
-import com.example.hotelservicesstandalone.Classes.Interfaces.DeviceAction;
-import com.example.hotelservicesstandalone.Classes.Interfaces.Listen;
-import com.example.hotelservicesstandalone.Classes.Interfaces.LockListener;
-import com.example.hotelservicesstandalone.Classes.Interfaces.RecordUnlock;
-import com.example.hotelservicesstandalone.Classes.Interfaces.SetFirebaseDevicesControl;
-import com.example.hotelservicesstandalone.Classes.Property.Room;
-import com.example.hotelservicesstandalone.Classes.Tuya;
-import com.example.hotelservicesstandalone.Interface.RequestOrder;
-import com.example.hotelservicesstandalone.MyApp;
-import com.example.hotelservicesstandalone.Classes.ZigbeeLock;
+import com.syriasoft.checkin.Classes.Interfaces.DeviceAction;
+import com.syriasoft.checkin.Classes.Interfaces.Listen;
+import com.syriasoft.checkin.Classes.Interfaces.LockListener;
+import com.syriasoft.checkin.Classes.Interfaces.RecordUnlock;
+import com.syriasoft.checkin.Classes.Interfaces.SetFirebaseDevicesControl;
+import com.syriasoft.checkin.Classes.Property.Room;
+import com.syriasoft.checkin.Classes.Tuya;
+import com.syriasoft.checkin.Classes.ZigbeeLock;
+import com.syriasoft.checkin.Interface.RequestOrder;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -180,7 +179,7 @@ public class CheckinLock extends CheckinDevice implements Listen, SetFirebaseDev
     }
 
     @Override
-    public void setFirebaseDevicesControl(DatabaseReference controlReference) {
+    public void setFirebaseDevicesControl(Context c,String projectUrl,DatabaseReference controlReference) {
         lockControlListener = controlReference.child(device.name).child("1").addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -189,7 +188,7 @@ public class CheckinLock extends CheckinDevice implements Listen, SetFirebaseDev
                     if (value == 1) {
                         long now = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
                         if (now > (lastUnlockTime+5000)) {
-                            unlock(Tuya.clientId, Tuya.clientSecret, MyApp.app, new RequestOrder() {
+                            unlock(Tuya.clientId, Tuya.clientSecret, c, new RequestOrder() {
                                 @Override
                                 public void onSuccess(String token) {
                                     lastUnlockTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
@@ -200,7 +199,7 @@ public class CheckinLock extends CheckinDevice implements Listen, SetFirebaseDev
                                     controlReference.child(device.name).child("1").setValue(0);
                                 }
                             });
-                            addClientUnlockOperationToDB(MyApp.My_PROJECT.url, new RecordUnlock() {
+                            addClientUnlockOperationToDB(projectUrl, new RecordUnlock() {
                                 @Override
                                 public void onSuccess() {
                                     Log.d("unlockRecording",device.name+" done");
@@ -216,7 +215,7 @@ public class CheckinLock extends CheckinDevice implements Listen, SetFirebaseDev
                     else if (value > 1) {
                         long now = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
                         if (now > (lastUnlockTime+5000)) {
-                            unlock(Tuya.clientId, Tuya.clientSecret, MyApp.app, new RequestOrder() {
+                            unlock(Tuya.clientId, Tuya.clientSecret,c, new RequestOrder() {
                                 @Override
                                 public void onSuccess(String token) {
                                     lastUnlockTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
@@ -227,7 +226,7 @@ public class CheckinLock extends CheckinDevice implements Listen, SetFirebaseDev
                                     controlReference.child(device.name).child("1").setValue(0);
                                 }
                             });
-                            addUserUnlockOperationToDB(MyApp.My_PROJECT.url,value, new RecordUnlock() {
+                            addUserUnlockOperationToDB(projectUrl,value, new RecordUnlock() {
                                 @Override
                                 public void onSuccess() {
                                     Log.d("unlockRecording",device.name+" done");

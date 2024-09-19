@@ -1,4 +1,4 @@
-package com.example.hotelservicesstandalone.Classes.Property;
+package com.syriasoft.checkin.Classes.Property;
 
 public class Suite {
 }

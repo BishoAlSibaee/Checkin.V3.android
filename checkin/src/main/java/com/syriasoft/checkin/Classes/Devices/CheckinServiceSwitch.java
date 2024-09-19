@@ -1,16 +1,17 @@
-package com.example.hotelservicesstandalone.Classes.Devices;
+package com.syriasoft.checkin.Classes.Devices;
 
+import android.content.Context;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
 
-import com.example.hotelservicesstandalone.Classes.Interfaces.DeviceAction;
-import com.example.hotelservicesstandalone.Classes.Interfaces.Listen;
-import com.example.hotelservicesstandalone.Classes.Interfaces.ServiceListener;
-import com.example.hotelservicesstandalone.Classes.Interfaces.SetFirebaseDevicesControl;
-import com.example.hotelservicesstandalone.Classes.Interfaces.SetInitialValues;
-import com.example.hotelservicesstandalone.Classes.PROJECT_VARIABLES;
-import com.example.hotelservicesstandalone.Classes.Property.Room;
+import com.syriasoft.checkin.Classes.Interfaces.DeviceAction;
+import com.syriasoft.checkin.Classes.Interfaces.Listen;
+import com.syriasoft.checkin.Classes.Interfaces.ServiceListener;
+import com.syriasoft.checkin.Classes.Interfaces.SetFirebaseDevicesControl;
+import com.syriasoft.checkin.Classes.Interfaces.SetInitialValues;
+import com.syriasoft.checkin.Classes.PROJECT_VARIABLES;
+import com.syriasoft.checkin.Classes.Property.Room;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -350,7 +351,7 @@ public class CheckinServiceSwitch extends CheckinDevice implements SetInitialVal
     }
 
     @Override
-    public void setFirebaseDevicesControl(DatabaseReference roomReference) {
+    public void setFirebaseDevicesControl(Context c, String projectUrl, DatabaseReference roomReference) {
         if (cleanup != null) {
             Log.d("serviceInfo","cleanup set");
             cleanupControlListener = roomReference.child("Cleanup").addValueEventListener(new ValueEventListener() {

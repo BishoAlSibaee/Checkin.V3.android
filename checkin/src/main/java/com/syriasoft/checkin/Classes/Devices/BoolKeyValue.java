@@ -1,4 +1,4 @@
-package com.example.hotelservicesstandalone.Classes.Devices;
+package com.syriasoft.checkin.Classes.Devices;
 
 public class BoolKeyValue {
 

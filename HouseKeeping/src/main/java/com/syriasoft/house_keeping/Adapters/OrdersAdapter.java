@@ -1,4 +1,4 @@
-package com.syriasoft.housekeeping.Adapters;
+package com.syriasoft.house_keeping.Adapters;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -26,12 +26,12 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
 import com.syriasoft.hotelservices.R;
-import com.syriasoft.housekeeping.MainActivity;
-import com.syriasoft.housekeeping.MyApp;
-import com.syriasoft.housekeeping.ROOM;
-import com.syriasoft.housekeeping.VolleyCallback;
-import com.syriasoft.housekeeping.cleanOrder;
-import com.syriasoft.housekeeping.messageDialog;
+import com.syriasoft.house_keeping.MainActivity;
+import com.syriasoft.house_keeping.MyApp;
+import com.syriasoft.house_keeping.ROOM;
+import com.syriasoft.house_keeping.VolleyCallback;
+import com.syriasoft.house_keeping.cleanOrder;
+import com.syriasoft.house_keeping.messageDialog;
 import com.wang.avi.AVLoadingIndicatorView;
 
 import org.json.JSONException;

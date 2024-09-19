@@ -1,4 +1,4 @@
-package com.example.hotelservicesstandalone.Interface;
+package com.syriasoft.checkin.Interface;
 
 import com.tuya.smart.home.sdk.bean.scene.SceneBean;
 

@@ -1,4 +1,4 @@
-package com.example.hotelservicesstandalone;
+package com.example.hotelservicesstandalone.Classes;
 
 import android.content.ContentValues;
 import android.content.Context;

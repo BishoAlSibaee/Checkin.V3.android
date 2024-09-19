@@ -1,7 +1,7 @@
-package com.example.hotelservicesstandalone.Classes.Devices;
+package com.syriasoft.checkin.Classes.Devices;
 
-import com.example.hotelservicesstandalone.Classes.Enumes.DpTypes;
-import com.example.hotelservicesstandalone.Classes.Interfaces.enumControl;
+import com.syriasoft.checkin.Classes.Enumes.DpTypes;
+import com.syriasoft.checkin.Classes.Interfaces.enumControl;
 import com.tuya.smart.sdk.api.IResultCallback;
 
 import java.util.List;

@@ -45,6 +45,7 @@ public class Device_Adapter extends RecyclerView.Adapter<Device_Adapter.Holder> 
 
     @Override
     public void onBindViewHolder(@NonNull Device_Adapter.Holder holder, @SuppressLint("RecyclerView") int position) {
+        DeviceBean device = list.get(position);
         holder.name.setText(list.get(position).getName());
         if (list.get(position).getIsOnline()) {
             holder.online.setImageResource(android.R.drawable.presence_online);
@@ -90,7 +91,7 @@ public class Device_Adapter extends RecyclerView.Adapter<Device_Adapter.Holder> 
             d.setContentView(R.layout.rename_device_dialog);
             Spinner s = d.findViewById(R.id.devicerenamespinner);
             Spinner rr = d.findViewById(R.id.roomsspinner);
-            String[] Types = new String[]{"Power", "ZGatway", "AC", "DoorSensor", "MotionSensor", "Curtain", "ServiceSwitch", "Switch1", "Switch2", "Switch3","Switch4","Switch5","Switch6","Switch7","Switch8","IR","Lock"};
+            String[] Types = new String[]{"Power", "ZGatway", "AC", "DoorSensor", "MotionSensor", "Curtain", "ServiceSwitch", "Switch1", "Switch2", "Switch3","Switch4","Switch5","Switch6","Switch7","Switch8","Shutter1","Shutter2","Shutter3","IR","Lock"};
             String[] the_rooms = new String[Rooms.ROOMS.size()];
             ROOM Room = null ;
             for (int i = 0; i < Rooms.ROOMS.size(); i++) {
@@ -175,6 +176,19 @@ public class Device_Adapter extends RecyclerView.Adapter<Device_Adapter.Holder> 
                 holder.online.setImageResource(android.R.drawable.presence_online);
                 if (list.get(position).getCategoryCode().contains("zig_kg") || list.get(position).getCategoryCode().contains("zig_pc") || list.get(position).getCategoryCode().contains("zig_tdq")) {
                     new SwitchControlDialog(holder.itemView.getContext(),list.get(position)).show();
+                    if (device.dps.get("27") != null) {
+                        TuyaHomeSdk.newDeviceInstance(device.devId).publishDps("{\"27\": \"memory\"}", new IResultCallback() {
+                            @Override
+                            public void onError(String code, String error) {
+                                Log.d("powerMemory",error);
+                            }
+
+                            @Override
+                            public void onSuccess() {
+                                Log.d("powerMemory","done");
+                            }
+                        });
+                    }
                 }
                 else if (list.get(position).getCategoryCode().contains("hotelms_4z")) {
                     new LockControlDialog(holder.itemView.getContext(),list.get(position)).show();

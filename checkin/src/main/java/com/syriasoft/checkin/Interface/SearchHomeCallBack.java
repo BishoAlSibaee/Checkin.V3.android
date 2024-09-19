@@ -1,4 +1,4 @@
-package com.example.hotelservicesstandalone.Interface;
+package com.syriasoft.checkin.Interface;
 
 public interface SearchHomeCallBack {
     void onSuccess(boolean result);

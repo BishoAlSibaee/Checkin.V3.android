@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    package="com.syriasoft.hotelservices">
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
@@ -18,7 +17,7 @@
     <uses-permission android:name="android.permission.BLUETOOTH"/>
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"/>
 
-    <application android:name="hotelservices.syriasoft.cleanup.MyApp"
+    <application android:name="com.syriasoft.house_keeping.MyApp"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -46,30 +45,30 @@
             android:value="yckws7gwmdh7xvav4p8a7f87px595xc7" />
 
         <activity
-            android:name="hotelservices.syriasoft.cleanup.ROOMS"
+            android:name="com.syriasoft.house_keeping.ROOMS"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:exported="true"
             android:screenOrientation="portrait" />
 
         <activity
-            android:name="hotelservices.syriasoft.cleanup.MiniBarCheck"
+            android:name="com.syriasoft.house_keeping.MiniBarCheck"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:exported="true"
             android:screenOrientation="portrait" />
 
         <activity
-            android:name="hotelservices.syriasoft.cleanup.RestaurantOrderItems"
+            android:name="com.syriasoft.house_keeping.RestaurantOrderItems"
             android:exported="true"
             android:configChanges="keyboardHidden|orientation|screenSize" />
 
         <activity
-            android:name="hotelservices.syriasoft.cleanup.RestaurantOrders"
+            android:name="com.syriasoft.house_keeping.RestaurantOrders"
             android:exported="true"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:theme="@style/AppTheme" />
 
         <activity
-            android:name="hotelservices.syriasoft.cleanup.LogIn"
+            android:name="com.syriasoft.house_keeping.LogIn"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:exported="true">
             <intent-filter>
@@ -79,22 +78,22 @@
         </activity>
 
         <receiver
-            android:name="hotelservices.syriasoft.cleanup.Alarm"
+            android:name="com.syriasoft.house_keeping.Alarm"
             android:process=":remote"
             android:exported="true" />
 
-        <receiver android:name="hotelservices.syriasoft.cleanup.RECIEVER" />
+        <receiver android:name="com.syriasoft.house_keeping.RECIEVER" />
 
         <service
-            android:name="hotelservices.syriasoft.cleanup.SOSService"
+            android:name="com.syriasoft.house_keeping.SOSService"
             android:exported="false"
             android:enabled="true" />
 
         <service
-            android:name="hotelservices.syriasoft.cleanup.ReceivingService"
+            android:name="com.syriasoft.house_keeping.ReceivingService"
             android:enabled="true" />
 
-        <service android:name="hotelservices.syriasoft.cleanup.messagingService"
+        <service android:name="com.syriasoft.house_keeping.messagingService"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
@@ -106,7 +105,7 @@
             android:resource="@drawable/logo_icon" />
 
         <activity
-            android:name="hotelservices.syriasoft.cleanup.MainActivity"
+            android:name="com.syriasoft.house_keeping.MainActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:icon="@drawable/service_logo"
             android:label="Checkin"

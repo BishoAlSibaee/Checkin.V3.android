@@ -1,20 +1,21 @@
-package com.example.hotelservicesstandalone.Classes.Devices;
+package com.syriasoft.checkin.Classes.Devices;
 
 
+import android.content.Context;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
 
-import com.example.hotelservicesstandalone.Classes.Interfaces.CurtainListener;
-import com.example.hotelservicesstandalone.Classes.Interfaces.DeviceAction;
-import com.example.hotelservicesstandalone.Classes.Interfaces.Listen;
-import com.example.hotelservicesstandalone.Classes.Interfaces.SetFirebaseDevicesControl;
-import com.example.hotelservicesstandalone.Classes.Interfaces.SetInitialValues;
-import com.example.hotelservicesstandalone.Classes.Property.Room;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.ValueEventListener;
+import com.syriasoft.checkin.Classes.Interfaces.CurtainListener;
+import com.syriasoft.checkin.Classes.Interfaces.DeviceAction;
+import com.syriasoft.checkin.Classes.Interfaces.Listen;
+import com.syriasoft.checkin.Classes.Interfaces.SetFirebaseDevicesControl;
+import com.syriasoft.checkin.Classes.Interfaces.SetInitialValues;
+import com.syriasoft.checkin.Classes.Property.Room;
 import com.tuya.smart.sdk.api.IDeviceListener;
 import com.tuya.smart.sdk.api.IResultCallback;
 import com.tuya.smart.sdk.bean.DeviceBean;
@@ -158,7 +159,7 @@ public class CheckinCurtain extends CheckinDevice implements SetInitialValues, L
     }
 
     @Override
-    public void setFirebaseDevicesControl(DatabaseReference controlReference) {
+    public void setFirebaseDevicesControl(Context c,String projectUrl, DatabaseReference controlReference) {
         curtainControlListener = controlReference.child(device.name).child("control").addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {

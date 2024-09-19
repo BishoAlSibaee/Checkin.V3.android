@@ -1,8 +1,10 @@
-package com.example.hotelservicesstandalone.Classes.Interfaces;
+package com.syriasoft.checkin.Classes.Interfaces;
+
+import android.content.Context;
 
 import com.google.firebase.database.DatabaseReference;
 
 public interface SetFirebaseDevicesControl {
-    void setFirebaseDevicesControl(DatabaseReference roomReference);
+    void setFirebaseDevicesControl(Context c, String projectUrl,DatabaseReference roomReference);
     void removeFirebaseDevicesControl(DatabaseReference roomReference);
 }

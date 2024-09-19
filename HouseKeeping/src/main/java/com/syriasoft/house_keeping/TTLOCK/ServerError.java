@@ -1,4 +1,4 @@
-package com.syriasoft.housekeeping.TTLOCK;
+package com.syriasoft.house_keeping.TTLOCK;
 
 /**
  * Created by TTLock on 2019/4/23.

@@ -1,4 +1,4 @@
-package com.syriasoft.housekeeping.TTLOCK;
+package com.syriasoft.house_keeping.TTLOCK;
 
 import com.google.gson.reflect.TypeToken;
 import com.ttlock.bl.sdk.util.LogUtil;

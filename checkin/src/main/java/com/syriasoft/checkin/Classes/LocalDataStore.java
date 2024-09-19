@@ -1,4 +1,4 @@
-package com.example.hotelservicesstandalone.Classes;
+package com.syriasoft.checkin.Classes;
 
 import static android.content.Context.MODE_PRIVATE;
 
@@ -82,11 +82,19 @@ public class LocalDataStore {
         }
     }
 
+    public int getProjectId() {
+        return getInteger("projectId");
+    }
+
+    public int getUserId() {
+        return getInteger("userId");
+    }
+
     public Object getString(String objectName) {
         return storage.getString(objectName, null);
     }
 
-    public Object getInteger(String objectName) {
+    public int getInteger(String objectName) {
         return storage.getInt(objectName, -1);
     }
 

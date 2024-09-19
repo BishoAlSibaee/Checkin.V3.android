@@ -1,10 +1,10 @@
-package com.example.hotelservicesstandalone.Classes;
+package com.syriasoft.checkin.Classes;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.StringRequest;
-import com.example.hotelservicesstandalone.Classes.Interfaces.GetProjectsCallback;
-import com.example.hotelservicesstandalone.Classes.Interfaces.ProjectLoginCallback;
+import com.syriasoft.checkin.Classes.Interfaces.GetProjectsCallback;
+import com.syriasoft.checkin.Classes.Interfaces.ProjectLoginCallback;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -102,6 +102,15 @@ public class PROJECT {
                 return par;
             }
         });
+    }
+
+    public static PROJECT findMyProject(List<PROJECT> projects,int id) {
+        for (PROJECT p : projects) {
+            if (p.id == id) {
+                return p;
+            }
+        }
+        return null;
     }
 }
 

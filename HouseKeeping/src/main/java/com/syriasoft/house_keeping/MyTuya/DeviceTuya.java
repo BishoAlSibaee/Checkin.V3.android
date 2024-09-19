@@ -1,4 +1,4 @@
-package com.syriasoft.housekeeping.MyTuya;
+package com.syriasoft.house_keeping.MyTuya;
 
 import com.tuya.smart.sdk.bean.DeviceBean;
 

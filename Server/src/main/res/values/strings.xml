@@ -13,9 +13,16 @@
     <string name="loginProject">Login Project</string>
 
     <string name="openProject..">Open Project ?</string>
-    <string name="enterPasswordToOpen" >Enter The Password To Open</string>
+    <string name="enterPasswordToOpen">Enter The Password To Open</string>
     <string name="password">password</string>
     <string name="cancel">Cancel</string>
     <string name="ok">Ok</string>
     <string name="open">Open</string>
+    <string name="login">Login</string>
+    <string name="selectProject">Select Project</string>
+    <string name="home">Home</string>
+    <string name="cleanup">Cleanup</string>
+    <string name="laundry">Laundry</string>
+    <string name="checkout">Checkout</string>
+    <string name="dnd">DND</string>
 </resources>

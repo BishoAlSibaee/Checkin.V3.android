@@ -117,7 +117,7 @@ public class Devices_Adapter extends BaseAdapter {
             d.setContentView(R.layout.rename_device_dialog);
             Spinner s = d.findViewById(R.id.devicerenamespinner);
             Spinner rr = d.findViewById(R.id.roomsspinner);
-            String[] Types = new String[]{"Power", "ZGatway", "AC", "DoorSensor", "MotionSensor", "Curtain", "ServiceSwitch", "Switch1", "Switch2", "Switch3","Switch4","Switch5","Switch6","Switch7","Switch8","IR","Lock"};
+            String[] Types = new String[]{"Power", "ZGatway", "AC", "DoorSensor", "MotionSensor", "Curtain", "ServiceSwitch", "Switch1", "Switch2", "Switch3","Switch4","Switch5","Switch6","Switch7","Switch8","Shutter","IR","Lock"};
             String[] therooms = new String[Rooms.ROOMS.size()];
             for (int i = 0; i < Rooms.ROOMS.size(); i++) {
                 therooms[i] = String.valueOf(Rooms.ROOMS.get(i).RoomNumber);

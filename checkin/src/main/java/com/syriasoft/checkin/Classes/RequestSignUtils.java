@@ -1,4 +1,4 @@
-package com.example.hotelservicesstandalone.Classes;
+package com.syriasoft.checkin.Classes;
 
 import android.os.Build;
 

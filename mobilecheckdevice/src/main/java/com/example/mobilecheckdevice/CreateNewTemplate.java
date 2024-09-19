@@ -176,7 +176,7 @@ public class CreateNewTemplate extends AppCompatActivity {
                 break;
         }
 
-        moodNamesArr = new String[] {"Living","Sleep","Work","Romance","Read","MasterOff","Other1","Other2","Other3","Other4","Other5","Other6","Other7","Other8","Opposite1","Opposite2","Opposite3","Opposite4","Opposite5","Opposite6","Opposite7","Opposite8"};
+        moodNamesArr = new String[] {"Living","Sleep","Work","Romance","Read","MasterOff","LightsOn","Other1","Other2","Other3","Other4","Other5","Other6","Other7","Other8","Opposite1","Opposite2","Opposite3","Opposite4","Opposite5","Opposite6","Opposite7","Opposite8"};
         ArrayAdapter<String> adapter = new ArrayAdapter<>(act,R.layout.spinners_item,moodNamesArr);
         MoodsNameSpinner = findViewById(R.id.spinner4);
         MoodsNameSpinner.setAdapter(adapter);

@@ -1,4 +1,4 @@
-package com.syriasoft.housekeeping;
+package com.syriasoft.house_keeping;
 
 import android.content.ContentValues;
 import android.content.Context;

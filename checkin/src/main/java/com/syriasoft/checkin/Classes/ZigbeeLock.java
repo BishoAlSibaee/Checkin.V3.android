@@ -1,4 +1,4 @@
-package com.example.hotelservicesstandalone.Classes;
+package com.syriasoft.checkin.Classes;
 
 import android.content.Context;
 import android.util.Log;
@@ -8,7 +8,7 @@ import androidx.annotation.NonNull;
 import com.android.volley.Request;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
-import com.example.hotelservicesstandalone.Interface.RequestOrder;
+import com.syriasoft.checkin.Interface.RequestOrder;
 import com.tuya.smart.android.common.utils.SHA256Util;
 
 import org.json.JSONException;

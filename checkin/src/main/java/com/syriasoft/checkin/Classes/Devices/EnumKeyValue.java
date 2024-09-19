@@ -1,4 +1,4 @@
-package com.example.hotelservicesstandalone.Classes.Devices;
+package com.syriasoft.checkin.Classes.Devices;
 
 import java.util.ArrayList;
 import java.util.List;

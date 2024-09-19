@@ -1,7 +1,7 @@
-package com.example.hotelservicesstandalone.Classes.Devices;
+package com.syriasoft.checkin.Classes.Devices;
 
-import com.example.hotelservicesstandalone.Classes.Enumes.DpTypes;
-import com.example.hotelservicesstandalone.Classes.Interfaces.increaseDecrease;
+import com.syriasoft.checkin.Classes.Enumes.DpTypes;
+import com.syriasoft.checkin.Classes.Interfaces.increaseDecrease;
 import com.tuya.smart.sdk.api.IResultCallback;
 
 public class DeviceDPValue extends DeviceDP implements increaseDecrease {
@@ -10,7 +10,7 @@ public class DeviceDPValue extends DeviceDP implements increaseDecrease {
 
     String current;
 
-    public DeviceDPValue(long dpId, String dpName, DpTypes dpType,CheckinDevice device) {
+    public DeviceDPValue(long dpId, String dpName, DpTypes dpType, CheckinDevice device) {
         super(dpId, dpName, dpType,device);
     }
 

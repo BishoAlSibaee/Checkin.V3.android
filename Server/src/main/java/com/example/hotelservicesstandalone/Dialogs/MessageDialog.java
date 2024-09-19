@@ -1,4 +1,4 @@
-package com.example.hotelservicesstandalone;
+package com.example.hotelservicesstandalone.Dialogs;
 
 import android.app.Dialog;
 import android.content.Context;
@@ -6,13 +6,15 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.example.hotelservicesstandalone.R;
+
 public class MessageDialog {
     private String title;
     private String message;
     private Context c;
     Dialog d;
 
-    MessageDialog(String message, String title, Context c) {
+    public MessageDialog(String message, String title, Context c) {
         this.message = message;
         this.title = title;
         this.c = c;

@@ -1,4 +1,4 @@
-package com.example.hotelservicesstandalone.Classes;
+package com.syriasoft.checkin.Classes;
 
 import android.util.Log;
 
@@ -7,8 +7,7 @@ import androidx.annotation.NonNull;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.StringRequest;
-import com.example.hotelservicesstandalone.Interface.RequestCallback;
-import com.example.hotelservicesstandalone.MyApp;
+import com.syriasoft.checkin.Interface.RequestCallback;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -50,10 +49,11 @@ public class PROJECT_VARIABLES {
     public static CheckInMood checkInMood;
     public static boolean isGettingDevicesData;
     private static DatabaseReference ProjectVariablesRef;
+    static PROJECT My_PROJECT;
 
 
     public static void getProjectVariables(RequestQueue Q,RequestCallback callback) {
-        String url = MyApp.My_PROJECT.url + "roomsManagement/getProjectVariables";
+        String url = My_PROJECT.url + "roomsManagement/getProjectVariables";
         StringRequest re = new StringRequest(Request.Method.GET, url, response -> {
             Log.d("gettingProjectVariables",response);
             try {
@@ -102,7 +102,6 @@ public class PROJECT_VARIABLES {
         PROJECT_VARIABLES.clientBackActions = new ClientBackActions(PROJECT_VARIABLES.OnClientBack);
         setServiceSwitchButtons(new JSONObject(row.getString("ServiceSwitchButtons")));
     }
-
     public static void setProjectVariablesFirebaseListeners(DatabaseReference ProjectVariablesRef) {
         PROJECT_VARIABLES.ProjectVariablesRef = ProjectVariablesRef;
         ProjectVariablesRef.child("CheckinModeActive").setValue(PROJECT_VARIABLES.CheckinModeActive);
@@ -325,35 +324,27 @@ public class PROJECT_VARIABLES {
             }
         });
     }
-
     boolean getAcSenarioActive() {
         return ACSenarioActive == 1;
     }
-
     public static void setAcScenarioActive(int ac) {
         ACSenarioActive = ac ;
     }
-
     public static boolean isAcScenarioActive() {
         return ACSenarioActive == 1;
     }
-
     public static void setDevicesListenersWorking(int working) {
         ProjectVariablesRef.child("DevicesListenersWorking").setValue(working);
     }
-
     boolean getCheckoutModeActive() {
         return CheckoutModeActive == 1;
     }
-
     boolean getCheckinModeActive() {
         return CheckinModeActive == 1;
     }
-
     public JSONObject getServiceSwitchButtons() {
         return ServiceSwitchButtons;
     }
-
     public static void setServiceSwitchButtons(JSONObject serviceSwitchButtons) throws JSONException {
         ServiceSwitchButtons = serviceSwitchButtons;
         if (serviceSwitchButtons.getInt("cleanup") != 0) {
@@ -369,11 +360,9 @@ public class PROJECT_VARIABLES {
             checkoutButton = serviceSwitchButtons.getInt("checkout");
         }
     }
-
     public static boolean getIsPowerOffAfterCheckout() {
         return PoweroffAfterHK == 0 ;
     }
-
     public static void setGettingDevicesData(boolean status) {
         if (status) {
             ProjectVariablesRef.child("GettingDevicesData").setValue("1");
@@ -382,5 +371,4 @@ public class PROJECT_VARIABLES {
             ProjectVariablesRef.child("GettingDevicesData").setValue("0");
         }
     }
-
 }

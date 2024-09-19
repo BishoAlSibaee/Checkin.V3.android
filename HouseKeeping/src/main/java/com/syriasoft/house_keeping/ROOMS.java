@@ -1,4 +1,4 @@
-package com.syriasoft.housekeeping;
+package com.syriasoft.house_keeping;
 
 import android.Manifest;
 import android.app.Activity;

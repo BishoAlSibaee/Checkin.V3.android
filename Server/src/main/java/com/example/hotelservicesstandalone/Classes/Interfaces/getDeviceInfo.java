@@ -1,5 +1,5 @@
-package com.example.hotelservicesstandalone.Classes.Devices;
+package com.example.hotelservicesstandalone.Classes.Interfaces;
 
 public interface getDeviceInfo {
-    void getDeviceDPs();
+    void getDeviceDPs(getDeviceDataCallback callback);
 }

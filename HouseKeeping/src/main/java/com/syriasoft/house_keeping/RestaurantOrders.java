@@ -1,4 +1,4 @@
-package com.syriasoft.housekeeping;
+package com.syriasoft.house_keeping;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -30,7 +30,7 @@ import com.google.firebase.database.ValueEventListener;
 import com.google.gson.Gson;
 import com.squareup.picasso.Picasso;
 import com.syriasoft.hotelservices.R;
-import com.syriasoft.housekeeping.Interface.RestaurantOrderCallback;
+import com.syriasoft.house_keeping.Interface.RestaurantOrderCallback;
 
 import org.json.JSONArray;
 import org.json.JSONException;

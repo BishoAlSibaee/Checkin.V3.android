@@ -1,4 +1,4 @@
-package com.example.hotelservicesstandalone;
+package com.example.hotelservicesstandalone.Classes;
 
 import com.example.hotelservicesstandalone.Classes.Property.Room;
 

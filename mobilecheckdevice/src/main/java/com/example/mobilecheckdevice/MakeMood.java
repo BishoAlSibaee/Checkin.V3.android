@@ -5,17 +5,17 @@ import android.app.Dialog;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SwitchCompat;
 
-import com.example.mobilecheckdevice.Interface.HomeBeanCallBack;
 import com.tuya.smart.home.sdk.TuyaHomeSdk;
-import com.tuya.smart.home.sdk.bean.HomeBean;
 import com.tuya.smart.home.sdk.bean.scene.SceneBean;
 import com.tuya.smart.home.sdk.bean.scene.SceneCondition;
 import com.tuya.smart.home.sdk.bean.scene.SceneTask;
@@ -26,6 +26,7 @@ import com.tuya.smart.home.sdk.callback.ITuyaResultCallback;
 import com.tuya.smart.sdk.api.IResultCallback;
 import com.tuya.smart.sdk.bean.DeviceBean;
 
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -34,13 +35,18 @@ public class MakeMood extends AppCompatActivity {
 
     Activity act ;
     String modeName ;
-    Button S1_1,S1_2,S1_3,S1_4,S2_1,S2_2,S2_3,S2_4,S3_1,S3_2,S3_3,S3_4,S4_1,S4_2,S4_3,S4_4 ,S5_1,S5_2,S5_3,S5_4 ,S6_1,S6_2,S6_3,S6_4 ,S7_1,S7_2,S7_3,S7_4 ,S8_1,S8_2,S8_3,S8_4,Service1,Service2,Service3,Service4,doorSensor,AC;
+    Button S1_1,S1_2,S1_3,S1_4,S2_1,S2_2,S2_3,S2_4,S3_1,S3_2,S3_3,S3_4,S4_1,S4_2,S4_3,S4_4 ,S5_1,S5_2,S5_3,S5_4 ,S6_1,S6_2,S6_3,S6_4 ,S7_1,S7_2,S7_3,S7_4 ,S8_1,S8_2,S8_3,S8_4,Shutter1Open,Shutter1Close,Shutter2Open,Shutter2Close,Shutter3Open,Shutter3Close,Service1,Service2,Service3,Service4,doorSensor,doorSensorClose,AC,AddDelay;
     List<Button> SelectedConditionButtons;
     List<MoodBtn> ConditionMoodButtons;
     List<Button> SelectedTaskButtons;
     List<MoodBtn> TaskMoodButtons;
     SwitchCompat PhysicalButton;
+    Spinner Seconds,Minutes;
+    TextView DelayCaption;
+    LinearLayout delayLayout,addedDelayLayout;
     int powerId;
+    RadioButton OR , AND;
+    int Selected_MATCH_TYPE = SceneBean.MATCH_TYPE_OR ;
 
 
     @Override
@@ -57,12 +63,36 @@ public class MakeMood extends AppCompatActivity {
         act = this ;
         TextView ModeName = findViewById(R.id.textView68);
         ModeName.setText(modeName);
+        LinearLayout AndOr = findViewById(R.id.andOrLayout);
+        AndOr.setVisibility(View.GONE);
+        addedDelayLayout = findViewById(R.id.addedDelayLayout);
+        delayLayout = findViewById(R.id.delayLayoutContent);
+        delayLayout.setVisibility(View.GONE);
+        DelayCaption = findViewById(R.id.textView76);
+        AddDelay = findViewById(R.id.button48);
+        OR = findViewById(R.id.radioButton6);
+        AND = findViewById(R.id.radioButton5);
         SelectedTaskButtons = new ArrayList<>();
         TaskMoodButtons = new ArrayList<>();
         SelectedConditionButtons = new ArrayList<>();
         ConditionMoodButtons = new ArrayList<>();
         PhysicalButton = findViewById(R.id.switch1);
         doorSensor = findViewById(R.id.button19237Av);
+        doorSensorClose = findViewById(R.id.button31);
+
+        String[] secondsArr = new String[60];
+        String[] minutesArr = new String[61];
+        for (int i=0;i<secondsArr.length;i++) {
+            secondsArr[i] = String.valueOf(i+1);
+        }
+        for (int i=0;i<minutesArr.length;i++) {
+            minutesArr[i] = String.valueOf(i);
+        }
+        Seconds = findViewById(R.id.spinner5);
+        Seconds.setAdapter(new ArrayAdapter<>(act,R.layout.spinners_item,secondsArr));
+        Minutes = findViewById(R.id.spinner6);
+        Minutes.setAdapter(new ArrayAdapter<>(act,R.layout.spinners_item,minutesArr));
+
         AC = findViewById(R.id.button19237Av0);
         S1_1 = findViewById(R.id.button272);
         S1_2 = findViewById(R.id.button192);
@@ -100,6 +130,16 @@ public class MakeMood extends AppCompatActivity {
         Service2 = findViewById(R.id.button19);
         Service3 = findViewById(R.id.button17);
         Service4 = findViewById(R.id.button28);
+
+        Shutter1Open = findViewById(R.id.button19237Ac);
+        Shutter1Close = findViewById(R.id.button17237ad);
+
+        Shutter2Open = findViewById(R.id.button19237Ac00);
+        Shutter2Close = findViewById(R.id.button17237ad00);
+
+        Shutter3Open = findViewById(R.id.button19237Ac1);
+        Shutter3Close = findViewById(R.id.button17237ad1);
+
         if (RoomManager.Room.getSWITCH1_B() != null ) {
             if (RoomManager.Room.getSWITCH1_B().dps.get("4") == null) {
                 S1_4.setVisibility(View.INVISIBLE);
@@ -291,6 +331,56 @@ public class MakeMood extends AppCompatActivity {
             LinearLayout curtainLayout = findViewById(R.id.CurtainLayout);
             curtainLayout.setVisibility(View.GONE);
         }
+        if (RoomManager.Room.getSHUTTER1() == null) {
+            LinearLayout shutterLayout = findViewById(R.id.shutter1Layout);
+            shutterLayout.setVisibility(View.GONE);
+        }
+        else {
+            LinearLayout shutterLayout = findViewById(R.id.shutter1Layout);
+            shutterLayout.setVisibility(View.VISIBLE);
+            if (RoomManager.Room.getSHUTTER1().dps.get("1") == null) {
+                Shutter1Close.setVisibility(View.GONE);
+            }
+            if (RoomManager.Room.getSHUTTER1().dps.get("2") == null) {
+                Shutter1Open.setVisibility(View.GONE);
+            }
+        }
+        if (RoomManager.Room.getSHUTTER2() == null) {
+            LinearLayout shutterLayout = findViewById(R.id.shutter2Layout);
+            shutterLayout.setVisibility(View.GONE);
+        }
+        else {
+            LinearLayout shutterLayout = findViewById(R.id.shutter2Layout);
+            shutterLayout.setVisibility(View.VISIBLE);
+            if (RoomManager.Room.getSHUTTER2().dps.get("1") == null) {
+                Shutter2Close.setVisibility(View.GONE);
+            }
+            if (RoomManager.Room.getSHUTTER2().dps.get("2") == null) {
+                Shutter2Open.setVisibility(View.GONE);
+            }
+        }
+        if (RoomManager.Room.getSHUTTER3() == null) {
+            LinearLayout shutterLayout = findViewById(R.id.shutter3Layout);
+            shutterLayout.setVisibility(View.GONE);
+        }
+        else {
+            LinearLayout shutterLayout = findViewById(R.id.shutter3Layout);
+            shutterLayout.setVisibility(View.VISIBLE);
+            if (RoomManager.Room.getSHUTTER3().dps.get("1") == null) {
+                Shutter3Close.setVisibility(View.GONE);
+            }
+            if (RoomManager.Room.getSHUTTER3().dps.get("2") == null) {
+                Shutter3Open.setVisibility(View.GONE);
+            }
+        }
+        if (RoomManager.Room.getDOORSENSOR_B() != null) {
+            LinearLayout doorSensorLayout = findViewById(R.id.DoorSensorLayout);
+            doorSensorLayout.setVisibility(View.VISIBLE);
+        }
+        else {
+            LinearLayout doorSensorLayout = findViewById(R.id.DoorSensorLayout);
+            doorSensorLayout.setVisibility(View.GONE);
+        }
         switch (MyApp.ProjectVariables.cleanupButton) {
             case 1 :
                 Service1.setText(getResources().getString(R.string.cleanup));
@@ -350,10 +440,80 @@ public class MakeMood extends AppCompatActivity {
     }
 
     void setActivityActions() {
+        AddDelay.setOnClickListener(view -> {
+            int seconds = Integer.parseInt(Seconds.getSelectedItem().toString());
+            int minutes = Integer.parseInt(Minutes.getSelectedItem().toString());
+            MoodBtn mb = new MoodBtn(minutes,seconds);
+            TaskMoodButtons.add(mb);
+            Button b = new Button(act);
+            b.setText(MessageFormat.format("delay {0} m :{1} s", minutes, seconds));
+            addedDelayLayout.addView(b);
+            b.setBackgroundResource(R.drawable.button_red);
+            b.setPadding(5,0,5,0);
+            SelectedTaskButtons.add(b);
+            b.setOnClickListener(view1 -> {
+                if (SelectedTaskButtons.contains(b)) {
+                    SelectedTaskButtons.remove(b);
+                    addedDelayLayout.removeView(b);
+                    for (int i = 0; i< TaskMoodButtons.size(); i++) {
+                        if (TaskMoodButtons.get(i) == mb) {
+                            TaskMoodButtons.remove(i);
+                            break;
+                        }
+                    }
+                }
+            });
+        });
+        DelayCaption.setOnClickListener(view -> {
+            if (delayLayout.getVisibility() == View.VISIBLE) {
+                delayLayout.setVisibility(View.GONE);
+            }
+            else {
+                delayLayout.setVisibility(View.VISIBLE);
+            }
+        });
+        OR.setOnCheckedChangeListener((compoundButton, b) -> {
+            if (b) {
+                AND.setChecked(false);
+                Selected_MATCH_TYPE = SceneBean.MATCH_TYPE_OR;
+            }
+        });
+        AND.setOnCheckedChangeListener((compoundButton, b) -> {
+            if (b) {
+                OR.setChecked(false);
+                Selected_MATCH_TYPE = SceneBean.MATCH_TYPE_AND;
+            }
+        });
+        OR.setChecked(true);
+
         PhysicalButton.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            LinearLayout AndOr = findViewById(R.id.andOrLayout);
+            LinearLayout DelayLayout = findViewById(R.id.delayLayout);
+            if (isChecked) {
+                AndOr.setVisibility(View.VISIBLE);
+                DelayLayout.setVisibility(View.GONE);
+            }
+            else {
+                AndOr.setVisibility(View.GONE);
+                DelayLayout.setVisibility(View.VISIBLE);
+            }
         });
 
         doorSensor.setOnClickListener(view -> {
+            if (!PhysicalButton.isChecked()) {
+                new MessageDialog("door sensor must be the condition please turn the switch on ","switch on",act);
+                return;
+            }
+            try {
+                Log.d("doorSensor", RoomManager.Room.getDOORSENSOR_B().dps.keySet().toArray()[0].toString());
+                int x = Integer.parseInt(RoomManager.Room.getDOORSENSOR_B().dps.keySet().toArray()[0].toString());
+                createPhysicalButtonStatusDialogSelector(act, "Door Sensor ", doorSensor, RoomManager.Room.getDOORSENSOR_B(), x);
+            }
+            catch (Exception e) {
+                new MessageDialog(e.getMessage(),"error",act);
+            }
+        });
+        doorSensorClose.setOnClickListener(view->{
             if (!PhysicalButton.isChecked()) {
                 new MessageDialog("door sensor must be the condition please turn the switch on ","switch on",act);
                 return;
@@ -407,6 +567,15 @@ public class MakeMood extends AppCompatActivity {
         S8_2.setOnClickListener(createButtonClickListener(act,"Switch 8 Button 2",S8_2,RoomManager.Room.getSWITCH8_B(),2));
         S8_3.setOnClickListener(createButtonClickListener(act,"Switch 8 Button 3",S8_3,RoomManager.Room.getSWITCH8_B(),3));
         S8_4.setOnClickListener(createButtonClickListener(act,"Switch 8 Button 4",S8_4,RoomManager.Room.getSWITCH8_B(),4));
+
+        Shutter1Open.setOnClickListener(createButtonClickListener(act,"Shutter1 Button open", Shutter1Open,RoomManager.Room.getSHUTTER1(),2));
+        Shutter1Close.setOnClickListener(createButtonClickListener(act,"Shutter1 Button close", Shutter1Close,RoomManager.Room.getSHUTTER1(),1));
+
+        Shutter2Open.setOnClickListener(createButtonClickListener(act,"Shutter2 Button open", Shutter2Open,RoomManager.Room.getSHUTTER2(),2));
+        Shutter2Close.setOnClickListener(createButtonClickListener(act,"Shutter2 Button close", Shutter2Close,RoomManager.Room.getSHUTTER2(),1));
+
+        Shutter3Open.setOnClickListener(createButtonClickListener(act,"Shutter3 Button open", Shutter3Open,RoomManager.Room.getSHUTTER3(),2));
+        Shutter3Close.setOnClickListener(createButtonClickListener(act,"Shutter3 Button close", Shutter3Close,RoomManager.Room.getSHUTTER3(),1));
 
         Service1.setOnClickListener(v -> {
             if (Service1.getText().toString().equals("DND")) {
@@ -558,100 +727,159 @@ public class MakeMood extends AppCompatActivity {
             return ;
         }
         LoadingDialog loading = new LoadingDialog(act);
-        ROOM.getRoomHome(RoomManager.Room, MyApp.ProjectHomes, new HomeBeanCallBack() {
-            @Override
-            public void onSuccess(HomeBean homeBean) {
-                List<SceneCondition> condS = null;
-                List<SceneTask> tasks = new ArrayList<>();
-//                if (BTN != null) {
-//                    condS = new ArrayList<>();
-//                    if (BTN.statusString == null) {
-//                        BoolRule rule = BoolRule.newInstance("dp"+BTN.SwitchButton, BTN.status);
-//                        SceneCondition cond = SceneCondition.createDevCondition(BTN.Switch, String.valueOf(BTN.SwitchButton),rule);
-//                        condS.add(cond);
-//                    }
-//                    else {
-//                        EnumRule rr = EnumRule.newInstance("dp"+BTN.SwitchButton,BTN.statusString);
-//                        SceneCondition cond = SceneCondition.createDevCondition(BTN.Switch, String.valueOf(BTN.SwitchButton),rr);
-//                        condS.add(cond);
-//                    }
-//                }
-                if (ConditionMoodButtons.size() > 0) {
-                    condS = new ArrayList<>();
-                    for (int i=0;i<ConditionMoodButtons.size();i++) {
-                        if (ConditionMoodButtons.get(i).statusString == null) {
-                            BoolRule rule = BoolRule.newInstance("dp"+ConditionMoodButtons.get(i).SwitchButton, ConditionMoodButtons.get(i).status);
-                            SceneCondition cond = SceneCondition.createDevCondition(ConditionMoodButtons.get(i).Switch, String.valueOf(ConditionMoodButtons.get(i).SwitchButton),rule);
-                            condS.add(cond);
-                        }
-                        else {
-                            EnumRule rr = EnumRule.newInstance("dp"+ConditionMoodButtons.get(i).SwitchButton,ConditionMoodButtons.get(i).statusString);
-                            SceneCondition cond = SceneCondition.createDevCondition(ConditionMoodButtons.get(i).Switch, String.valueOf(ConditionMoodButtons.get(i).SwitchButton),rr);
-                            condS.add(cond);
-                        }
-                    }
+        List<SceneCondition> condS = null;
+        List<SceneTask> tasks = new ArrayList<>();
+        if (ConditionMoodButtons.size() > 0) {
+            condS = new ArrayList<>();
+            for (int i=0;i<ConditionMoodButtons.size();i++) {
+                if (ConditionMoodButtons.get(i).statusString == null) {
+                    BoolRule rule = BoolRule.newInstance("dp"+ConditionMoodButtons.get(i).SwitchButton, ConditionMoodButtons.get(i).status);
+                    SceneCondition cond = SceneCondition.createDevCondition(ConditionMoodButtons.get(i).Switch, String.valueOf(ConditionMoodButtons.get(i).SwitchButton),rule);
+                    condS.add(cond);
                 }
-                for (int i = 0; i< TaskMoodButtons.size(); i++) {
-                    HashMap<String, Object> taskMap = new HashMap<>();
-                    if (TaskMoodButtons.get(i).statusString == null) {
-                        taskMap.put(String.valueOf(TaskMoodButtons.get(i).SwitchButton), TaskMoodButtons.get(i).status);
-                        SceneTask task = TuyaHomeSdk.getSceneManagerInstance().createDpTask(TaskMoodButtons.get(i).Switch.devId, taskMap);
-                        tasks.add(task);
-                    }
-                    else {
-                        taskMap.put(String.valueOf(TaskMoodButtons.get(i).SwitchButton), TaskMoodButtons.get(i).statusString);
-                        SceneTask task = TuyaHomeSdk.getSceneManagerInstance().createDpTask(TaskMoodButtons.get(i).Switch.devId, taskMap);
-                        tasks.add(task);
-                    }
+                else {
+                    EnumRule rr = EnumRule.newInstance("dp"+ConditionMoodButtons.get(i).SwitchButton,ConditionMoodButtons.get(i).statusString);
+                    SceneCondition cond = SceneCondition.createDevCondition(ConditionMoodButtons.get(i).Switch, String.valueOf(ConditionMoodButtons.get(i).SwitchButton),rr);
+                    condS.add(cond);
                 }
-                TuyaHomeSdk.getSceneManagerInstance().createScene(
-                        homeBean.getHomeId(),
-                        RoomManager.Room.RoomNumber+modeName,
-                        false,
-                        RoomManager.IMAGES.get(0),
-                        condS,
-                        tasks,
-                        null,
-                        SceneBean.MATCH_TYPE_OR,
-                        new ITuyaResultCallback<SceneBean>() {
+            }
+        }
+        for (int i = 0; i< TaskMoodButtons.size(); i++) {
+            HashMap<String, Object> taskMap = new HashMap<>();
+            if (TaskMoodButtons.get(i).delay) {
+                SceneTask task = TuyaHomeSdk.getSceneManagerInstance().createDelayTask(TaskMoodButtons.get(i).minutes,TaskMoodButtons.get(i).seconds);
+                tasks.add(task);
+            }
+            else if (TaskMoodButtons.get(i).statusString == null) {
+                taskMap.put(String.valueOf(TaskMoodButtons.get(i).SwitchButton), TaskMoodButtons.get(i).status);
+                SceneTask task = TuyaHomeSdk.getSceneManagerInstance().createDpTask(TaskMoodButtons.get(i).Switch.devId, taskMap);
+                tasks.add(task);
+            }
+            else {
+                taskMap.put(String.valueOf(TaskMoodButtons.get(i).SwitchButton), TaskMoodButtons.get(i).statusString);
+                SceneTask task = TuyaHomeSdk.getSceneManagerInstance().createDpTask(TaskMoodButtons.get(i).Switch.devId, taskMap);
+                tasks.add(task);
+            }
+        }
+        TuyaHomeSdk.getSceneManagerInstance().createScene(
+                RoomManager.Room.Home.getHomeId(),
+                RoomManager.Room.RoomNumber+modeName,
+                false,
+                RoomManager.IMAGES.get(0),
+                condS,
+                tasks,
+                null,
+                Selected_MATCH_TYPE,
+                new ITuyaResultCallback<SceneBean>() {
+                    @Override
+                    public void onSuccess(SceneBean sceneBean) {
+                        Log.d("MoodCreation", "create Scene Success");
+                        Moods.MoodsScenes.add(sceneBean);
+                        TuyaHomeSdk.newSceneInstance(sceneBean.getId()).enableScene(sceneBean.getId(), new IResultCallback() {
                             @Override
-                            public void onSuccess(SceneBean sceneBean) {
-                                Log.d("MoodCreation", "create Scene Success");
-                                Moods.MoodsScenes.add(sceneBean);
-                                TuyaHomeSdk.newSceneInstance(sceneBean.getId()).enableScene(sceneBean.getId(), new IResultCallback() {
-                                    @Override
-                                    public void onSuccess() {
-                                        loading.stop();
-                                        Log.d("MoodCreation", "enable Scene Success");
-                                        RoomManager.MY_SCENES.add(sceneBean);
-                                        MyApp.SCENES.add(sceneBean);
-                                        new MessageDialog("Scene created","Done",act,true);
-                                    }
-                                    @Override
-                                    public void onError(String errorCode, String errorMessage) {
-                                        loading.stop();
-                                        Log.d("MoodCreation", errorMessage + " " + errorCode);
-                                        new MessageDialog(errorMessage + " " + errorCode,"Failed",act);
-
-                                    }
-                                });
+                            public void onSuccess() {
+                                loading.stop();
+                                Log.d("MoodCreation", "enable Scene Success");
+                                RoomManager.MY_SCENES.add(sceneBean);
+                                MyApp.SCENES.add(sceneBean);
+                                new MessageDialog("Scene created","Done",act,true);
                             }
                             @Override
                             public void onError(String errorCode, String errorMessage) {
                                 loading.stop();
                                 Log.d("MoodCreation", errorMessage + " " + errorCode);
                                 new MessageDialog(errorMessage + " " + errorCode,"Failed",act);
+
                             }
                         });
-            }
-
-            @Override
-            public void onFail(String error) {
-                loading.stop();
-                new MessageDialog(error,"Failed",act);
-            }
-        });
-
+                    }
+                    @Override
+                    public void onError(String errorCode, String errorMessage) {
+                        loading.stop();
+                        Log.d("MoodCreation", errorMessage + " " + errorCode);
+                        new MessageDialog(errorMessage + " " + errorCode,"Failed",act);
+                    }
+                });
+//        ROOM.getRoomHome(RoomManager.Room, MyApp.ProjectHomes, new HomeBeanCallBack() {
+//            @Override
+//            public void onSuccess(HomeBean homeBean) {
+//                List<SceneCondition> condS = null;
+//                List<SceneTask> tasks = new ArrayList<>();
+//                if (ConditionMoodButtons.size() > 0) {
+//                    condS = new ArrayList<>();
+//                    for (int i=0;i<ConditionMoodButtons.size();i++) {
+//                        if (ConditionMoodButtons.get(i).statusString == null) {
+//                            BoolRule rule = BoolRule.newInstance("dp"+ConditionMoodButtons.get(i).SwitchButton, ConditionMoodButtons.get(i).status);
+//                            SceneCondition cond = SceneCondition.createDevCondition(ConditionMoodButtons.get(i).Switch, String.valueOf(ConditionMoodButtons.get(i).SwitchButton),rule);
+//                            condS.add(cond);
+//                        }
+//                        else {
+//                            EnumRule rr = EnumRule.newInstance("dp"+ConditionMoodButtons.get(i).SwitchButton,ConditionMoodButtons.get(i).statusString);
+//                            SceneCondition cond = SceneCondition.createDevCondition(ConditionMoodButtons.get(i).Switch, String.valueOf(ConditionMoodButtons.get(i).SwitchButton),rr);
+//                            condS.add(cond);
+//                        }
+//                    }
+//                }
+//                for (int i = 0; i< TaskMoodButtons.size(); i++) {
+//                    HashMap<String, Object> taskMap = new HashMap<>();
+//                    if (TaskMoodButtons.get(i).statusString == null) {
+//                        taskMap.put(String.valueOf(TaskMoodButtons.get(i).SwitchButton), TaskMoodButtons.get(i).status);
+//                        SceneTask task = TuyaHomeSdk.getSceneManagerInstance().createDpTask(TaskMoodButtons.get(i).Switch.devId, taskMap);
+//                        tasks.add(task);
+//                    }
+//                    else {
+//                        taskMap.put(String.valueOf(TaskMoodButtons.get(i).SwitchButton), TaskMoodButtons.get(i).statusString);
+//                        SceneTask task = TuyaHomeSdk.getSceneManagerInstance().createDpTask(TaskMoodButtons.get(i).Switch.devId, taskMap);
+//                        tasks.add(task);
+//                    }
+//                }
+//                TuyaHomeSdk.getSceneManagerInstance().createScene(
+//                        homeBean.getHomeId(),
+//                        RoomManager.Room.RoomNumber+modeName,
+//                        false,
+//                        RoomManager.IMAGES.get(0),
+//                        condS,
+//                        tasks,
+//                        null,
+//                        Selected_MATCH_TYPE,
+//                        new ITuyaResultCallback<SceneBean>() {
+//                            @Override
+//                            public void onSuccess(SceneBean sceneBean) {
+//                                Log.d("MoodCreation", "create Scene Success");
+//                                Moods.MoodsScenes.add(sceneBean);
+//                                TuyaHomeSdk.newSceneInstance(sceneBean.getId()).enableScene(sceneBean.getId(), new IResultCallback() {
+//                                    @Override
+//                                    public void onSuccess() {
+//                                        loading.stop();
+//                                        Log.d("MoodCreation", "enable Scene Success");
+//                                        RoomManager.MY_SCENES.add(sceneBean);
+//                                        MyApp.SCENES.add(sceneBean);
+//                                        new MessageDialog("Scene created","Done",act,true);
+//                                    }
+//                                    @Override
+//                                    public void onError(String errorCode, String errorMessage) {
+//                                        loading.stop();
+//                                        Log.d("MoodCreation", errorMessage + " " + errorCode);
+//                                        new MessageDialog(errorMessage + " " + errorCode,"Failed",act);
+//
+//                                    }
+//                                });
+//                            }
+//                            @Override
+//                            public void onError(String errorCode, String errorMessage) {
+//                                loading.stop();
+//                                Log.d("MoodCreation", errorMessage + " " + errorCode);
+//                                new MessageDialog(errorMessage + " " + errorCode,"Failed",act);
+//                            }
+//                        });
+//            }
+//
+//            @Override
+//            public void onFail(String error) {
+//                loading.stop();
+//                new MessageDialog(error,"Failed",act);
+//            }
+//        });
     }
 
     void createButtonStatusDialogSelector(Activity act, String titleText, Button bb, DeviceBean d,int buttonNumber) {
@@ -737,12 +965,9 @@ public class MakeMood extends AppCompatActivity {
                                 r.setTextColor(getResources().getColor(R.color.white,null));
                                 r.setOnCheckedChangeListener((compoundButton, b) -> {
                                     if (b) {
-                                        //MoodButton = bb ;
                                         SelectedConditionButtons.add(bb);
-                                        //BTN = new MoodBtn(d,buttonNumber,String.valueOf(o));
                                         ConditionMoodButtons.add(new MoodBtn(d,buttonNumber,true));
                                         bb.setBackgroundResource(R.drawable.btn_bg_normal_selected0);
-                                        //PhysicalButton.setChecked(false);
                                         SelectedTaskButtons.remove(bb);
                                         D.dismiss();
                                     }
@@ -849,5 +1074,4 @@ public class MakeMood extends AppCompatActivity {
             }
         });
     }
-
 }

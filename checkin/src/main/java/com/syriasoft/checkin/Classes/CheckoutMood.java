@@ -1,7 +1,7 @@
-package com.example.hotelservicesstandalone.Classes;
+package com.syriasoft.checkin.Classes;
 
-import com.example.hotelservicesstandalone.Classes.Property.Room;
-import com.example.hotelservicesstandalone.Interface.RequestCallback;
+import com.syriasoft.checkin.Classes.Property.Room;
+import com.syriasoft.checkin.Interface.RequestCallback;
 import com.tuya.smart.sdk.api.IResultCallback;
 
 import org.json.JSONException;

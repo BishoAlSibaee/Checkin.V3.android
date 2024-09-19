@@ -1,4 +1,4 @@
-package com.example.hotelservicesstandalone.Services;
+package com.syriasoft.checkin.Services;
 
 import android.app.Service;
 import android.content.Intent;
@@ -7,9 +7,8 @@ import android.util.Log;
 
 import androidx.annotation.Nullable;
 
-import com.example.hotelservicesstandalone.Classes.ErrorRegister;
-import com.example.hotelservicesstandalone.Interface.RequestCallback;
-import com.example.hotelservicesstandalone.MyApp;
+import com.syriasoft.checkin.Classes.ErrorRegister;
+import com.syriasoft.checkin.Interface.RequestCallback;
 
 import java.util.Calendar;
 import java.util.Locale;
@@ -30,7 +29,7 @@ public class ErrorService extends Service {
         String errorMsg = intent.getExtras().getString("errorMsg");
         String activityName = intent.getExtras().getString("activityName");
         long x = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
-        ErrorRegister.insertError(MyApp.app, project, room, x, 0, errorMsg, activityName, new RequestCallback() {
+        ErrorRegister.insertError(this.getApplicationContext(), project, room, x, 0, errorMsg, activityName, new RequestCallback() {
             @Override
             public void onSuccess() {
                 Log.d("unExpectedCrash","error inserted");

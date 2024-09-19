@@ -52,10 +52,6 @@ import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.squareup.picasso.Picasso;
 import com.ttlock.bl.sdk.api.TTLockClient;
-import com.ttlock.bl.sdk.callback.ControlLockCallback;
-import com.ttlock.bl.sdk.constant.ControlAction;
-import com.ttlock.bl.sdk.entity.ControlLockResult;
-import com.ttlock.bl.sdk.entity.LockError;
 import com.tuya.smart.android.device.api.ITuyaDeviceMultiControl;
 import com.tuya.smart.android.user.api.ILoginCallback;
 import com.tuya.smart.android.user.bean.User;
@@ -2218,60 +2214,121 @@ public class FullscreenActivity extends AppCompatActivity {
     }
 
     void getScenes() {
-        TuyaHomeSdk.getSceneManagerInstance().getSceneList(MyApp.HOME.getHomeId(), new ITuyaResultCallback<List<SceneBean>>() {
-            @Override
-            public void onSuccess(List<SceneBean> result) {
-                SCENES = result ;
-                MY_SCENES.clear();
-                if (MyApp.MY_SCENES != null) {
-                    MyApp.MY_SCENES.clear();
-                }
-                LivingMood.clear();
-                SleepMood.clear();
-                WorkMood.clear();
-                RomanceMood.clear();
-                ReadMood.clear();
-                MasterOffMood.clear();
-                Log.d("scenesAre",SCENES.size()+"");
-                for (SceneBean s : SCENES) {
-                    Log.d("scenesAre",s.getName());
-                    if (s.getName().contains(String.valueOf(THE_ROOM.RoomNumber))) {
-                        MY_SCENES.add(s);
+        MY_SCENES.clear();
+        if (MyApp.MY_SCENES != null) {
+            MyApp.MY_SCENES.clear();
+        }
+        LivingMood.clear();
+        SleepMood.clear();
+        WorkMood.clear();
+        RomanceMood.clear();
+        ReadMood.clear();
+        MasterOffMood.clear();
+        int xxx[] = {0};
+        for (int i=0; i< MyApp.Homes.size();i++) {
+            HomeBean h = MyApp.Homes.get(i);
+            TuyaHomeSdk.getSceneManagerInstance().getSceneList(h.getHomeId(), new ITuyaResultCallback<List<SceneBean>>() {
+                @Override
+                public void onSuccess(List<SceneBean> result) {
+                    xxx[0]++;
+                    SCENES.addAll(result);
+                    if (xxx[0] == MyApp.Homes.size()) {
+                        for (SceneBean s : SCENES) {
+                            if (s.getName().contains(String.valueOf(THE_ROOM.RoomNumber))) {
+                                Log.d("scenesAre",s.getName());
+                                MY_SCENES.add(s);
+                            }
+                        }
+                        MyApp.MY_SCENES = MY_SCENES ;
+                        if (MY_SCENES.size() > 0) {
+                            for (int i=0;i<MY_SCENES.size();i++) {
+                                Log.d("scenesAre","my scenes "+MY_SCENES.get(i).getName());
+                                if (MY_SCENES.get(i).getName().contains("Living")) {
+                                    LivingMood.add(MY_SCENES.get(i));
+                                }
+                                else if (MY_SCENES.get(i).getName().contains("Sleep")) {
+                                    SleepMood.add(MY_SCENES.get(i));
+                                }
+                                else if (MY_SCENES.get(i).getName().contains("Work")) {
+                                    WorkMood.add(MY_SCENES.get(i));
+                                }
+                                else if (MY_SCENES.get(i).getName().contains("Romance")) {
+                                    RomanceMood.add(MY_SCENES.get(i));
+                                }
+                                else if (MY_SCENES.get(i).getName().contains("Read")) {
+                                    ReadMood.add(MY_SCENES.get(i));
+                                }
+                                else if (MY_SCENES.get(i).getName().contains("MasterOff")) {
+                                    MasterOffMood.add(MY_SCENES.get(i));
+                                }
+                            }
+                            prepareMoodButtons();
+                            TextView lightsText = findViewById(R.id.textView40);
+                            lightsText.setText(getResources().getString(R.string.lightsAndMoods));
+                        }
                     }
                 }
-                MyApp.MY_SCENES = MY_SCENES ;
-                if (MY_SCENES.size() > 0) {
-                    for (int i=0;i<MY_SCENES.size();i++) {
-                        Log.d("scenesAre","my scenes "+MY_SCENES.get(i).getName());
-                        if (MY_SCENES.get(i).getName().contains("Living")) {
-                            LivingMood.add(MY_SCENES.get(i));
-                        }
-                        else if (MY_SCENES.get(i).getName().contains("Sleep")) {
-                            SleepMood.add(MY_SCENES.get(i));
-                        }
-                        else if (MY_SCENES.get(i).getName().contains("Work")) {
-                            WorkMood.add(MY_SCENES.get(i));
-                        }
-                        else if (MY_SCENES.get(i).getName().contains("Romance")) {
-                            RomanceMood.add(MY_SCENES.get(i));
-                        }
-                        else if (MY_SCENES.get(i).getName().contains("Read")) {
-                            ReadMood.add(MY_SCENES.get(i));
-                        }
-                        else if (MY_SCENES.get(i).getName().contains("MasterOff")) {
-                            MasterOffMood.add(MY_SCENES.get(i));
-                        }
-                    }
-                    prepareMoodButtons();
-                    TextView lightsText = findViewById(R.id.textView40);
-                    lightsText.setText(getResources().getString(R.string.lightsAndMoods));
+
+                @Override
+                public void onError(String errorCode, String errorMessage) {
+
                 }
-            }
-            @Override
-            public void onError(String errorCode, String errorMessage) {
-                Log.d("scenesAre",errorCode+" "+errorMessage);
-            }
-        });
+            });
+        }
+//        TuyaHomeSdk.getSceneManagerInstance().getSceneList(MyApp.HOME.getHomeId(), new ITuyaResultCallback<List<SceneBean>>() {
+//            @Override
+//            public void onSuccess(List<SceneBean> result) {
+//                SCENES = result ;
+//                MY_SCENES.clear();
+//                if (MyApp.MY_SCENES != null) {
+//                    MyApp.MY_SCENES.clear();
+//                }
+//                LivingMood.clear();
+//                SleepMood.clear();
+//                WorkMood.clear();
+//                RomanceMood.clear();
+//                ReadMood.clear();
+//                MasterOffMood.clear();
+//                Log.d("scenesAre",SCENES.size()+"");
+//                for (SceneBean s : SCENES) {
+//                    if (s.getName().contains(String.valueOf(THE_ROOM.RoomNumber))) {
+//                        Log.d("scenesAre",s.getName());
+//                        MY_SCENES.add(s);
+//                    }
+//                }
+//                MyApp.MY_SCENES = MY_SCENES ;
+//                if (MY_SCENES.size() > 0) {
+//                    for (int i=0;i<MY_SCENES.size();i++) {
+//                        Log.d("scenesAre","my scenes "+MY_SCENES.get(i).getName());
+//                        if (MY_SCENES.get(i).getName().contains("Living")) {
+//                            LivingMood.add(MY_SCENES.get(i));
+//                        }
+//                        else if (MY_SCENES.get(i).getName().contains("Sleep")) {
+//                            SleepMood.add(MY_SCENES.get(i));
+//                        }
+//                        else if (MY_SCENES.get(i).getName().contains("Work")) {
+//                            WorkMood.add(MY_SCENES.get(i));
+//                        }
+//                        else if (MY_SCENES.get(i).getName().contains("Romance")) {
+//                            RomanceMood.add(MY_SCENES.get(i));
+//                        }
+//                        else if (MY_SCENES.get(i).getName().contains("Read")) {
+//                            ReadMood.add(MY_SCENES.get(i));
+//                        }
+//                        else if (MY_SCENES.get(i).getName().contains("MasterOff")) {
+//                            MasterOffMood.add(MY_SCENES.get(i));
+//                        }
+//                    }
+//                    prepareMoodButtons();
+//                    TextView lightsText = findViewById(R.id.textView40);
+//                    lightsText.setText(getResources().getString(R.string.lightsAndMoods));
+//                }
+//            }
+//            @Override
+//            public void onError(String errorCode, String errorMessage) {
+//                Log.d("scenesAre",errorCode+" "+errorMessage);
+//            }
+//        });
     }
 
     void prepareLights() {
@@ -2300,9 +2357,11 @@ public class FullscreenActivity extends AppCompatActivity {
             Switch8Status = true ;
         }
         if (!Switch1Status && !Switch2Status && !Switch3Status && !Switch4Status && !Switch5Status && !Switch6Status && !Switch7Status && !Switch8Status) {
+            Log.d("lights","no lights");
             ShowLighting.setVisibility(View.GONE);
         }
         else {
+            Log.d("lights","lights ok");
             lightsLayout.removeAllViews();
             ShowLighting.setVisibility(View.VISIBLE);
             if (lightsDB.getScreenButtons().size() > 0 ) {
@@ -3401,6 +3460,7 @@ public class FullscreenActivity extends AppCompatActivity {
 
     void prepareMoodButtons() {
         if (LivingMood.size() > 0) {
+            Log.d("scenesAre","living "+LivingMood.size());
             LinearLayout LightButton = new LinearLayout(act);
             LightButton.setOrientation(LinearLayout.VERTICAL);
             TextView text = new TextView(act);
@@ -3462,6 +3522,30 @@ public class FullscreenActivity extends AppCompatActivity {
                             btn = LivingMood.get(i).getConditions().get(0).getEntitySubIds();
                         }
                     }
+                    if (THE_ROOM.getSWITCH5_B() != null) {
+                        if (LivingMood.get(i).getConditions().get(0).getEntityId().equals(THE_ROOM.getSWITCH5_B().devId)) {
+                            Living = THE_ROOM.getSWITCH5_B() ;
+                            btn = LivingMood.get(i).getConditions().get(0).getEntitySubIds();
+                        }
+                    }
+                    if (THE_ROOM.getSWITCH6_B() != null) {
+                        if (LivingMood.get(i).getConditions().get(0).getEntityId().equals(THE_ROOM.getSWITCH6_B().devId)) {
+                            Living = THE_ROOM.getSWITCH6_B() ;
+                            btn = LivingMood.get(i).getConditions().get(0).getEntitySubIds();
+                        }
+                    }
+                    if (THE_ROOM.getSWITCH7_B() != null) {
+                        if (LivingMood.get(i).getConditions().get(0).getEntityId().equals(THE_ROOM.getSWITCH7_B().devId)) {
+                            Living = THE_ROOM.getSWITCH7_B() ;
+                            btn = LivingMood.get(i).getConditions().get(0).getEntitySubIds();
+                        }
+                    }
+                    if (THE_ROOM.getSWITCH8_B() != null) {
+                        if (LivingMood.get(i).getConditions().get(0).getEntityId().equals(THE_ROOM.getSWITCH8_B().devId)) {
+                            Living = THE_ROOM.getSWITCH8_B() ;
+                            btn = LivingMood.get(i).getConditions().get(0).getEntitySubIds();
+                        }
+                    }
                 }
             }
             String finalBtn = btn;
@@ -3495,6 +3579,7 @@ public class FullscreenActivity extends AppCompatActivity {
             }
         }
         if (SleepMood.size() > 0) {
+            Log.d("scenesAre","sleep "+SleepMood.size());
             LinearLayout LightButton = new LinearLayout(act);
             LightButton.setOrientation(LinearLayout.VERTICAL);
             TextView text = new TextView(act);
@@ -3556,6 +3641,30 @@ public class FullscreenActivity extends AppCompatActivity {
                             btn = SleepMood.get(i).getConditions().get(0).getEntitySubIds();
                         }
                     }
+                    if (THE_ROOM.getSWITCH5_B() != null) {
+                        if (SleepMood.get(i).getConditions().get(0).getEntityId().equals(THE_ROOM.getSWITCH5_B().devId)) {
+                            Sleep = THE_ROOM.getSWITCH5_B() ;
+                            btn = SleepMood.get(i).getConditions().get(0).getEntitySubIds();
+                        }
+                    }
+                    if (THE_ROOM.getSWITCH6_B() != null) {
+                        if (SleepMood.get(i).getConditions().get(0).getEntityId().equals(THE_ROOM.getSWITCH6_B().devId)) {
+                            Sleep = THE_ROOM.getSWITCH6_B() ;
+                            btn = SleepMood.get(i).getConditions().get(0).getEntitySubIds();
+                        }
+                    }
+                    if (THE_ROOM.getSWITCH7_B() != null) {
+                        if (SleepMood.get(i).getConditions().get(0).getEntityId().equals(THE_ROOM.getSWITCH7_B().devId)) {
+                            Sleep = THE_ROOM.getSWITCH7_B() ;
+                            btn = SleepMood.get(i).getConditions().get(0).getEntitySubIds();
+                        }
+                    }
+                    if (THE_ROOM.getSWITCH8_B() != null) {
+                        if (SleepMood.get(i).getConditions().get(0).getEntityId().equals(THE_ROOM.getSWITCH8_B().devId)) {
+                            Sleep = THE_ROOM.getSWITCH8_B() ;
+                            btn = SleepMood.get(i).getConditions().get(0).getEntitySubIds();
+                        }
+                    }
                 }
             }
             String finalBtn = btn;
@@ -3589,6 +3698,7 @@ public class FullscreenActivity extends AppCompatActivity {
             }
         }
         if (WorkMood.size() > 0) {
+            Log.d("scenesAre","work "+WorkMood.size());
             LinearLayout LightButton = new LinearLayout(act);
             LightButton.setOrientation(LinearLayout.VERTICAL);
             TextView text = new TextView(act);
@@ -3650,6 +3760,30 @@ public class FullscreenActivity extends AppCompatActivity {
                             btn = WorkMood.get(i).getConditions().get(0).getEntitySubIds();
                         }
                     }
+                    if (THE_ROOM.getSWITCH5_B() != null) {
+                        if (WorkMood.get(i).getConditions().get(0).getEntityId().equals(THE_ROOM.getSWITCH5_B().devId)) {
+                            Work = THE_ROOM.getSWITCH5_B() ;
+                            btn = WorkMood.get(i).getConditions().get(0).getEntitySubIds();
+                        }
+                    }
+                    if (THE_ROOM.getSWITCH6_B() != null) {
+                        if (WorkMood.get(i).getConditions().get(0).getEntityId().equals(THE_ROOM.getSWITCH6_B().devId)) {
+                            Work = THE_ROOM.getSWITCH6_B() ;
+                            btn = WorkMood.get(i).getConditions().get(0).getEntitySubIds();
+                        }
+                    }
+                    if (THE_ROOM.getSWITCH7_B() != null) {
+                        if (WorkMood.get(i).getConditions().get(0).getEntityId().equals(THE_ROOM.getSWITCH7_B().devId)) {
+                            Work = THE_ROOM.getSWITCH7_B() ;
+                            btn = WorkMood.get(i).getConditions().get(0).getEntitySubIds();
+                        }
+                    }
+                    if (THE_ROOM.getSWITCH8_B() != null) {
+                        if (WorkMood.get(i).getConditions().get(0).getEntityId().equals(THE_ROOM.getSWITCH8_B().devId)) {
+                            Work = THE_ROOM.getSWITCH8_B() ;
+                            btn = WorkMood.get(i).getConditions().get(0).getEntitySubIds();
+                        }
+                    }
                 }
             }
             String finalBtn = btn;
@@ -3683,6 +3817,7 @@ public class FullscreenActivity extends AppCompatActivity {
             }
         }
         if (RomanceMood.size() > 0) {
+            Log.d("scenesAre","romance "+RomanceMood.size());
             LinearLayout LightButton = new LinearLayout(act);
             LightButton.setOrientation(LinearLayout.VERTICAL);
             TextView text = new TextView(act);
@@ -3744,6 +3879,30 @@ public class FullscreenActivity extends AppCompatActivity {
                             btn = RomanceMood.get(i).getConditions().get(0).getEntitySubIds();
                         }
                     }
+                    if (THE_ROOM.getSWITCH5_B() != null) {
+                        if (RomanceMood.get(i).getConditions().get(0).getEntityId().equals(THE_ROOM.getSWITCH5_B().devId)) {
+                            Romance = THE_ROOM.getSWITCH5_B() ;
+                            btn = RomanceMood.get(i).getConditions().get(0).getEntitySubIds();
+                        }
+                    }
+                    if (THE_ROOM.getSWITCH6_B() != null) {
+                        if (RomanceMood.get(i).getConditions().get(0).getEntityId().equals(THE_ROOM.getSWITCH6_B().devId)) {
+                            Romance = THE_ROOM.getSWITCH6_B() ;
+                            btn = RomanceMood.get(i).getConditions().get(0).getEntitySubIds();
+                        }
+                    }
+                    if (THE_ROOM.getSWITCH7_B() != null) {
+                        if (RomanceMood.get(i).getConditions().get(0).getEntityId().equals(THE_ROOM.getSWITCH7_B().devId)) {
+                            Romance = THE_ROOM.getSWITCH7_B() ;
+                            btn = RomanceMood.get(i).getConditions().get(0).getEntitySubIds();
+                        }
+                    }
+                    if (THE_ROOM.getSWITCH8_B() != null) {
+                        if (RomanceMood.get(i).getConditions().get(0).getEntityId().equals(THE_ROOM.getSWITCH8_B().devId)) {
+                            Romance = THE_ROOM.getSWITCH8_B() ;
+                            btn = RomanceMood.get(i).getConditions().get(0).getEntitySubIds();
+                        }
+                    }
                 }
             }
             String finalBtn = btn;
@@ -3777,6 +3936,7 @@ public class FullscreenActivity extends AppCompatActivity {
             }
         }
         if (ReadMood.size() > 0) {
+            Log.d("scenesAre","read "+ReadMood.size());
             LinearLayout LightButton = new LinearLayout(act);
             LightButton.setOrientation(LinearLayout.VERTICAL);
             TextView text = new TextView(act);
@@ -3838,6 +3998,30 @@ public class FullscreenActivity extends AppCompatActivity {
                             btn = ReadMood.get(i).getConditions().get(0).getEntitySubIds();
                         }
                     }
+                    if (THE_ROOM.getSWITCH5_B() != null) {
+                        if (ReadMood.get(i).getConditions().get(0).getEntityId().equals(THE_ROOM.getSWITCH5_B().devId)) {
+                            Read = THE_ROOM.getSWITCH5_B() ;
+                            btn = ReadMood.get(i).getConditions().get(0).getEntitySubIds();
+                        }
+                    }
+                    if (THE_ROOM.getSWITCH6_B() != null) {
+                        if (ReadMood.get(i).getConditions().get(0).getEntityId().equals(THE_ROOM.getSWITCH6_B().devId)) {
+                            Read = THE_ROOM.getSWITCH6_B() ;
+                            btn = ReadMood.get(i).getConditions().get(0).getEntitySubIds();
+                        }
+                    }
+                    if (THE_ROOM.getSWITCH7_B() != null) {
+                        if (ReadMood.get(i).getConditions().get(0).getEntityId().equals(THE_ROOM.getSWITCH7_B().devId)) {
+                            Read = THE_ROOM.getSWITCH7_B() ;
+                            btn = ReadMood.get(i).getConditions().get(0).getEntitySubIds();
+                        }
+                    }
+                    if (THE_ROOM.getSWITCH8_B() != null) {
+                        if (ReadMood.get(i).getConditions().get(0).getEntityId().equals(THE_ROOM.getSWITCH8_B().devId)) {
+                            Read = THE_ROOM.getSWITCH8_B() ;
+                            btn = ReadMood.get(i).getConditions().get(0).getEntitySubIds();
+                        }
+                    }
                 }
             }
             String finalBtn = btn;
@@ -3871,6 +4055,7 @@ public class FullscreenActivity extends AppCompatActivity {
             }
         }
         if (MasterOffMood.size() > 0) {
+            Log.d("scenesAre","master "+MasterOffMood.size());
             LinearLayout LightButton = new LinearLayout(act);
             LightButton.setOrientation(LinearLayout.VERTICAL);
             TextView text = new TextView(act);
@@ -3932,6 +4117,30 @@ public class FullscreenActivity extends AppCompatActivity {
                             btn = MasterOffMood.get(i).getConditions().get(0).getEntitySubIds();
                         }
                     }
+                    if (THE_ROOM.getSWITCH5_B() != null) {
+                        if (MasterOffMood.get(i).getConditions().get(0).getEntityId().equals(THE_ROOM.getSWITCH5_B().devId)) {
+                            MasterOff = THE_ROOM.getSWITCH5_B() ;
+                            btn = MasterOffMood.get(i).getConditions().get(0).getEntitySubIds();
+                        }
+                    }
+                    if (THE_ROOM.getSWITCH6_B() != null) {
+                        if (MasterOffMood.get(i).getConditions().get(0).getEntityId().equals(THE_ROOM.getSWITCH6_B().devId)) {
+                            MasterOff = THE_ROOM.getSWITCH6_B() ;
+                            btn = MasterOffMood.get(i).getConditions().get(0).getEntitySubIds();
+                        }
+                    }
+                    if (THE_ROOM.getSWITCH7_B() != null) {
+                        if (MasterOffMood.get(i).getConditions().get(0).getEntityId().equals(THE_ROOM.getSWITCH7_B().devId)) {
+                            MasterOff = THE_ROOM.getSWITCH7_B() ;
+                            btn = MasterOffMood.get(i).getConditions().get(0).getEntitySubIds();
+                        }
+                    }
+                    if (THE_ROOM.getSWITCH8_B() != null) {
+                        if (MasterOffMood.get(i).getConditions().get(0).getEntityId().equals(THE_ROOM.getSWITCH8_B().devId)) {
+                            MasterOff = THE_ROOM.getSWITCH8_B() ;
+                            btn = MasterOffMood.get(i).getConditions().get(0).getEntitySubIds();
+                        }
+                    }
                 }
             }
             String finalBtn = btn;
@@ -3969,26 +4178,57 @@ public class FullscreenActivity extends AppCompatActivity {
     public void OpenTheDoor(View view) {
         AVLoadingIndicatorView doorLoading = findViewById(R.id.loadingIcon);
         ImageView doorImage = findViewById(R.id.imageView17);
-        if (MyApp.BluetoothLock != null) {
+        if (THE_ROOM.getLOCK_B() != null) {
             doorImage.setVisibility(View.GONE);
             doorLoading.setVisibility(View.VISIBLE);
             String url = MyApp.ProjectURL + "roomsManagement/addClientDoorOpen";
             StringRequest req = new StringRequest(Request.Method.POST, url, response -> {
-                Log.d("doorOpenResp" , "BT"+response);
+                Log.d("doorOpenResp" , "ZB"+response);
                 try {
                     JSONObject result = new JSONObject(response);
                     result.getString("result");
                     if (result.getString("result").equals("success")) {
-                        TTLockClient.getDefault().controlLock(ControlAction.UNLOCK, THE_ROOM.getLock().getLockData(), THE_ROOM.getLock().getLockMac(),new ControlLockCallback() {
+                        ZigbeeLock.getTokenFromApi(MyApp.cloudClientId, MyApp.cloudSecret, act, new RequestOrder() {
                             @Override
-                            public void onControlLockSuccess(ControlLockResult controlLockResult) {
-                                ToastMaker.MakeToast("door opened",act);
-                                doorImage.setVisibility(View.VISIBLE);
-                                doorLoading.setVisibility(View.GONE);
+                            public void onSuccess(String token) {
+                                Log.d("doorOpenResp" , "token "+token);
+                                ZigbeeLock.getTicketId(token, MyApp.cloudClientId, MyApp.cloudSecret, THE_ROOM.getLOCK_B().devId, act, new RequestOrder() {
+                                    @Override
+                                    public void onSuccess(String ticket) {
+                                        Log.d("doorOpenResp" , "ticket "+ticket);
+                                        ZigbeeLock.unlockWithoutPassword(token, ticket, MyApp.cloudClientId, MyApp.cloudSecret, THE_ROOM.getLOCK_B().devId, act, new RequestOrder() {
+                                            @Override
+                                            public void onSuccess(String res) {
+                                                Log.d("doorOpenResp" , "res "+res);
+                                                ToastMaker.MakeToast("door opened",act);
+                                                doorImage.setVisibility(View.VISIBLE);
+                                                doorLoading.setVisibility(View.GONE);
+                                            }
+
+                                            @Override
+                                            public void onFailed(String error) {
+                                                Log.d("openDoorResp" , "res "+error);
+                                                ToastMaker.MakeToast(error,act);
+                                                doorImage.setVisibility(View.VISIBLE);
+                                                doorLoading.setVisibility(View.GONE);
+                                            }
+                                        });
+                                    }
+
+                                    @Override
+                                    public void onFailed(String error) {
+                                        Log.d("doorOpenResp" , "ticket "+error);
+                                        ToastMaker.MakeToast(error,act);
+                                        doorImage.setVisibility(View.VISIBLE);
+                                        doorLoading.setVisibility(View.GONE);
+                                    }
+                                });
                             }
+
                             @Override
-                            public void onFail(LockError error) {
-                                ToastMaker.MakeToast(error.getErrorMsg(),act);
+                            public void onFailed(String error) {
+                                Log.d("doorOpenResp" , "token "+error);
+                                ToastMaker.MakeToast(error,act);
                                 doorImage.setVisibility(View.VISIBLE);
                                 doorLoading.setVisibility(View.GONE);
                             }
@@ -3999,12 +4239,15 @@ public class FullscreenActivity extends AppCompatActivity {
                         doorImage.setVisibility(View.VISIBLE);
                         doorLoading.setVisibility(View.GONE);
                     }
+
                 } catch (JSONException e) {
+                    Log.d("doorOpenResp" , e.getMessage());
                     ToastMaker.MakeToast(e.getMessage(),act);
                     doorImage.setVisibility(View.VISIBLE);
                     doorLoading.setVisibility(View.GONE);
                 }
             }, error -> {
+                Log.d("doorOpenResp" , error.toString());
                 ToastMaker.MakeToast(error.toString(),act);
                 doorImage.setVisibility(View.VISIBLE);
                 doorLoading.setVisibility(View.GONE);
@@ -4022,96 +4265,151 @@ public class FullscreenActivity extends AppCompatActivity {
             FirebaseTokenRegister.add(req);
         }
         else {
-            if (THE_ROOM.getLOCK_B() != null) {
-                doorImage.setVisibility(View.GONE);
-                doorLoading.setVisibility(View.VISIBLE);
-                String url = MyApp.ProjectURL + "roomsManagement/addClientDoorOpen";
-                StringRequest req = new StringRequest(Request.Method.POST, url, response -> {
-                    Log.d("doorOpenResp" , "ZB"+response);
-                    try {
-                        JSONObject result = new JSONObject(response);
-                        result.getString("result");
-                        if (result.getString("result").equals("success")) {
-                            ZigbeeLock.getTokenFromApi(MyApp.cloudClientId, MyApp.cloudSecret, act, new RequestOrder() {
-                                @Override
-                                public void onSuccess(String token) {
-                                    Log.d("doorOpenResp" , "token "+token);
-                                    ZigbeeLock.getTicketId(token, MyApp.cloudClientId, MyApp.cloudSecret, THE_ROOM.getLOCK_B().devId, act, new RequestOrder() {
-                                        @Override
-                                        public void onSuccess(String ticket) {
-                                            Log.d("doorOpenResp" , "ticket "+ticket);
-                                            ZigbeeLock.unlockWithoutPassword(token, ticket, MyApp.cloudClientId, MyApp.cloudSecret, THE_ROOM.getLOCK_B().devId, act, new RequestOrder() {
-                                                @Override
-                                                public void onSuccess(String res) {
-                                                    Log.d("doorOpenResp" , "res "+res);
-                                                    ToastMaker.MakeToast("door opened",act);
-                                                    doorImage.setVisibility(View.VISIBLE);
-                                                    doorLoading.setVisibility(View.GONE);
-                                                }
-
-                                                @Override
-                                                public void onFailed(String error) {
-                                                    Log.d("openDoorResp" , "res "+error);
-                                                    ToastMaker.MakeToast(error,act);
-                                                    doorImage.setVisibility(View.VISIBLE);
-                                                    doorLoading.setVisibility(View.GONE);
-                                                }
-                                            });
-                                        }
-
-                                        @Override
-                                        public void onFailed(String error) {
-                                            Log.d("doorOpenResp" , "ticket "+error);
-                                            ToastMaker.MakeToast(error,act);
-                                            doorImage.setVisibility(View.VISIBLE);
-                                            doorLoading.setVisibility(View.GONE);
-                                        }
-                                    });
-                                }
-
-                                @Override
-                                public void onFailed(String error) {
-                                    Log.d("doorOpenResp" , "token "+error);
-                                    ToastMaker.MakeToast(error,act);
-                                    doorImage.setVisibility(View.VISIBLE);
-                                    doorLoading.setVisibility(View.GONE);
-                                }
-                            });
-                        }
-                        else {
-                            ToastMaker.MakeToast(result.getString("error"),act);
-                            doorImage.setVisibility(View.VISIBLE);
-                            doorLoading.setVisibility(View.GONE);
-                        }
-
-                    } catch (JSONException e) {
-                        Log.d("doorOpenResp" , e.getMessage());
-                        ToastMaker.MakeToast(e.getMessage(),act);
-                        doorImage.setVisibility(View.VISIBLE);
-                        doorLoading.setVisibility(View.GONE);
-                    }
-                }, error -> {
-                    Log.d("doorOpenResp" , error.toString());
-                    ToastMaker.MakeToast(error.toString(),act);
-                    doorImage.setVisibility(View.VISIBLE);
-                    doorLoading.setVisibility(View.GONE);
-                }){
-                    @Override
-                    protected Map<String, String> getParams() {
-                        Map<String,String> params = new HashMap<>();
-                        params.put("room_id", String.valueOf(THE_ROOM.id));
-                        return params;
-                    }
-                };
-                if (FirebaseTokenRegister == null) {
-                    FirebaseTokenRegister = Volley.newRequestQueue(act) ;
-                }
-                FirebaseTokenRegister.add(req);
-            }
-            else {
-                new messageDialog("no lock detected in this room ","failed",act);
-            }
+            new messageDialog("no lock detected in this room ","failed",act);
         }
+//        if (MyApp.BluetoothLock != null) {
+//            doorImage.setVisibility(View.GONE);
+//            doorLoading.setVisibility(View.VISIBLE);
+//            String url = MyApp.ProjectURL + "roomsManagement/addClientDoorOpen";
+//            StringRequest req = new StringRequest(Request.Method.POST, url, response -> {
+//                Log.d("doorOpenResp" , "BT"+response);
+//                try {
+//                    JSONObject result = new JSONObject(response);
+//                    result.getString("result");
+//                    if (result.getString("result").equals("success")) {
+//                        TTLockClient.getDefault().controlLock(ControlAction.UNLOCK, THE_ROOM.getLock().getLockData(), THE_ROOM.getLock().getLockMac(),new ControlLockCallback() {
+//                            @Override
+//                            public void onControlLockSuccess(ControlLockResult controlLockResult) {
+//                                ToastMaker.MakeToast("door opened",act);
+//                                doorImage.setVisibility(View.VISIBLE);
+//                                doorLoading.setVisibility(View.GONE);
+//                            }
+//                            @Override
+//                            public void onFail(LockError error) {
+//                                ToastMaker.MakeToast(error.getErrorMsg(),act);
+//                                doorImage.setVisibility(View.VISIBLE);
+//                                doorLoading.setVisibility(View.GONE);
+//                            }
+//                        });
+//                    }
+//                    else {
+//                        ToastMaker.MakeToast(result.getString("error"),act);
+//                        doorImage.setVisibility(View.VISIBLE);
+//                        doorLoading.setVisibility(View.GONE);
+//                    }
+//                } catch (JSONException e) {
+//                    ToastMaker.MakeToast(e.getMessage(),act);
+//                    doorImage.setVisibility(View.VISIBLE);
+//                    doorLoading.setVisibility(View.GONE);
+//                }
+//            }, error -> {
+//                ToastMaker.MakeToast(error.toString(),act);
+//                doorImage.setVisibility(View.VISIBLE);
+//                doorLoading.setVisibility(View.GONE);
+//            }){
+//                @Override
+//                protected Map<String, String> getParams() {
+//                    Map<String,String> params = new HashMap<>();
+//                    params.put("room_id", String.valueOf(THE_ROOM.id));
+//                    return params;
+//                }
+//            };
+//            if (FirebaseTokenRegister == null) {
+//                FirebaseTokenRegister = Volley.newRequestQueue(act) ;
+//            }
+//            FirebaseTokenRegister.add(req);
+//        }
+//        else {
+//            if (THE_ROOM.getLOCK_B() != null) {
+//                doorImage.setVisibility(View.GONE);
+//                doorLoading.setVisibility(View.VISIBLE);
+//                String url = MyApp.ProjectURL + "roomsManagement/addClientDoorOpen";
+//                StringRequest req = new StringRequest(Request.Method.POST, url, response -> {
+//                    Log.d("doorOpenResp" , "ZB"+response);
+//                    try {
+//                        JSONObject result = new JSONObject(response);
+//                        result.getString("result");
+//                        if (result.getString("result").equals("success")) {
+//                            ZigbeeLock.getTokenFromApi(MyApp.cloudClientId, MyApp.cloudSecret, act, new RequestOrder() {
+//                                @Override
+//                                public void onSuccess(String token) {
+//                                    Log.d("doorOpenResp" , "token "+token);
+//                                    ZigbeeLock.getTicketId(token, MyApp.cloudClientId, MyApp.cloudSecret, THE_ROOM.getLOCK_B().devId, act, new RequestOrder() {
+//                                        @Override
+//                                        public void onSuccess(String ticket) {
+//                                            Log.d("doorOpenResp" , "ticket "+ticket);
+//                                            ZigbeeLock.unlockWithoutPassword(token, ticket, MyApp.cloudClientId, MyApp.cloudSecret, THE_ROOM.getLOCK_B().devId, act, new RequestOrder() {
+//                                                @Override
+//                                                public void onSuccess(String res) {
+//                                                    Log.d("doorOpenResp" , "res "+res);
+//                                                    ToastMaker.MakeToast("door opened",act);
+//                                                    doorImage.setVisibility(View.VISIBLE);
+//                                                    doorLoading.setVisibility(View.GONE);
+//                                                }
+//
+//                                                @Override
+//                                                public void onFailed(String error) {
+//                                                    Log.d("openDoorResp" , "res "+error);
+//                                                    ToastMaker.MakeToast(error,act);
+//                                                    doorImage.setVisibility(View.VISIBLE);
+//                                                    doorLoading.setVisibility(View.GONE);
+//                                                }
+//                                            });
+//                                        }
+//
+//                                        @Override
+//                                        public void onFailed(String error) {
+//                                            Log.d("doorOpenResp" , "ticket "+error);
+//                                            ToastMaker.MakeToast(error,act);
+//                                            doorImage.setVisibility(View.VISIBLE);
+//                                            doorLoading.setVisibility(View.GONE);
+//                                        }
+//                                    });
+//                                }
+//
+//                                @Override
+//                                public void onFailed(String error) {
+//                                    Log.d("doorOpenResp" , "token "+error);
+//                                    ToastMaker.MakeToast(error,act);
+//                                    doorImage.setVisibility(View.VISIBLE);
+//                                    doorLoading.setVisibility(View.GONE);
+//                                }
+//                            });
+//                        }
+//                        else {
+//                            ToastMaker.MakeToast(result.getString("error"),act);
+//                            doorImage.setVisibility(View.VISIBLE);
+//                            doorLoading.setVisibility(View.GONE);
+//                        }
+//
+//                    } catch (JSONException e) {
+//                        Log.d("doorOpenResp" , e.getMessage());
+//                        ToastMaker.MakeToast(e.getMessage(),act);
+//                        doorImage.setVisibility(View.VISIBLE);
+//                        doorLoading.setVisibility(View.GONE);
+//                    }
+//                }, error -> {
+//                    Log.d("doorOpenResp" , error.toString());
+//                    ToastMaker.MakeToast(error.toString(),act);
+//                    doorImage.setVisibility(View.VISIBLE);
+//                    doorLoading.setVisibility(View.GONE);
+//                }){
+//                    @Override
+//                    protected Map<String, String> getParams() {
+//                        Map<String,String> params = new HashMap<>();
+//                        params.put("room_id", String.valueOf(THE_ROOM.id));
+//                        return params;
+//                    }
+//                };
+//                if (FirebaseTokenRegister == null) {
+//                    FirebaseTokenRegister = Volley.newRequestQueue(act) ;
+//                }
+//                FirebaseTokenRegister.add(req);
+//            }
+//            else {
+//                new messageDialog("no lock detected in this room ","failed",act);
+//            }
+//        }
     }
 
     void getMiniBarMenu(int Facility) {

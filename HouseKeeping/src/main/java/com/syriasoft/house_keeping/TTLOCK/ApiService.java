@@ -1,4 +1,4 @@
-package com.syriasoft.housekeeping.TTLOCK;
+package com.syriasoft.house_keeping.TTLOCK;
 
 import java.util.Map;
 

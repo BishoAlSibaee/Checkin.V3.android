@@ -370,6 +370,7 @@ public class Template {
                         }
                     });
                     scenes.add(mood);
+                    MyApp.SCENES.add(mood);
                     if (scenes.size() == Moods.size()) {
                         Log.d("applyTemplateXX","total moods: "+scenes.size());
                         callback.onSuccess();
@@ -515,16 +516,16 @@ public class Template {
 
     TemplateError checkRoomMoodCorrespond(ROOM room, TemplateMood mood) {
         DeviceBean d = room.searchDeviceNameInRoomDevices(mood.conditionButton.SwitchName);
-        if (d == null) {
-            return new TemplateError(false,mood.conditionButton.SwitchName+" condition device unavailable in room number "+room.RoomNumber+" to make mood "+mood.name);
-        }
-        else {
+        if (d != null) {
+//            return new TemplateError(false,mood.conditionButton.SwitchName+" condition device unavailable in room number "+room.RoomNumber+" to make mood "+mood.name);
+//        }
+//        else {
             if (!Template.isDPInDevice(d,mood.conditionButton.DP)) {
                 return new TemplateError(false,"button number "+mood.conditionButton.DP+" is unavailable in "+mood.conditionButton.SwitchName+" in room number "+room.RoomNumber+" to make mood "+mood.name);
             }
         }
         for (TemplateButton chT: mood.tasks) {
-            DeviceBean dd = room.searchDeviceNameInRoomDevices(chT.SwitchName);
+            DeviceBean dd = room.searchDeviceNameInRoomDevices(room.RoomNumber+chT.SwitchName);
             if (dd == null) {
                 return new TemplateError(false,mood.name+" task device "+chT.SwitchName+" is unavailable in room number "+room.RoomNumber+" to make mood "+mood.name);
             }

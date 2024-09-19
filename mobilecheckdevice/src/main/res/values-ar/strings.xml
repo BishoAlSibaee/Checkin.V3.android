@@ -27,7 +27,7 @@
 
 <!--    Messages -->
 
-    <string name="physicalButtonMessage">يجب تشغيل هذا الزر اذا كان هناك زر مود فعلي ضمن الازرار وثم يجب اختيار هذا الزر اولا</string>
+    <string name="physicalButtonMessage">يجب تشغيل هذا الزر عند اختيار أزرار الشرط </string>
 
     <string name="selectButtons">اختر الازرار</string>
     <string name="pleaseSelectButtons">يرجى اختيار الازرار</string>

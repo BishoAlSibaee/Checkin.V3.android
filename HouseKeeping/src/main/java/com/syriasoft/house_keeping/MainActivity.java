@@ -1,4 +1,4 @@
-package com.syriasoft.housekeeping;
+package com.syriasoft.house_keeping;
 
 
 import android.annotation.SuppressLint;
@@ -41,14 +41,14 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.gson.Gson;
-import com.syriasoft.housekeeping.Adapters.OrdersAdapter;
-import com.syriasoft.housekeeping.Adapters.OrdersGridAdapter;
-import com.syriasoft.housekeeping.Interface.HomeBeanCallBack;
-import com.syriasoft.housekeeping.Interface.RequestCallback;
-import com.syriasoft.housekeeping.TTLOCK.AccountInfo;
-import com.syriasoft.housekeeping.TTLOCK.ApiService;
-import com.syriasoft.housekeeping.TTLOCK.LockObj;
-import com.syriasoft.housekeeping.TTLOCK.RetrofitAPIManager;
+import com.syriasoft.house_keeping.Adapters.OrdersAdapter;
+import com.syriasoft.house_keeping.Adapters.OrdersGridAdapter;
+import com.syriasoft.house_keeping.Interface.HomeBeanCallBack;
+import com.syriasoft.house_keeping.Interface.RequestCallback;
+import com.syriasoft.house_keeping.TTLOCK.AccountInfo;
+import com.syriasoft.house_keeping.TTLOCK.ApiService;
+import com.syriasoft.house_keeping.TTLOCK.LockObj;
+import com.syriasoft.house_keeping.TTLOCK.RetrofitAPIManager;
 import com.ttlock.bl.sdk.util.DigitUtil;
 import com.tuya.smart.android.user.api.ILoginCallback;
 import com.tuya.smart.home.sdk.TuyaHomeSdk;

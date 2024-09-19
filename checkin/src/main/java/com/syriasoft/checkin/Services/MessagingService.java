@@ -1,5 +1,6 @@
-package com.example.hotelservicesstandalone.Services;
+package com.syriasoft.checkin.Services;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.util.Log;
@@ -10,20 +11,26 @@ import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
-import com.example.hotelservicesstandalone.Classes.Property.Room;
-import com.example.hotelservicesstandalone.Login;
-import com.example.hotelservicesstandalone.MyApp;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
+import com.syriasoft.checkin.Classes.Property.Room;
 import com.tuya.smart.sdk.api.IResultCallback;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
 public class MessagingService extends FirebaseMessagingService {
 
     private RequestQueue FirebaseTokenRegister ;
+    List<Room> rooms;
+    Activity target;
+
+    public MessagingService(List<Room> rooms, Activity target) {
+        this.rooms = rooms;
+        this.target = target;
+    }
 
     @Override
     public void onMessageReceived(@NonNull RemoteMessage remoteMessage) {
@@ -36,7 +43,7 @@ public class MessagingService extends FirebaseMessagingService {
                         int roomNumber;
                         if (remoteMessage.getData().get("room") != null) {
                             roomNumber = Integer.parseInt(Objects.requireNonNull(remoteMessage.getData().get("room")));
-                            Room r = Room.searchRoomInList(MyApp.ROOMS, roomNumber);
+                            Room r = Room.searchRoomInList(rooms, roomNumber);
                             r.powerOffRoom(new IResultCallback() {
                                 @Override
                                 public void onError(String code, String error) {
@@ -55,7 +62,7 @@ public class MessagingService extends FirebaseMessagingService {
                         int roomNumber;
                         if (remoteMessage.getData().get("room") != null) {
                             roomNumber = Integer.parseInt(Objects.requireNonNull(remoteMessage.getData().get("room")));
-                            Room r = Room.searchRoomInList(MyApp.ROOMS, roomNumber);
+                            Room r = Room.searchRoomInList(rooms, roomNumber);
                             r.powerOnRoom(new IResultCallback() {
                                 @Override
                                 public void onError(String code, String error) {
@@ -74,7 +81,7 @@ public class MessagingService extends FirebaseMessagingService {
                         int roomNumber;
                         if (remoteMessage.getData().get("room") != null) {
                             roomNumber = Integer.parseInt(Objects.requireNonNull(remoteMessage.getData().get("room")));
-                            Room r = Room.searchRoomInList(MyApp.ROOMS, roomNumber);
+                            Room r = Room.searchRoomInList(rooms, roomNumber);
                             r.powerByCardRoom(new IResultCallback() {
                                 @Override
                                 public void onError(String code, String error) {
@@ -90,7 +97,7 @@ public class MessagingService extends FirebaseMessagingService {
                         break;
                     }
                     case "reRun":
-                        Intent i = new Intent(this, Login.class);
+                        Intent i = new Intent(this, target.getClass());
                         startActivity(i);
                         break;
                 }
@@ -119,7 +126,7 @@ public class MessagingService extends FirebaseMessagingService {
                 }
             };
             if (FirebaseTokenRegister == null) {
-                FirebaseTokenRegister = Volley.newRequestQueue(MyApp.app) ;
+                FirebaseTokenRegister = Volley.newRequestQueue(this.getApplicationContext()) ;
             }
             FirebaseTokenRegister.add(re);
         }

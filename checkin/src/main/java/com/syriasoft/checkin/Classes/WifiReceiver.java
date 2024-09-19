@@ -1,24 +1,19 @@
-package com.example.hotelservicesstandalone.Classes;
+package com.syriasoft.checkin.Classes;
 
 import android.Manifest;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
 import androidx.core.app.ActivityCompat;
 
-import com.example.hotelservicesstandalone.R;
-
 import java.util.ArrayList;
-import java.util.List;
 
 public class WifiReceiver extends BroadcastReceiver {
 
@@ -48,15 +43,15 @@ public class WifiReceiver extends BroadcastReceiver {
                 // for ActivityCompat#requestPermissions for more details.
                 return;
             }
-            List<ScanResult> wifiList = wifiManager.getScanResults();
+            //List<ScanResult> wifiList = wifiManager.getScanResults();
             ArrayList<String> deviceList = new ArrayList<>();
-            for (ScanResult scanResult : wifiList)
-            {
-                sb.append("\n").append(scanResult.SSID).append(" - ").append(scanResult.capabilities);
-                deviceList.add(scanResult.SSID);
-            }
-            ArrayAdapter arrayAdapter = new ArrayAdapter(context, R.layout.spinners_item, deviceList.toArray());
-            wifiDeviceList.setAdapter(arrayAdapter);
+            //for (ScanResult scanResult : wifiList)
+            //{
+               // sb.append("\n").append(scanResult.SSID).append(" - ").append(scanResult.capabilities);
+              // deviceList.add(scanResult.SSID);
+            //}
+            //ArrayAdapter arrayAdapter = new ArrayAdapter(context, R.layout.spinners_item, deviceList.toArray());
+            //wifiDeviceList.setAdapter(arrayAdapter);
             wifiDeviceList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id)

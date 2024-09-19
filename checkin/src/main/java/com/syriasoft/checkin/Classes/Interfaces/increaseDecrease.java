@@ -1,4 +1,4 @@
-package com.example.hotelservicesstandalone.Classes.Interfaces;
+package com.syriasoft.checkin.Classes.Interfaces;
 
 import com.tuya.smart.sdk.api.IResultCallback;
 

@@ -1,4 +1,4 @@
-package com.example.hotelservicesstandalone;
+package com.example.hotelservicesstandalone.Classes;
 
 import android.app.Activity;
 import android.app.AlarmManager;
@@ -9,23 +9,28 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 
+import com.example.hotelservicesstandalone.Login;
+import com.example.hotelservicesstandalone.MyApp;
+import com.example.hotelservicesstandalone.Services.ErrorService;
+
 import java.util.Calendar;
 import java.util.Locale;
+import java.util.Objects;
 
 public class DefaultExceptionHandler implements Thread.UncaughtExceptionHandler {
 
     Activity act ;
 
-    DefaultExceptionHandler(Activity act) {
+    public DefaultExceptionHandler(Activity act) {
         this.act = act ;
     }
 
     @Override
     public void uncaughtException(@NonNull Thread t, @NonNull Throwable e) {
-        Log.d("unExpectedCrash",e.getMessage());
+        Log.d("unExpectedCrash", Objects.requireNonNull(e.getMessage()));
         long time = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
-        Log.d("unExpectedCrash",act.getLocalClassName()+" "+MyApp.My_PROJECT.projectName+" "+0+" "+time);
-        Intent i = new Intent(act,ErrorService.class);
+        Log.d("unExpectedCrash",act.getLocalClassName()+" "+ MyApp.My_PROJECT.projectName+" "+0+" "+time);
+        Intent i = new Intent(act, ErrorService.class);
         i.putExtra("project",MyApp.My_PROJECT.projectName);
         i.putExtra("room",0);
         i.putExtra("errorMsg",e.getMessage());

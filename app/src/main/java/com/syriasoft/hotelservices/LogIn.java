@@ -24,6 +24,7 @@ import androidx.core.view.WindowInsetsControllerCompat;
 import com.android.volley.Request;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.google.android.datatransport.BuildConfig;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.gson.reflect.TypeToken;
@@ -59,7 +60,6 @@ import retrofit2.Call;
 import retrofit2.Callback;
 
 public class LogIn extends AppCompatActivity {
-    public static String URL = "https://ratco-solutions.com/Checkin/P0001/php/";
     private EditText password ;
     Activity act ;
     private final String projectLoginUrl = "users/loginProject" ;
@@ -144,6 +144,7 @@ public class LogIn extends AppCompatActivity {
             getProjectVariables(new loginCallback() {
                 @Override
                 public void onSuccess() {
+                    Log.d("bootUp","variables done");
                     buildings.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                         @Override
                         public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -207,18 +208,22 @@ public class LogIn extends AppCompatActivity {
                     getBuildings(new RequestCallback() {
                         @Override
                         public void onSuccess() {
+                            Log.d("bootUp","buildings done");
                             CurrentOperation.setText(getResources().getString(R.string.gettingFloors));
                             getFloors(new RequestCallback() {
                                 @Override
                                 public void onSuccess() {
+                                    Log.d("bootUp","floors done");
                                     CurrentOperation.setText(getResources().getString(R.string.gettingRoomTypes));
                                     getRoomTypes(new RequestCallback() {
                                         @Override
                                         public void onSuccess() {
+                                            Log.d("bootUp","types done");
                                             CurrentOperation.setText(getResources().getString(R.string.gettingRooms));
                                             getRooms(new RequestCallback() {
                                                 @Override
                                                 public void onSuccess() {
+                                                    Log.d("bootUp","rooms done");
                                                     CurrentOperation.setText("");
                                                     if (pref.getString("RoomNumber", null) == null) {
                                                         Login.setVisibility(View.VISIBLE);
@@ -235,22 +240,39 @@ public class LogIn extends AppCompatActivity {
                                                                 break;
                                                             }
                                                         }
+                                                        Log.d("bootUp","room is "+MyApp.Room.RoomNumber);
                                                         CurrentOperation.setText(getResources().getString(R.string.gettingRoomDevices));
                                                         onlyLogInToTuya(new RequestCallback() {
                                                             @Override
                                                             public void onSuccess() {
-                                                                getTheLock(new RequestCallback() {
+                                                                Log.d("bootUp","tuya login done");
+                                                                getMyDevices(new RequestCallback() {
                                                                     @Override
                                                                     public void onSuccess() {
+                                                                        Log.d("bootUp","devices done");
                                                                         startActivity(new Intent(act,FullscreenActivity.class));
                                                                         act.finish();
                                                                     }
 
                                                                     @Override
                                                                     public void onFail(String error) {
+                                                                        new messageDialog("error getting devices"+ error , "error",act);
                                                                         reRunActivity();
                                                                     }
                                                                 });
+
+//                                                                getTheLock(new RequestCallback() {
+//                                                                    @Override
+//                                                                    public void onSuccess() {
+//                                                                        startActivity(new Intent(act,FullscreenActivity.class));
+//                                                                        act.finish();
+//                                                                    }
+//
+//                                                                    @Override
+//                                                                    public void onFail(String error) {
+//                                                                        reRunActivity();
+//                                                                    }
+//                                                                });
                                                             }
                                                             @Override
                                                             public void onFail(String error) {
@@ -504,11 +526,9 @@ public class LogIn extends AppCompatActivity {
         version.setText(String.format("Welcome To Checkin Version%s", BuildConfig.VERSION_NAME));
         database = FirebaseDatabase.getInstance("https://hotelservices-ebe66.firebaseio.com/");
         windowInsetsController = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+        windowInsetsController.hide(WindowInsetsCompat.Type.systemBars());
         if (windowInsetsController != null) {
-            windowInsetsController.hide(WindowInsetsCompat.Type.systemBars());
-        }
-        if (windowInsetsController != null) {
-            windowInsetsController.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_BARS_BY_SWIPE);
+            windowInsetsController.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
         }
         KeepScreenFull();
     }
@@ -669,8 +689,20 @@ public class LogIn extends AppCompatActivity {
                                             @Override
                                             public void onSuccess() {
                                                 CurrentOperation.setText("");
-                                                startActivity(new Intent(act,FullscreenActivity.class));
-                                                act.finish();
+                                                getMyDevices(new RequestCallback() {
+                                                    @Override
+                                                    public void onSuccess() {
+                                                        startActivity(new Intent(act,FullscreenActivity.class));
+                                                        act.finish();
+                                                    }
+
+                                                    @Override
+                                                    public void onFail(String error) {
+                                                        loading.setVisibility(View.INVISIBLE);
+                                                        new messageDialog("error getting devices"+ error , "error",act);
+                                                    }
+                                                });
+
                                             }
                                             @Override
                                             public void onFail(String error) {
@@ -720,7 +752,7 @@ public class LogIn extends AppCompatActivity {
         Log.d("loginLock" , "start");
         if (LockUser.equals("no")) {
             Log.d("loginLock" , "project has no bluetooth locks");
-            return;
+            callback.onSuccess();
         }
         ApiService apiService = RetrofitAPIManager.provideClientApi();
         pass = DigitUtil.getMD5(LockPassword);
@@ -811,29 +843,28 @@ public class LogIn extends AppCompatActivity {
                     @Override
                     public void onSuccess(List<HomeBean> homeBeans) {
                         // do something
-                        Homes = homeBeans ;
-                        for (int i = 0; i< Homes.size(); i++) {
-                            if (MyApp.ProjectName.contains(Homes.get(i).getName())) {
-                                MyApp.HOME = Homes.get(i);
-                                break;
+                        for (HomeBean h : homeBeans) {
+                            Log.d("tuyaLogin",h.getName());
+                        }
+                        for (int i = 0; i< homeBeans.size(); i++) {
+                            if (MyApp.ProjectName.equals("apiTest")) {
+                                if (homeBeans.get(i).getName().contains("Test")) {
+                                    MyApp.Homes.add(homeBeans.get(i));
+                                }
+                            }
+                            else if (homeBeans.get(i).getName().contains(MyApp.ProjectName)) {
+                                MyApp.Homes.add(homeBeans.get(i));
                             }
                         }
-                        if (MyApp.HOME == null) {
+                        if (MyApp.Homes.size() == 0) {
                             callback.onFail("Tuya home not found");
                         }
                         else {
-                            Log.d("tuyaLogin",MyApp.HOME.getName());
-                            getMyDevices(new RequestCallback() {
-                                @Override
-                                public void onSuccess() {
-                                    callback.onSuccess();
-                                }
-
-                                @Override
-                                public void onFail(String error) {
-                                    callback.onFail(error);
-                                }
-                            });
+                            Log.d("tuyaLogin",MyApp.Homes.size()+"");
+                            for (HomeBean h : MyApp.Homes) {
+                                Log.d("tuyaLogin",h.getName());
+                            }
+                            callback.onSuccess();
                         }
                     }
                 });
@@ -977,91 +1008,285 @@ public class LogIn extends AppCompatActivity {
     }
 
     public void getMyDevices(RequestCallback callback) {
-        TuyaHomeSdk.newHomeInstance(MyApp.HOME.getHomeId()).getHomeDetail(new ITuyaHomeResultCallback() {
-            @Override
-            public void onSuccess(HomeBean homeBean) {
-                List<DeviceBean> TheDevicesList = homeBean.getDeviceList();
-                if (TheDevicesList.size() == 0) {
-                    ToastMaker.MakeToast("no devices" , act );
+//        TuyaHomeSdk.newHomeInstance(MyApp.HOME.getHomeId()).getHomeDetail(new ITuyaHomeResultCallback() {
+//            @Override
+//            public void onSuccess(HomeBean homeBean) {
+//                List<DeviceBean> TheDevicesList = homeBean.getDeviceList();
+//                if (TheDevicesList.size() == 0) {
+//                    ToastMaker.MakeToast("no devices" , act );
+//
+//                }
+//                else {
+//                    Log.d("tuyaLogin"," devices "+TheDevicesList.size());
+//                    for (int i=0;i<TheDevicesList.size();i++) {
+//                        if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"Power")) {
+//                            MyApp.Room.setPOWER_B(TheDevicesList.get(i));
+//                            MyApp.Room.setPOWER(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getPOWER_B().devId));
+//                        }
+//                        else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"ZGatway")) {
+//                            MyApp.Room.setGATEWAY_B(TheDevicesList.get(i));
+//                            MyApp.Room.setGATEWAY(TuyaHomeSdk.newGatewayInstance(MyApp.Room.getGATEWAY_B().devId));
+//                        }
+//                        else if(TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"AC")) {
+//                            MyApp.Room.setAC_B(TheDevicesList.get(i));
+//                            MyApp.Room.setAC(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getAC_B().devId));
+//                        }
+//                        else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"DoorSensor")) {
+//                            MyApp.Room.setDOORSENSOR_B(TheDevicesList.get(i));
+//                            MyApp.Room.setDOORSENSOR(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getDOORSENSOR_B().devId));
+//                        }
+//                        else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"MotionSensor")) {
+//                            MyApp.Room.setMOTIONSENSOR_B(TheDevicesList.get(i));
+//                            MyApp.Room.setMOTIONSENSOR(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getMOTIONSENSOR_B().getDevId()));
+//                        }
+//                        else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"Curtain")) {
+//                            MyApp.Room.setCURTAIN_B(TheDevicesList.get(i));
+//                            MyApp.Room.setCURTAIN(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getCURTAIN_B().getDevId()));
+//                        }
+//                        else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"ServiceSwitch")) {
+//                            MyApp.Room.setSERVICE1_B(TheDevicesList.get(i));
+//                            MyApp.Room.setSERVICE1(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getSERVICE1_B().getDevId()));
+//                        }
+//                        else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"Switch1")) {
+//                            MyApp.Room.setSWITCH1_B(TheDevicesList.get(i));
+//                            MyApp.Room.setSWITCH1(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getSWITCH1_B().getDevId()));
+//                        }
+//                        else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"Switch2")) {
+//                            MyApp.Room.setSWITCH2_B(TheDevicesList.get(i));
+//                            MyApp.Room.setSWITCH2(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getSWITCH2_B().getDevId()));
+//                        }
+//                        else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"Switch3")) {
+//                            MyApp.Room.setSWITCH3_B(TheDevicesList.get(i));
+//                            MyApp.Room.setSWITCH3(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getSWITCH3_B().getDevId()));
+//                        }
+//                        else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"Switch4")) {
+//                            MyApp.Room.setSWITCH4_B(TheDevicesList.get(i));
+//                            MyApp.Room.setSWITCH4(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getSWITCH4_B().getDevId()));
+//                        }
+//                        else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"Switch5")) {
+//                            MyApp.Room.setSWITCH5_B(TheDevicesList.get(i));
+//                            MyApp.Room.setSWITCH5(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getSWITCH5_B().getDevId()));
+//                        }
+//                        else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"Switch6")) {
+//                            MyApp.Room.setSWITCH6_B(TheDevicesList.get(i));
+//                            MyApp.Room.setSWITCH6(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getSWITCH6_B().getDevId()));
+//                        }
+//                        else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"Switch7")) {
+//                            MyApp.Room.setSWITCH7_B(TheDevicesList.get(i));
+//                            MyApp.Room.setSWITCH7(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getSWITCH7_B().getDevId()));
+//                        }
+//                        else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"Switch8")) {
+//                            MyApp.Room.setSWITCH8_B(TheDevicesList.get(i));
+//                            MyApp.Room.setSWITCH8(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getSWITCH8_B().getDevId()));
+//                        }
+//                        else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"Lock")) {
+//                            MyApp.Room.setLOCK_B(TheDevicesList.get(i));
+//                            MyApp.Room.setLOCK(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getLOCK_B().getDevId()));
+//                        }
+//                    }
+//                    //Log.d("tuyaLogin"," devices "+MyApp.Room.getSERVICE1_B().getName());
+//                    callback.onSuccess();
+//                }
+//            }
+//
+//            @Override
+//            public void onError(String errorCode, String errorMsg) {
+//                callback.onFail(errorCode+" "+errorMsg);
+//            }
+//        });
+//        final int[] x = {0};
+//        for (int i=0;i<MyApp.Homes.size();i++) {
+//            HomeBean h = MyApp.Homes.get(i);
+//            Timer t = new Timer();
+//            t.schedule(new TimerTask() {
+//                @Override
+//                public void run() {
+//                    TuyaHomeSdk.newHomeInstance(h.getHomeId()).getHomeDetail(new ITuyaHomeResultCallback() {
+//                        @Override
+//                        public void onSuccess(HomeBean bean) {
+//                            x[0]++;
+//                            List<DeviceBean> TheDevicesList = bean.getDeviceList();
+//                            for (int i=0;i<TheDevicesList.size();i++) {
+//                                if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"Power")) {
+//                                    MyApp.Room.setPOWER_B(TheDevicesList.get(i));
+//                                    MyApp.Room.setPOWER(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getPOWER_B().devId));
+//                                }
+//                                else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"ZGatway")) {
+//                                    MyApp.Room.setGATEWAY_B(TheDevicesList.get(i));
+//                                    MyApp.Room.setGATEWAY(TuyaHomeSdk.newGatewayInstance(MyApp.Room.getGATEWAY_B().devId));
+//                                }
+//                                else if(TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"AC")) {
+//                                    MyApp.Room.setAC_B(TheDevicesList.get(i));
+//                                    MyApp.Room.setAC(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getAC_B().devId));
+//                                }
+//                                else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"DoorSensor")) {
+//                                    MyApp.Room.setDOORSENSOR_B(TheDevicesList.get(i));
+//                                    MyApp.Room.setDOORSENSOR(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getDOORSENSOR_B().devId));
+//                                }
+//                                else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"MotionSensor")) {
+//                                    MyApp.Room.setMOTIONSENSOR_B(TheDevicesList.get(i));
+//                                    MyApp.Room.setMOTIONSENSOR(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getMOTIONSENSOR_B().getDevId()));
+//                                }
+//                                else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"Curtain")) {
+//                                    MyApp.Room.setCURTAIN_B(TheDevicesList.get(i));
+//                                    MyApp.Room.setCURTAIN(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getCURTAIN_B().getDevId()));
+//                                }
+//                                else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"ServiceSwitch")) {
+//                                    MyApp.Room.setSERVICE1_B(TheDevicesList.get(i));
+//                                    MyApp.Room.setSERVICE1(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getSERVICE1_B().getDevId()));
+//                                }
+//                                else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"Switch1")) {
+//                                    MyApp.Room.setSWITCH1_B(TheDevicesList.get(i));
+//                                    MyApp.Room.setSWITCH1(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getSWITCH1_B().getDevId()));
+//                                }
+//                                else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"Switch2")) {
+//                                    MyApp.Room.setSWITCH2_B(TheDevicesList.get(i));
+//                                    MyApp.Room.setSWITCH2(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getSWITCH2_B().getDevId()));
+//                                }
+//                                else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"Switch3")) {
+//                                    MyApp.Room.setSWITCH3_B(TheDevicesList.get(i));
+//                                    MyApp.Room.setSWITCH3(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getSWITCH3_B().getDevId()));
+//                                }
+//                                else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"Switch4")) {
+//                                    MyApp.Room.setSWITCH4_B(TheDevicesList.get(i));
+//                                    MyApp.Room.setSWITCH4(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getSWITCH4_B().getDevId()));
+//                                }
+//                                else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"Switch5")) {
+//                                    MyApp.Room.setSWITCH5_B(TheDevicesList.get(i));
+//                                    MyApp.Room.setSWITCH5(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getSWITCH5_B().getDevId()));
+//                                }
+//                                else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"Switch6")) {
+//                                    MyApp.Room.setSWITCH6_B(TheDevicesList.get(i));
+//                                    MyApp.Room.setSWITCH6(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getSWITCH6_B().getDevId()));
+//                                }
+//                                else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"Switch7")) {
+//                                    MyApp.Room.setSWITCH7_B(TheDevicesList.get(i));
+//                                    MyApp.Room.setSWITCH7(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getSWITCH7_B().getDevId()));
+//                                }
+//                                else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"Switch8")) {
+//                                    MyApp.Room.setSWITCH8_B(TheDevicesList.get(i));
+//                                    MyApp.Room.setSWITCH8(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getSWITCH8_B().getDevId()));
+//                                }
+//                                else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"Lock")) {
+//                                    MyApp.Room.setLOCK_B(TheDevicesList.get(i));
+//                                    MyApp.Room.setLOCK(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getLOCK_B().getDevId()));
+//                                }
+//                            }
+//                            if (THE_ROOM.getGATEWAY_B() != null) {
+//                                MyApp.HOME = h;
+//                            }
+//                            if (x[0] == MyApp.Homes.size()) {
+//                                callback.onSuccess();
+//                            }
+//                        }
+//
+//                        @Override
+//                        public void onError(String errorCode, String errorMsg) {
+//                            callback.onFail(errorMsg);
+//                        }
+//                    });
+//                }
+//            },i* 1000L);
+//        }
+        Log.d("tuyaLogin","devices start "+MyApp.Homes.size());
+        final int[] x = {0};
+        for (int i=0; i< MyApp.Homes.size();i++) {
+            HomeBean h = MyApp.Homes.get(i);
+            Log.d("tuyaLogin",h.getName()+" "+i);
+            Timer t = new Timer();
+            t.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    TuyaHomeSdk.newHomeInstance(h.getHomeId()).getHomeDetail(new ITuyaHomeResultCallback() {
+                        @Override
+                        public void onSuccess(HomeBean homeBean) {
+                            x[0] = x[0]+1;
+                            Log.d("tuyaLogin","devices done "+h.getName()+" "+x[0]);
+                            List<DeviceBean> TheDevicesList = homeBean.getDeviceList();
+                            for (int i=0;i<TheDevicesList.size();i++) {
+                                if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"Power")) {
+                                    MyApp.Room.setPOWER_B(TheDevicesList.get(i));
+                                    MyApp.Room.setPOWER(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getPOWER_B().devId));
+                                }
+                                else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"ZGatway")) {
+                                    MyApp.Room.setGATEWAY_B(TheDevicesList.get(i));
+                                    MyApp.Room.setGATEWAY(TuyaHomeSdk.newGatewayInstance(MyApp.Room.getGATEWAY_B().devId));
+                                }
+                                else if(TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"AC")) {
+                                    MyApp.Room.setAC_B(TheDevicesList.get(i));
+                                    MyApp.Room.setAC(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getAC_B().devId));
+                                }
+                                else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"DoorSensor")) {
+                                    MyApp.Room.setDOORSENSOR_B(TheDevicesList.get(i));
+                                    MyApp.Room.setDOORSENSOR(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getDOORSENSOR_B().devId));
+                                }
+                                else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"MotionSensor")) {
+                                    MyApp.Room.setMOTIONSENSOR_B(TheDevicesList.get(i));
+                                    MyApp.Room.setMOTIONSENSOR(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getMOTIONSENSOR_B().getDevId()));
+                                }
+                                else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"Curtain")) {
+                                    MyApp.Room.setCURTAIN_B(TheDevicesList.get(i));
+                                    MyApp.Room.setCURTAIN(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getCURTAIN_B().getDevId()));
+                                }
+                                else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"ServiceSwitch")) {
+                                    MyApp.Room.setSERVICE1_B(TheDevicesList.get(i));
+                                    MyApp.Room.setSERVICE1(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getSERVICE1_B().getDevId()));
+                                }
+                                else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"Switch1")) {
+                                    MyApp.Room.setSWITCH1_B(TheDevicesList.get(i));
+                                    MyApp.Room.setSWITCH1(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getSWITCH1_B().getDevId()));
+                                }
+                                else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"Switch2")) {
+                                    MyApp.Room.setSWITCH2_B(TheDevicesList.get(i));
+                                    MyApp.Room.setSWITCH2(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getSWITCH2_B().getDevId()));
+                                }
+                                else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"Switch3")) {
+                                    MyApp.Room.setSWITCH3_B(TheDevicesList.get(i));
+                                    MyApp.Room.setSWITCH3(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getSWITCH3_B().getDevId()));
+                                }
+                                else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"Switch4")) {
+                                    MyApp.Room.setSWITCH4_B(TheDevicesList.get(i));
+                                    MyApp.Room.setSWITCH4(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getSWITCH4_B().getDevId()));
+                                }
+                                else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"Switch5")) {
+                                    MyApp.Room.setSWITCH5_B(TheDevicesList.get(i));
+                                    MyApp.Room.setSWITCH5(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getSWITCH5_B().getDevId()));
+                                }
+                                else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"Switch6")) {
+                                    MyApp.Room.setSWITCH6_B(TheDevicesList.get(i));
+                                    MyApp.Room.setSWITCH6(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getSWITCH6_B().getDevId()));
+                                }
+                                else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"Switch7")) {
+                                    MyApp.Room.setSWITCH7_B(TheDevicesList.get(i));
+                                    MyApp.Room.setSWITCH7(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getSWITCH7_B().getDevId()));
+                                }
+                                else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"Switch8")) {
+                                    MyApp.Room.setSWITCH8_B(TheDevicesList.get(i));
+                                    MyApp.Room.setSWITCH8(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getSWITCH8_B().getDevId()));
+                                }
+                                else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"Lock")) {
+                                    MyApp.Room.setLOCK_B(TheDevicesList.get(i));
+                                    MyApp.Room.setLOCK(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getLOCK_B().getDevId()));
+                                }
+                            }
+                            Log.d("tuyaLogin","set devices finish");
+                            if (MyApp.Room.getGATEWAY_B() != null) {
+                                MyApp.HOME = h;
+                            }
+                            Log.d("tuyaLogin",x[0] +" "+MyApp.Homes.size());
+                            if (x[0] == MyApp.Homes.size()) {
+                                callback.onSuccess();
+                            }
+                        }
+                        @Override
+                        public void onError(String errorCode, String errorMsg) {
+                            Log.d("tuyaLogin","error "+errorMsg);
+                            callback.onFail(errorCode+" "+errorMsg);
+                        }
+                    });
                 }
-                else {
-                    Log.d("tuyaLogin"," devices "+TheDevicesList.size());
-                    for (int i=0;i<TheDevicesList.size();i++) {
-                        if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"Power")) {
-                            MyApp.Room.setPOWER_B(TheDevicesList.get(i));
-                            MyApp.Room.setPOWER(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getPOWER_B().devId));
-                        }
-                        else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"ZGatway")) {
-                            MyApp.Room.setGATEWAY_B(TheDevicesList.get(i));
-                            MyApp.Room.setGATEWAY(TuyaHomeSdk.newGatewayInstance(MyApp.Room.getGATEWAY_B().devId));
-                        }
-                        else if(TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"AC")) {
-                            MyApp.Room.setAC_B(TheDevicesList.get(i));
-                            MyApp.Room.setAC(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getAC_B().devId));
-                        }
-                        else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"DoorSensor")) {
-                            MyApp.Room.setDOORSENSOR_B(TheDevicesList.get(i));
-                            MyApp.Room.setDOORSENSOR(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getDOORSENSOR_B().devId));
-                        }
-                        else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"MotionSensor")) {
-                            MyApp.Room.setMOTIONSENSOR_B(TheDevicesList.get(i));
-                            MyApp.Room.setMOTIONSENSOR(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getMOTIONSENSOR_B().getDevId()));
-                        }
-                        else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"Curtain")) {
-                            MyApp.Room.setCURTAIN_B(TheDevicesList.get(i));
-                            MyApp.Room.setCURTAIN(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getCURTAIN_B().getDevId()));
-                        }
-                        else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"ServiceSwitch")) {
-                            MyApp.Room.setSERVICE1_B(TheDevicesList.get(i));
-                            MyApp.Room.setSERVICE1(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getSERVICE1_B().getDevId()));
-                        }
-                        else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"Switch1")) {
-                            MyApp.Room.setSWITCH1_B(TheDevicesList.get(i));
-                            MyApp.Room.setSWITCH1(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getSWITCH1_B().getDevId()));
-                        }
-                        else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"Switch2")) {
-                            MyApp.Room.setSWITCH2_B(TheDevicesList.get(i));
-                            MyApp.Room.setSWITCH2(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getSWITCH2_B().getDevId()));
-                        }
-                        else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"Switch3")) {
-                            MyApp.Room.setSWITCH3_B(TheDevicesList.get(i));
-                            MyApp.Room.setSWITCH3(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getSWITCH3_B().getDevId()));
-                        }
-                        else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"Switch4")) {
-                            MyApp.Room.setSWITCH4_B(TheDevicesList.get(i));
-                            MyApp.Room.setSWITCH4(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getSWITCH4_B().getDevId()));
-                        }
-                        else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"Switch5")) {
-                            MyApp.Room.setSWITCH5_B(TheDevicesList.get(i));
-                            MyApp.Room.setSWITCH5(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getSWITCH5_B().getDevId()));
-                        }
-                        else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"Switch6")) {
-                            MyApp.Room.setSWITCH6_B(TheDevicesList.get(i));
-                            MyApp.Room.setSWITCH6(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getSWITCH6_B().getDevId()));
-                        }
-                        else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"Switch7")) {
-                            MyApp.Room.setSWITCH7_B(TheDevicesList.get(i));
-                            MyApp.Room.setSWITCH7(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getSWITCH7_B().getDevId()));
-                        }
-                        else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"Switch8")) {
-                            MyApp.Room.setSWITCH8_B(TheDevicesList.get(i));
-                            MyApp.Room.setSWITCH8(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getSWITCH8_B().getDevId()));
-                        }
-                        else if (TheDevicesList.get(i).getName().equals(MyApp.Room.RoomNumber+"Lock")) {
-                            MyApp.Room.setLOCK_B(TheDevicesList.get(i));
-                            MyApp.Room.setLOCK(TuyaHomeSdk.newDeviceInstance(MyApp.Room.getLOCK_B().getDevId()));
-                        }
-                    }
-                    //Log.d("tuyaLogin"," devices "+MyApp.Room.getSERVICE1_B().getName());
-                    callback.onSuccess();
-                }
-            }
-
-            @Override
-            public void onError(String errorCode, String errorMsg) {
-                callback.onFail(errorCode+" "+errorMsg);
-            }
-        });
+            }, (long) i * 1000);
+        }
     }
 
     private void KeepScreenFull() {

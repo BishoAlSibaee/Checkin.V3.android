@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#060d3c</color>
+    <color name="colorPrimary">#212F3C</color>
     <color name="purple_200">#FFBB86FC</color>
     <color name="purple_500">#DCB83C3C</color>
     <color name="purple_700">#CD150833</color>
@@ -20,6 +20,6 @@
     <color name="green">#B94E9F52</color>
     <color name="red">#EEEE5B5B</color>
     <color name="black_overlay">#161616</color>
-    <color name="darkBlue">#191B71</color>
+    <color name="darkBlue">#202142</color>
     <color name="transparent">#00818181</color>
 </resources>

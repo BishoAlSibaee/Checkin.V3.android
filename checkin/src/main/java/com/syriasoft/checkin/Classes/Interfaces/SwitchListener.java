@@ -1,4 +1,4 @@
-package com.example.hotelservicesstandalone.Classes.Interfaces;
+package com.syriasoft.checkin.Classes.Interfaces;
 
 public interface SwitchListener extends DeviceAction {
     void oneOn();

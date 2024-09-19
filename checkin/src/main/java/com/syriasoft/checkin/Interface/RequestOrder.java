@@ -1,4 +1,4 @@
-package com.example.hotelservicesstandalone.Interface;
+package com.syriasoft.checkin.Interface;
 
 public interface RequestOrder {
     void onSuccess(String token);

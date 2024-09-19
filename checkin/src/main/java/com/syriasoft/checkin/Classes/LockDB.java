@@ -1,4 +1,4 @@
-package com.example.hotelservicesstandalone.Classes;
+package com.syriasoft.checkin.Classes;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -9,9 +9,6 @@ import android.util.Log;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class LockDB  extends SQLiteOpenHelper {
 

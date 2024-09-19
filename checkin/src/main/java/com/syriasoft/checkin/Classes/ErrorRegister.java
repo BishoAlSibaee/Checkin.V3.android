@@ -1,4 +1,4 @@
-package com.example.hotelservicesstandalone.Classes;
+package com.syriasoft.checkin.Classes;
 
 import android.content.Context;
 import android.util.Log;
@@ -7,8 +7,7 @@ import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
-import com.example.hotelservicesstandalone.Interface.RequestCallback;
-import com.example.hotelservicesstandalone.MyApp;
+import com.syriasoft.checkin.Interface.RequestCallback;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -16,9 +15,10 @@ import java.util.Map;
 public class ErrorRegister {
 
     static RequestQueue Q ;
+    static String ErrorsUrl = "https://ratco-solutions.com/Checkin/Test/php/insertError.php";
 
     public static void insertError(Context c , String hotel, int room, long dateTime, int errorCode, String errorMsg, String errorCaption) {
-        StringRequest request = new StringRequest(Request.Method.POST, MyApp.ErrorsUrl, response -> Log.d("unExpectedCrash",response), error -> Log.d("unExpectedCrash",error.toString())) {
+        StringRequest request = new StringRequest(Request.Method.POST, ErrorsUrl, response -> Log.d("unExpectedCrash",response), error -> Log.d("unExpectedCrash",error.toString())) {
             @Override
             protected Map<String, String> getParams() {
                 Map<String,String> params = new HashMap<>();
@@ -38,7 +38,7 @@ public class ErrorRegister {
     }
 
     public static void insertError(Context c , String hotel, int room, long dateTime, int errorCode, String errorMsg, String errorCaption, RequestCallback callback) {
-        StringRequest request = new StringRequest(Request.Method.POST, MyApp.ErrorsUrl, response -> {
+        StringRequest request = new StringRequest(Request.Method.POST, ErrorsUrl, response -> {
             Log.d("unExpectedCrash",response);
             callback.onSuccess();
         }, error -> {

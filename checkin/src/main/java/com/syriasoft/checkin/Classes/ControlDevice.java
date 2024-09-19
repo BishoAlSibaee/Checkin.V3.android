@@ -1,7 +1,6 @@
-package com.example.hotelservicesstandalone.Classes;
+package com.syriasoft.checkin.Classes;
 
 import android.app.Activity;
-import android.content.Intent;
 import android.util.Log;
 import android.widget.TextView;
 
@@ -10,18 +9,16 @@ import androidx.annotation.NonNull;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.StringRequest;
-import com.example.hotelservicesstandalone.Classes.Interfaces.ControlDeviceCallback;
-import com.example.hotelservicesstandalone.Classes.Interfaces.ControlDeviceListener;
-import com.example.hotelservicesstandalone.Classes.Interfaces.GerRoomsCallback;
-import com.example.hotelservicesstandalone.Classes.Interfaces.GetControlDevicesCallback;
-import com.example.hotelservicesstandalone.Classes.Property.Room;
-import com.example.hotelservicesstandalone.Interface.RequestCallback;
-import com.example.hotelservicesstandalone.Login;
-import com.example.hotelservicesstandalone.MyApp;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.ValueEventListener;
+import com.syriasoft.checkin.Classes.Interfaces.ControlDeviceCallback;
+import com.syriasoft.checkin.Classes.Interfaces.ControlDeviceListener;
+import com.syriasoft.checkin.Classes.Interfaces.GetRoomsCallback;
+import com.syriasoft.checkin.Classes.Interfaces.GetControlDevicesCallback;
+import com.syriasoft.checkin.Classes.Property.Room;
+import com.syriasoft.checkin.Interface.RequestCallback;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -32,8 +29,6 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
 
 public class ControlDevice {
 
@@ -103,7 +98,7 @@ public class ControlDevice {
     }
 
     public static void addNewControlDevice(RequestQueue queue,ControlDeviceCallback result) {
-        queue.add(new StringRequest(Request.Method.GET, MyApp.My_PROJECT.url + addNewControlDevice, response -> {
+        queue.add(new StringRequest(Request.Method.GET, PROJECT_VARIABLES.My_PROJECT.url + addNewControlDevice, response -> {
             try {
                 JSONObject resp = new JSONObject(response);
                 if (resp.getString("result").equals("success")) {
@@ -123,7 +118,7 @@ public class ControlDevice {
     }
 
     public void deleteControlDevice(RequestQueue Q, RequestCallback callback) {
-        String url = MyApp.My_PROJECT.url + deleteControlDevice;
+        String url = PROJECT_VARIABLES.My_PROJECT.url + deleteControlDevice;
         StringRequest req = new StringRequest(Request.Method.POST, url, response -> {
             Log.d("deleteDeviceStatus" , response);
             try {
@@ -171,11 +166,11 @@ public class ControlDevice {
         }));
     }
 
-    public void getMyRooms(DatabaseReference deviceReference,RequestQueue queue, GerRoomsCallback result) {
+    public void getMyRooms(DatabaseReference deviceReference,RequestQueue queue, GetRoomsCallback result) {
         setControlDeviceFirebaseListener(deviceReference, new ControlDeviceListener() {
             @Override
             public void onRoomsChanged() {
-                queue.add(new StringRequest(Request.Method.POST,MyApp.My_PROJECT.url+getRoomsUrl, response -> {
+                queue.add(new StringRequest(Request.Method.POST,PROJECT_VARIABLES.My_PROJECT.url+getRoomsUrl, response -> {
                     Log.d("gettingRooms",response);
                     try {
                         JSONObject res = new JSONObject(response);
@@ -257,17 +252,17 @@ public class ControlDevice {
         CurrentAction.setText(error);
     }
 
-    public static void restartApplication(int seconds,Activity act) {
-        Timer t = new Timer();
-        t.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                Intent i = new Intent(act, Login.class);
-                act.startActivity(i);
-                act.finish();
-            }
-        }, 1000L *seconds);
-    }
+//    public static void restartApplication(int seconds,Activity act) {
+//        Timer t = new Timer();
+//        t.schedule(new TimerTask() {
+//            @Override
+//            public void run() {
+//                Intent i = new Intent(act, Login.class);
+//                act.startActivity(i);
+//                act.finish();
+//            }
+//        }, 1000L *seconds);
+//    }
 
     public void addControlDeviceToFirebase(DatabaseReference myReference) {
         myReference.child("id").setValue(id);

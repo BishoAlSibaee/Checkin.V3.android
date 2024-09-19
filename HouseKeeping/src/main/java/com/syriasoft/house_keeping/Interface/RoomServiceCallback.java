@@ -1,4 +1,4 @@
-package com.syriasoft.housekeeping.Interface;
+package com.syriasoft.house_keeping.Interface;
 
 public interface RoomServiceCallback {
     void onSuccess(String res);

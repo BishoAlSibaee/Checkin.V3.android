@@ -1,15 +1,13 @@
 package com.example.hotelservicesstandalone;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
 import android.app.Activity;
 import android.app.Dialog;
 import android.os.Bundle;
 import android.util.Log;
-import android.widget.LinearLayout;
-import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
@@ -17,6 +15,7 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.example.hotelservicesstandalone.Adapters.lockAdapter;
 import com.example.hotelservicesstandalone.lock.ApiService;
 import com.example.hotelservicesstandalone.lock.LockObj;
 import com.example.hotelservicesstandalone.lock.RetrofitAPIManager;
@@ -60,7 +59,7 @@ public class Locks extends AppCompatActivity {
         LocksRecycler.setLayoutManager(Manager);
     }
 
-    static void getLocks() {
+    public static void getLocks() {
         final Dialog d = new Dialog(act);
         d.setContentView(R.layout.loading_layout);
         d.setCancelable(false);

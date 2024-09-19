@@ -1,4 +1,4 @@
-package com.example.hotelservicesstandalone.Classes.Enumes;
+package com.syriasoft.checkin.Classes.Enumes;
 
 public enum Curtain {
     zig_clkg,

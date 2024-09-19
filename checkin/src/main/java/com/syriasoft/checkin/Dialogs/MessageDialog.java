@@ -1,4 +1,4 @@
-package com.example.hotelservicesstandalone.Dialogs;
+package com.syriasoft.checkin.Dialogs;
 
 import android.app.Dialog;
 import android.content.Context;
@@ -6,7 +6,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
-import com.example.hotelservicesstandalone.R;
+import com.syriasoft.checkin.R;
 
 public class MessageDialog {
     private String title;

@@ -1,4 +1,4 @@
-package com.example.hotelservicesstandalone.Dialogs;
+package com.syriasoft.checkin.Dialogs;
 
 import android.app.Activity;
 import android.app.Dialog;
@@ -6,7 +6,7 @@ import android.os.Build;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import com.example.hotelservicesstandalone.R;
+import com.syriasoft.checkin.R;
 
 public class ProgressDialog {
 

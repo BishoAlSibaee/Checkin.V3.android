@@ -1,6 +1,6 @@
-package com.example.hotelservicesstandalone.Classes;
+package com.syriasoft.checkin.Classes;
 
-import com.example.hotelservicesstandalone.Classes.Property.Room;
+import com.syriasoft.checkin.Classes.Property.Room;
 
 import org.json.JSONException;
 import org.json.JSONObject;

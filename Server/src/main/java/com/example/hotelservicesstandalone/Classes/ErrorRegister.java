@@ -1,4 +1,4 @@
-package com.example.hotelservicesstandalone;
+package com.example.hotelservicesstandalone.Classes;
 
 import android.content.Context;
 import android.util.Log;
@@ -8,11 +8,12 @@ import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.example.hotelservicesstandalone.Interface.RequestCallback;
+import com.example.hotelservicesstandalone.MyApp;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public  class ErrorRegister {
+public class ErrorRegister {
 
     static RequestQueue Q ;
 

@@ -48,9 +48,13 @@ public class TemplateMood_adapter extends RecyclerView.Adapter<TemplateMood_adap
         }
         TemplateMoodTasks_adapter adapter = new TemplateMoodTasks_adapter(list.get(position).tasks);
         holder.tasksRecycler.setAdapter(adapter);
-        if (ViewTemplate.template.rooms.size() > 0) {
-            holder.edit.setVisibility(View.GONE);
-            holder.delete.setVisibility(View.GONE);
+        if (ViewTemplate.template != null) {
+            if (ViewTemplate.template.rooms != null) {
+                if (ViewTemplate.template.rooms.size() > 0) {
+                    holder.edit.setVisibility(View.GONE);
+                    holder.delete.setVisibility(View.GONE);
+                }
+            }
         }
         holder.delete.setOnClickListener(new View.OnClickListener() {
             @Override

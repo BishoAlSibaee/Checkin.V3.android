@@ -1,14 +1,13 @@
-package com.example.hotelservicesstandalone.Classes;
+package com.syriasoft.checkin.Classes;
 
 import android.app.Activity;
 import android.util.Log;
 
-import com.example.hotelservicesstandalone.Classes.Devices.CheckinDevice;
-import com.example.hotelservicesstandalone.Classes.Interfaces.GetDevicesCallback;
-import com.example.hotelservicesstandalone.Classes.Interfaces.getDeviceDataCallback;
-import com.example.hotelservicesstandalone.Classes.Property.Room;
-import com.example.hotelservicesstandalone.Dialogs.ProgressDialog;
-import com.example.hotelservicesstandalone.MyApp;
+import com.syriasoft.checkin.Classes.Devices.CheckinDevice;
+import com.syriasoft.checkin.Classes.Interfaces.GetDevicesCallback;
+import com.syriasoft.checkin.Classes.Interfaces.getDeviceDataCallback;
+import com.syriasoft.checkin.Classes.Property.Room;
+import com.syriasoft.checkin.Dialogs.ProgressDialog;
 import com.tuya.smart.android.user.api.ILoginCallback;
 import com.tuya.smart.android.user.bean.User;
 import com.tuya.smart.home.sdk.TuyaHomeSdk;
@@ -41,7 +40,7 @@ public class Tuya {
         CountryCode = countryCode;
     }
 
-    public static void loginTuya(PROJECT project,ILoginCallback result) {
+    public static void loginTuya(PROJECT project, ILoginCallback result) {
         TuyaHomeSdk.getUserInstance().loginWithEmail(CountryCode, project.TuyaUser, project.TuyaPassword, new ILoginCallback() {
             @Override
             public void onSuccess(User user) {
@@ -105,7 +104,7 @@ public class Tuya {
                             Log.d("getDevicesRun","home "+counter[0]+" "+bean.getName()+" "+bean.getSharedDeviceList().size());
                             Devices.addAll(Room.setRoomsDevices(rooms,bean.getDeviceList(),h));
                             Devices.addAll(Room.setRoomsDevices(rooms,bean.getSharedDeviceList(),h));
-                            if (counter[0] == MyApp.PROJECT_HOMES.size()) {
+                            if (counter[0] == homeBeans.size()) {
                                 callback.devices(Devices);
                                 Log.d("getDevicesRun","finish "+Devices.size());
                             }
@@ -185,17 +184,17 @@ public class Tuya {
         }
     }
 
-    public static void setDevicesListenersWatcher(Activity act) {
+    public static void setDevicesListenersWatcher(Activity act,List<Room> rooms) {
         if (ListenersWorking) {
-            setDevicesListenersWorking(act);
+            setDevicesListenersWorking(act,rooms);
         }
         else {
-            setDevicesListenersNotWorking(act);
+            setDevicesListenersNotWorking(act,rooms);
         }
 
     }
 
-    static void setDevicesListenersWorking(Activity act) {
+    static void setDevicesListenersWorking(Activity act,List<Room> rooms) {
         Log.d("devicesListenersListener", "start 10");
         if (ListenersTimerWorking == null) {
             ListenersTimerWorking = new Timer();
@@ -206,18 +205,18 @@ public class Tuya {
                 long now = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
                 if (now > (LastListenersActionTime + ListenersWaitingTimeWorking)) {
                     Log.d("devicesListenersListener", "listeners stop 10");
-                    implementStopActions(act);
+                    implementStopActions(act,rooms);
                 }
                 else {
                     Log.d("devicesListenersListener", "listeners working 10");
                     implementWorkActions();
-                    setDevicesListenersWatcher(act);
+                    setDevicesListenersWatcher(act,rooms);
                 }
             }
         }, ListenersWaitingTimeWorking);
     }
 
-    static void setDevicesListenersNotWorking(Activity act) {
+    static void setDevicesListenersNotWorking(Activity act,List<Room> rooms) {
         Log.d("devicesListenersListener", "start 5");
         if (ListenersTimerWorking == null) {
             ListenersTimerWorking = new Timer();
@@ -228,21 +227,21 @@ public class Tuya {
                 long now = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
                 if (now > (LastListenersActionTime + ListenersWaitingTimeNotWorking)) {
                     Log.d("devicesListenersListener", "listeners stop 5");
-                    implementStopActions(act);
+                    implementStopActions(act,rooms);
                 }
                 else {
                     Log.d("devicesListenersListener", "listeners working 5");
                     implementWorkActions();
-                    setDevicesListenersWatcher(act);
+                    setDevicesListenersWatcher(act,rooms);
                 }
             }
         }, ListenersWaitingTimeNotWorking);
     }
 
-    static void implementStopActions(Activity act) {
+    static void implementStopActions(Activity act,List<Room> rooms) {
         ListenersWorking = false;
         PROJECT_VARIABLES.setDevicesListenersWorking(0);
-        Room.stopAllRoomListeners(MyApp.ROOMS);
+        Room.stopAllRoomListeners(rooms);
         act.finish();
     }
 

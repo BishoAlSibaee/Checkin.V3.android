@@ -1,15 +1,16 @@
-package com.example.hotelservicesstandalone.Classes.Devices;
+package com.syriasoft.checkin.Classes.Devices;
 
+import android.content.Context;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
 
-import com.example.hotelservicesstandalone.Classes.Interfaces.DeviceAction;
-import com.example.hotelservicesstandalone.Classes.Interfaces.Listen;
-import com.example.hotelservicesstandalone.Classes.Interfaces.SetFirebaseDevicesControl;
-import com.example.hotelservicesstandalone.Classes.Interfaces.SetInitialValues;
-import com.example.hotelservicesstandalone.Classes.Interfaces.SwitchListener;
-import com.example.hotelservicesstandalone.Classes.Property.Room;
+import com.syriasoft.checkin.Classes.Interfaces.DeviceAction;
+import com.syriasoft.checkin.Classes.Interfaces.Listen;
+import com.syriasoft.checkin.Classes.Interfaces.SetFirebaseDevicesControl;
+import com.syriasoft.checkin.Classes.Interfaces.SetInitialValues;
+import com.syriasoft.checkin.Classes.Interfaces.SwitchListener;
+import com.syriasoft.checkin.Classes.Property.Room;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -345,7 +346,7 @@ public class CheckinSwitch extends CheckinDevice implements SetInitialValues, Li
     }
 
     @Override
-    public void setFirebaseDevicesControl(DatabaseReference roomReference) {
+    public void setFirebaseDevicesControl(Context c, String projectUrl, DatabaseReference roomReference) {
         if (dp1 != null) {
             dp1ControlListener = roomReference.child(device.name).child(String.valueOf(dp1.dpId)).addValueEventListener(new ValueEventListener() {
                 @Override

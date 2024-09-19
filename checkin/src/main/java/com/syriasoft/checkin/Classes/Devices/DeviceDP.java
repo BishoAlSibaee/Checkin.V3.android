@@ -1,6 +1,6 @@
-package com.example.hotelservicesstandalone.Classes.Devices;
+package com.syriasoft.checkin.Classes.Devices;
 
-import com.example.hotelservicesstandalone.Classes.Enumes.DpTypes;
+import com.syriasoft.checkin.Classes.Enumes.DpTypes;
 
 public class DeviceDP {
     public long dpId;
