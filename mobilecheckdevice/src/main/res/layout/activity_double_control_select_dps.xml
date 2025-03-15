@@ -7,7 +7,7 @@
     android:background="@color/black_overlay"
     android:orientation="vertical"
     android:padding="5dp"
-    tools:context=".DoubleControlSelectDps">
+    tools:context="com.syriasoft.mobilecheckdevice.DoubleControlSelectDps">
 
     <TextView
         android:id="@+id/textView54"

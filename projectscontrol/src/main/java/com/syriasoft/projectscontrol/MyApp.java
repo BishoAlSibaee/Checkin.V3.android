@@ -4,6 +4,7 @@ import android.app.Application;
 
 import com.tuya.smart.home.sdk.TuyaHomeSdk;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class MyApp extends Application {
@@ -17,6 +18,7 @@ public class MyApp extends Application {
     public void onCreate() {
         super.onCreate();
         app = this ;
+        Projects = new ArrayList<>();
         initTuya();
     }
 

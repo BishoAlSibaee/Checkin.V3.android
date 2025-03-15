@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/pressed_btn"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <TextView
+        android:id="@+id/textView17"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="10dp"
+        android:gravity="center"
+        android:textColor="@color/lightGray"
+        android:textSize="34sp"
+        android:textStyle="bold" />
+
+    <LinearLayout
+        android:id="@+id/powerLayout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/imageView10"
+            android:layout_width="wrap_content"
+            android:layout_height="70dp"
+            android:layout_marginStart="2dp"
+            android:layout_marginEnd="2dp"
+            android:layout_weight="1"
+            android:background="@drawable/power_buttons_bg"
+            android:padding="10dp"
+            android:text="@string/powerOn"
+            android:textAllCaps="false"
+            app:srcCompat="@drawable/power_" />
+
+        <Button
+            android:id="@+id/imageView11"
+            android:layout_width="wrap_content"
+            android:layout_height="70dp"
+            android:layout_marginStart="2dp"
+            android:layout_marginEnd="2dp"
+            android:layout_weight="1"
+            android:background="@drawable/power_buttons_bg"
+            android:padding="10dp"
+            android:text="@string/powerCard"
+            android:textAllCaps="false"
+            app:srcCompat="@drawable/card" />
+
+        <Button
+            android:id="@+id/imageView12"
+            android:layout_width="wrap_content"
+            android:layout_height="70dp"
+            android:layout_marginStart="2dp"
+            android:layout_marginEnd="2dp"
+            android:layout_weight="1"
+            android:background="@drawable/power_buttons_bg"
+            android:padding="10dp"
+            android:text="@string/powerOff"
+            android:textAllCaps="false"
+            app:srcCompat="@drawable/power_off" />
+    </LinearLayout>
+</LinearLayout>

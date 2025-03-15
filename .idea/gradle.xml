@@ -9,12 +9,9 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
-            <option value="$PROJECT_DIR$/HouseKeeping" />
             <option value="$PROJECT_DIR$/Server" />
-            <option value="$PROJECT_DIR$/app" />
-            <option value="$PROJECT_DIR$/checkin" />
             <option value="$PROJECT_DIR$/mobilecheckdevice" />
-            <option value="$PROJECT_DIR$/projectscontrol" />
+            <option value="$PROJECT_DIR$/projectseditor" />
           </set>
         </option>
         <option name="resolveExternalAnnotations" value="false" />

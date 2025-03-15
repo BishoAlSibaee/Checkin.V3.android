@@ -4,10 +4,10 @@
     <selectionStates>
       <SelectionState runConfigName="Server">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2024-09-18T08:36:14.845260800Z">
+        <DropdownSelection timestamp="2025-02-22T13:57:44.829551Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="PhysicalDevice" identifier="serial=AMABUN4426G01230" />
+              <DeviceId pluginId="PhysicalDevice" identifier="serial=8J0MLIRPB2" />
             </handle>
           </Target>
         </DropdownSelection>
@@ -15,6 +15,14 @@
       </SelectionState>
       <SelectionState runConfigName="mobilecheckdevice">
         <option name="selectionMode" value="DROPDOWN" />
+        <DropdownSelection timestamp="2024-12-02T11:16:48.938102900Z">
+          <Target type="DEFAULT_BOOT">
+            <handle>
+              <DeviceId pluginId="PhysicalDevice" identifier="serial=AMABUN4426G01230" />
+            </handle>
+          </Target>
+        </DropdownSelection>
+        <DialogSelection />
       </SelectionState>
       <SelectionState runConfigName="HouseKeeping">
         <option name="selectionMode" value="DROPDOWN" />
@@ -36,6 +44,17 @@
           <Target type="DEFAULT_BOOT">
             <handle>
               <DeviceId pluginId="PhysicalDevice" identifier="serial=242383270138bc7c" />
+            </handle>
+          </Target>
+        </DropdownSelection>
+        <DialogSelection />
+      </SelectionState>
+      <SelectionState runConfigName="projectseditor">
+        <option name="selectionMode" value="DROPDOWN" />
+        <DropdownSelection timestamp="2025-02-04T11:57:16.416587900Z">
+          <Target type="DEFAULT_BOOT">
+            <handle>
+              <DeviceId pluginId="PhysicalDevice" identifier="serial=AMABUN4426G01230" />
             </handle>
           </Target>
         </DropdownSelection>

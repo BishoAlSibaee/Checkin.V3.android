@@ -74,11 +74,11 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         act = this;
-//        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.SCHEDULE_EXACT_ALARM) != PackageManager.PERMISSION_GRANTED) {
-//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-//                ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.SCHEDULE_EXACT_ALARM},42);
-//            }
-//        }
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.SCHEDULE_EXACT_ALARM) != PackageManager.PERMISSION_GRANTED) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.SCHEDULE_EXACT_ALARM},42);
+            }
+        }
         setActivity();
         getActiveProjects();
 

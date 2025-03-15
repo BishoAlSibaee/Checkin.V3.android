@@ -7,7 +7,7 @@
     android:background="@color/colorPrimary"
     android:orientation="vertical"
     android:padding="10dp"
-    tools:context=".AddTemplateMood">
+    tools:context="com.syriasoft.mobilecheckdevice.AddTemplateMood">
 
     <LinearLayout
         android:id="@+id/moodLayout"

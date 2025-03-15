@@ -1,0 +1,201 @@
+{
+  "project_info": {
+    "project_number": "395407287653",
+    "firebase_url": "https://checkin-62774-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "checkin-62774",
+    "storage_bucket": "checkin-62774.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:395407287653:android:3287dd45121f8f2212ed8c",
+        "android_client_info": {
+          "package_name": "com.example.hotelservicesstandalone"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyChwiyNo50oIhQnX7j1eoluKBxdM9CVesw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:395407287653:android:1cbc0adaa3fb027812ed8c",
+        "android_client_info": {
+          "package_name": "com.example.mobilecheckdevice"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyChwiyNo50oIhQnX7j1eoluKBxdM9CVesw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:395407287653:android:508a473763f0320812ed8c",
+        "android_client_info": {
+          "package_name": "com.syriasoft.cleanup"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyChwiyNo50oIhQnX7j1eoluKBxdM9CVesw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:395407287653:android:bb744f0b268af7e512ed8c",
+        "android_client_info": {
+          "package_name": "com.syriasoft.hotelservice"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyChwiyNo50oIhQnX7j1eoluKBxdM9CVesw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:395407287653:android:b7ae0b1af9d1c94012ed8c",
+        "android_client_info": {
+          "package_name": "com.syriasoft.hotelservices"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyChwiyNo50oIhQnX7j1eoluKBxdM9CVesw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:395407287653:android:907fe0cda172dbbf12ed8c",
+        "android_client_info": {
+          "package_name": "com.syriasoft.houseKeeping"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyChwiyNo50oIhQnX7j1eoluKBxdM9CVesw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:395407287653:android:33f0437996ba5e3b12ed8c",
+        "android_client_info": {
+          "package_name": "com.syriasoft.mobilecheckdeviceChina"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyChwiyNo50oIhQnX7j1eoluKBxdM9CVesw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:395407287653:android:a8bc2de920f793f512ed8c",
+        "android_client_info": {
+          "package_name": "com.syriasoft.projectseditor"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyChwiyNo50oIhQnX7j1eoluKBxdM9CVesw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:395407287653:android:c14ddcd88d04acde12ed8c",
+        "android_client_info": {
+          "package_name": "com.syriasoft.server"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyChwiyNo50oIhQnX7j1eoluKBxdM9CVesw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:395407287653:android:e1be2e6c57a404f212ed8c",
+        "android_client_info": {
+          "package_name": "com.syriasoft.serverback"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyChwiyNo50oIhQnX7j1eoluKBxdM9CVesw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

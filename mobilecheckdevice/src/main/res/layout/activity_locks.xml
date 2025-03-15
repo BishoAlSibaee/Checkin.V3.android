@@ -7,7 +7,7 @@
     android:background="@color/dark_gray"
     android:orientation="vertical"
     android:padding="10dp"
-    tools:context=".Locks">
+    tools:context="com.syriasoft.mobilecheckdevice.Locks">
 
     <TextView
         android:id="@+id/textView8"

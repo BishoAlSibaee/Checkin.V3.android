@@ -4,13 +4,12 @@
 
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" /> <!-- <uses-permission android:name="android.permission.BLUETOOTH_SCAN" /> -->
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
-    <!-- <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" /> -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" /> <!-- <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" /> -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
     <application
-        android:name=".MyApp"
+        android:name="com.syriasoft.mobilecheckdevice.MyApp"
         android:allowBackup="true"
         android:exported="true"
         android:icon="@mipmap/ic_launcher"
@@ -19,6 +18,14 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Checkin_android_P0001"
         tools:replace="android:allowBackup,android:supportsRtl">
+        <activity
+            android:name="com.syriasoft.mobilecheckdevice.Activities.ProjectActivity"
+            android:theme="@style/Theme.AppCompat.NoActionBar"
+            android:exported="false" />
+        <activity
+            android:name="com.syriasoft.mobilecheckdevice.Projects"
+            android:theme="@style/Theme.AppCompat.NoActionBar"
+            android:exported="false" />
 
         <meta-data
             android:name="TUYA_SMART_APPKEY"
@@ -29,7 +36,7 @@
             android:exported="true"
             android:value="yckws7gwmdh7xvav4p8a7f87px595xc7" /> <!-- netymnmhf4mvnvantyd9mhhqaahnc8ea -->
         <activity
-            android:name=".Login"
+            android:name="com.syriasoft.mobilecheckdevice.Login"
             android:exported="true"
             android:screenOrientation="landscape"
             android:theme="@style/Theme.AppCompat.NoActionBar">
@@ -45,45 +52,45 @@
                 android:value="" />
         </activity>
         <activity
-            android:name=".Locks"
+            android:name="com.syriasoft.mobilecheckdevice.Locks"
             android:exported="true" />
         <activity
-            android:name=".LightingControl"
+            android:name="com.syriasoft.mobilecheckdevice.LightingControl"
             android:exported="true"
             android:screenOrientation="landscape"
             android:theme="@style/Theme.AppCompat.NoActionBar" />
         <activity
-            android:name=".LightingDoubleControl"
+            android:name="com.syriasoft.mobilecheckdevice.LightingDoubleControl"
             android:exported="true"
             android:screenOrientation="landscape"
             android:theme="@style/Theme.AppCompat.NoActionBar" />
         <activity
-            android:name=".DoubleControlSelectDps"
+            android:name="com.syriasoft.mobilecheckdevice.DoubleControlSelectDps"
             android:exported="true"
             android:screenOrientation="landscape"
             android:theme="@style/Theme.AppCompat.NoActionBar" />
         <activity
-            android:name=".Moods"
+            android:name="com.syriasoft.mobilecheckdevice.Moods"
             android:exported="true"
             android:screenOrientation="landscape"
             android:theme="@style/Theme.AppCompat.NoActionBar" />
         <activity
-            android:name=".MakeMood"
+            android:name="com.syriasoft.mobilecheckdevice.MakeMood"
             android:exported="true"
             android:screenOrientation="landscape"
             android:theme="@style/Theme.AppCompat.NoActionBar" />
         <activity
-            android:name=".RoomManager"
+            android:name="com.syriasoft.mobilecheckdevice.RoomManager"
             android:exported="true"
             android:screenOrientation="landscape"
             android:theme="@style/Theme.AppCompat.NoActionBar" />
         <activity
-            android:name=".Rooms"
+            android:name="com.syriasoft.mobilecheckdevice.Rooms"
             android:exported="true"
             android:screenOrientation="landscape"
             android:theme="@style/Theme.AppCompat.NoActionBar" />
         <activity
-            android:name=".CreateNewTemplate"
+            android:name="com.syriasoft.mobilecheckdevice.CreateNewTemplate"
             android:exported="false"
             android:screenOrientation="landscape"
             android:theme="@style/Theme.AppCompat.NoActionBar">
@@ -92,7 +99,7 @@
                 android:value="" />
         </activity>
         <activity
-            android:name=".ProjectTemplates"
+            android:name="com.syriasoft.mobilecheckdevice.ProjectTemplates"
             android:exported="false"
             android:screenOrientation="landscape"
             android:theme="@style/Theme.AppCompat.NoActionBar">
@@ -101,7 +108,7 @@
                 android:value="" />
         </activity>
         <activity
-            android:name=".ViewTemplate"
+            android:name="com.syriasoft.mobilecheckdevice.ViewTemplate"
             android:exported="false"
             android:screenOrientation="landscape"
             android:theme="@style/Theme.AppCompat.NoActionBar">
@@ -110,7 +117,7 @@
                 android:value="" />
         </activity>
         <activity
-            android:name=".ApplyTemplateToRooms"
+            android:name="com.syriasoft.mobilecheckdevice.ApplyTemplateToRooms"
             android:exported="false"
             android:screenOrientation="landscape"
             android:theme="@style/Theme.AppCompat.NoActionBar">
@@ -119,33 +126,33 @@
                 android:value="" />
         </activity>
         <activity
-            android:name=".EditTemplateMultiControl"
+            android:name="com.syriasoft.mobilecheckdevice.EditTemplateMultiControl"
             android:exported="false"
             android:screenOrientation="landscape"
             android:theme="@style/Theme.AppCompat.NoActionBar" />
         <activity
-            android:name=".AddTemplateMultiControl"
+            android:name="com.syriasoft.mobilecheckdevice.AddTemplateMultiControl"
             android:exported="false"
             android:screenOrientation="landscape"
             android:theme="@style/Theme.AppCompat.NoActionBar" />
         <activity
-            android:name=".AddTemplateMood"
+            android:name="com.syriasoft.mobilecheckdevice.AddTemplateMood"
             android:exported="false"
             android:screenOrientation="landscape"
             android:theme="@style/Theme.AppCompat.NoActionBar" />
         <activity
-            android:name=".EditTemplateMood"
+            android:name="com.syriasoft.mobilecheckdevice.EditTemplateMood"
             android:exported="false"
             android:screenOrientation="landscape"
-            android:theme="@style/Theme.AppCompat.NoActionBar"/>
+            android:theme="@style/Theme.AppCompat.NoActionBar" />
         <activity
-            android:name=".ScreenButtons"
+            android:name="com.syriasoft.mobilecheckdevice.ScreenButtons"
             android:exported="false"
             android:screenOrientation="landscape"
-            android:theme="@style/Theme.AppCompat.NoActionBar"/>
+            android:theme="@style/Theme.AppCompat.NoActionBar" />
 
         <service
-            android:name=".MessagingService"
+            android:name="com.syriasoft.mobilecheckdevice.MessagingService"
             android:enabled="true"
             android:exported="true">
             <intent-filter>

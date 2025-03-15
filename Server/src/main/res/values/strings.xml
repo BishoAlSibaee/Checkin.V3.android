@@ -25,4 +25,14 @@
     <string name="laundry">Laundry</string>
     <string name="checkout">Checkout</string>
     <string name="dnd">DND</string>
+    <string name="powerOn">Power On</string>
+    <string name="powerCard">Power Card</string>
+    <string name="powerOff">Power Off</string>
+    <string name="noPowerController">No Power Controller</string>
+    <string name="service">Service</string>
+    <string name="power">Power</string>
+    <string name="offline">Offline</string>
+
+    <string name="admin_receiver_label">Tesk Kiosk label</string>
+    <string name="admin_receiver_description">Tesk Kiosk description</string>
 </resources>

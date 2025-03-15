@@ -23,6 +23,20 @@
     <string name="disable">Disable</string>
     <string name="rooms">Rooms</string>
     <string name="devices">Devices</string>
+    <string name="selectProject">Select Project</string>
+    <string name="loading">Loading ..</string>
+    <string name="login">Login</string>
+    <string name="powerOn">Power On</string>
+    <string name="powerCard">Power Card</string>
+    <string name="powerOff">Power Off</string>
+    <string name="edit">Edit</string>
+    <string name="buildings">Buildings</string>
+    <string name="addBuilding">Add Building</string>
+    <string name="floors">Floors</string>
+    <string name="addFloor">Add Floor</string>
+    <string name="addRoom">Add Room</string>
+    <string name="suites">Suites</string>
+
 
     <!--    Messages -->
 

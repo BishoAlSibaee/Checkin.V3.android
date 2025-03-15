@@ -23,7 +23,19 @@
     <string name="disable">تعطيل</string>
     <string name="rooms">الغرف</string>
     <string name="devices">الاجهزة</string>
-
+    <string name="selectProject">Select Project</string>
+    <string name="loading">Loading ..</string>
+    <string name="login">Login</string>
+    <string name="powerOn">Power On</string>
+    <string name="powerCard">Power Card</string>
+    <string name="powerOff">Power Off</string>
+    <string name="edit">تعديل</string>
+    <string name="buildings">المباني</string>
+    <string name="addBuilding">اضافة مبنى</string>
+    <string name="floors">الادوار</string>
+    <string name="addFloor">اضافة دور</string>
+    <string name="addRoom">اضافة غرفة</string>
+    <string name="suites">الاجنحة</string>
 
 <!--    Messages -->
 

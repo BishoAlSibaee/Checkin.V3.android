@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context="com.example.mobilecheckdevice.lock.AuthActivity">
+    tools:context="com.example.mobilecheckdevice.com.syriasoft.mobilecheckdevice.lock.AuthActivity">
 
     <TextView
         android:id="@+id/tv_account"

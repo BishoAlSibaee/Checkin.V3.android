@@ -8,7 +8,7 @@
     android:background="@color/colorPrimary"
     android:orientation="vertical"
     android:padding="10dp"
-    tools:context=".Moods">
+    tools:context="com.syriasoft.mobilecheckdevice.Moods">
 
     <ScrollView
         android:layout_width="match_parent"

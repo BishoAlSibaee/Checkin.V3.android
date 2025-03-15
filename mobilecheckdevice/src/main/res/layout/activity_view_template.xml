@@ -7,7 +7,7 @@
     android:background="@color/colorPrimary"
     android:orientation="vertical"
     android:padding="10dp"
-    tools:context=".ViewTemplate">
+    tools:context="com.syriasoft.mobilecheckdevice.ViewTemplate">
 
     <TextView
         android:id="@+id/textView44"

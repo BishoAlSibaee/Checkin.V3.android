@@ -7,21 +7,29 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
+    <uses-permission android:name="android.permission.REBOOT" tools:ignore="ProtectedPermissions" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.REBOOT"
+        tools:ignore="ProtectedPermissions" />
 
     <application
-        android:name=".MyApp"
+        android:name="com.syriasoft.server.MyApp"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.HotelServices"
+        android:hardwareAccelerated="false"
+        android:largeHeap="true"
         tools:replace="android:allowBackup,android:supportsRtl">
         <activity
-            android:name=".ReceptionScreen"
+            android:name="com.syriasoft.server.ReceptionScreen"
             android:exported="false"
             android:theme="@style/Theme.AppCompat.NoActionBar"/>
-        <activity android:name=".Locks" />
+        <activity android:name="com.syriasoft.server.Locks" />
 
         <meta-data
             android:name="TUYA_SMART_APPKEY"
@@ -31,22 +39,21 @@
             android:value="netymnmhf4mvnvantyd9mhhqaahnc8ea" />
 
         <activity
-            android:name=".RoomManager"
+            android:name="com.syriasoft.server.RoomManager"
             android:screenOrientation="landscape"
             android:theme="@style/Theme.AppCompat.NoActionBar" />
         <activity
-            android:name=".Rooms"
+            android:name="com.syriasoft.server.Rooms"
             android:screenOrientation="landscape"
             android:theme="@style/Theme.AppCompat.NoActionBar" />
         <activity
-            android:name=".Login"
+            android:name="com.syriasoft.server.Login"
             android:exported="true"
             android:screenOrientation="landscape"
             android:theme="@style/Theme.AppCompat.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <action android:name="com.syriasoft.server.Login" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
                 <category android:name="android.intent.category.HOME" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -54,11 +61,8 @@
             </intent-filter>
         </activity>
 
-        <service android:name=".Services.KeepAliveService_Test"
-            android:enabled="true" />
-
         <service
-            android:name=".Services.MessagingService"
+            android:name="com.syriasoft.server.Services.MessagingService"
             android:enabled="true"
             android:exported="true">
             <intent-filter>
@@ -66,22 +70,32 @@
             </intent-filter>
         </service>
 
-        <service android:name=".Services.RerunService"
-            android:enabled="true"/>
 
         <service
-            android:name=".Services.ErrorService"
+            android:name="com.syriasoft.server.Services.ErrorService"
             android:enabled="true"
             android:exported="false" />
 
-        <receiver android:name=".Services.checkWorkingReceiver"
-            android:enabled="true"
-            android:exported="true"
-            android:permission="TODO">
+        <service android:name="com.syriasoft.server.Services.ServerService"
+            android:foregroundServiceType="dataSync"
+            android:enabled="true"/>
+
+        <service android:name="com.syriasoft.server.Services.ServerService2"
+            android:foregroundServiceType="dataSync"
+            android:enabled="true"/>
+        <receiver android:name="com.syriasoft.server.Services.checkWorkingReceiver"/>
+
+        <receiver android:name="com.syriasoft.server.Services.MyDeviceAdminReceiver"
+            android:description="@string/admin_receiver_description"
+            android:label="@string/admin_receiver_label"
+            android:permission="android.permission.BIND_DEVICE_ADMIN">
+            <meta-data android:name="android.app.device_admin"
+                android:resource="@xml/device_admin" />
             <intent-filter>
-                <action android:name=".Login"/>
+                <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
             </intent-filter>
         </receiver>
+
     </application>
 
 </manifest>

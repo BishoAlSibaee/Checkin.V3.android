@@ -7,7 +7,7 @@
     android:background="@color/colorPrimary"
     android:orientation="vertical"
     android:paddingTop="10dp"
-    tools:context=".CreateNewTemplate">
+    tools:context="com.syriasoft.mobilecheckdevice.CreateNewTemplate">
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"

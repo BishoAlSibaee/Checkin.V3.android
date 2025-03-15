@@ -22,4 +22,5 @@
     <color name="black_overlay">#161616</color>
     <color name="darkBlue">#202142</color>
     <color name="transparent">#00818181</color>
+    <color name="background">#212F3C</color>
 </resources>

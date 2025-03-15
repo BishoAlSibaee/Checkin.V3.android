@@ -7,7 +7,7 @@
     android:background="@color/colorPrimary"
     android:orientation="vertical"
     android:padding="10dp"
-    tools:context=".MakeMood">
+    tools:context="com.syriasoft.mobilecheckdevice.MakeMood">
 
     <ScrollView
         android:layout_width="match_parent"

@@ -6,7 +6,7 @@
     android:background="@color/colorPrimary"
     android:orientation="vertical"
     android:padding="10dp"
-    tools:context=".LightingControl">
+    tools:context="com.syriasoft.mobilecheckdevice.LightingControl">
 
 
     <Button
