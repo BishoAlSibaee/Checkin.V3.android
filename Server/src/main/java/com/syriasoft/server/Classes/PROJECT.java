@@ -17,7 +17,7 @@ import java.util.Map;
 
 public class PROJECT {
 
-    private static final String getProjectsUrl = "https://ratco-solutions.com/Checkin/getProjects.php";
+    private static final String getProjectsUrl = "https://checkin-grms.com/projects/getProjects.php";//"https://ratco-solutions.com/Checkin/getProjects.php";
     private static final String projectLoginUrl = "users/loginProject" ;
 
     public int id ;

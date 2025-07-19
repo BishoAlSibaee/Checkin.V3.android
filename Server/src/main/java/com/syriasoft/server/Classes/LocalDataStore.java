@@ -135,4 +135,8 @@ public class LocalDataStore {
         PROJECT_VARIABLES.deleteProjectVariablesFromStorage(this);
         Tuya.deleteHomesFromLocalStorage(this);
     }
+
+    public boolean checkObjectStored(String name) {
+        return storage.contains(name);
+    }
 }

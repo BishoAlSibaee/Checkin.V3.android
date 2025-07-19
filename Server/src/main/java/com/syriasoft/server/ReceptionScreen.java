@@ -88,14 +88,16 @@ public class ReceptionScreen extends AppCompatActivity {
     public static List<Bed> beds,cleanupBeds,laundryBeds,dndBeds,checkoutBeds,powerOnBeds,powerCardBeds,powerOffBeds,offlineBeds;
     ReceptionRoom_Adapter adapter;
     int ind = 0;
-    int cleanupCounter=0,laundryCounter=0,dndCounter=0,checkoutCounter=0;
-    RoomOrder_Adapter cleanupAdapter,laundryAdapter,checkoutAdapter,dndAdapter;
+    static int cleanupCounter=0,laundryCounter=0,dndCounter=0,checkoutCounter=0;
+    static RoomOrder_Adapter cleanupAdapter,laundryAdapter,checkoutAdapter,dndAdapter;
     RoomPower_Adapter powerOnAdapter,powerOffAdapter,powerCardAdapter;
     RoomOffline_Adapter offlineAdapter;
     boolean servicesVisibility = true;
     boolean powerVisibility = false;
     boolean offlineVisibility = false;
     MediaPlayer player0,player1,player2,player3;
+    public static Timer terminateTimer;
+    boolean getOnlineGatewayDone = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -120,12 +122,10 @@ public class ReceptionScreen extends AppCompatActivity {
         setRefreshTimer();
     }
 
-
     @Override
     public void onBackPressed() {
         MyApp.finishActivities();
     }
-
 
     void setActivity() {
         act = this;
@@ -253,6 +253,7 @@ public class ReceptionScreen extends AppCompatActivity {
         });
         TextView powerCaption = findViewById(R.id.textView300);
         powerCaption.setOnClickListener(view -> {
+            //resetCloseTimer();
             powerVisibility = !powerVisibility;
             LinearLayout powerLayout = findViewById(R.id.powersLayout);
             if (powerVisibility) {
@@ -264,6 +265,7 @@ public class ReceptionScreen extends AppCompatActivity {
         });
         TextView offlineCaption = findViewById(R.id.textView30000);
         offlineCaption.setOnClickListener(view->{
+            //resetCloseTimer();
             offlineVisibility = !offlineVisibility;
             LinearLayout offlineLayout = findViewById(R.id.offlineLayout);
             if (offlineVisibility) {
@@ -452,15 +454,18 @@ public class ReceptionScreen extends AppCompatActivity {
 
     void gettingAndPreparingLocalData(Activity act) throws JSONException {
         Log.d("bootingOp","getting data locally done ");
-        //ProgressDialog progress = new ProgressDialog(act,"getting project variables",9);
-        //progress.show();
-        //progress.setProgress(1,"getting project variables");
+        if (loading == null) {
+            loading = new loadingDialog(act);
+        }
+//        ProgressDialog progress = new ProgressDialog(act,"getting project variables",9);
+//        progress.show();
+//        progress.setProgress(1,"getting project variables");
         PROJECT_VARIABLES.getProjectVariablesFromStorage(storage);
         Log.d("bootingOp","getting variables locally done ");
         //progress.setProgress(2,"getting buildings");
         MyApp.Buildings = pDB.getBuildings();
         Log.d("bootingOp","getting buildings locally done "+MyApp.Buildings.size());
-       // progress.setProgress(3,"getting floors");
+        ///progress.setProgress(3,"getting floors");
         MyApp.Floors = pDB.getFloors();
         Log.d("bootingOp","getting floors locally done "+MyApp.Floors.size());
         //progress.setProgress(4,"getting rooms");
@@ -490,29 +495,55 @@ public class ReceptionScreen extends AppCompatActivity {
                     public void onSuccess() {
                         Log.d("bootingOp","getting initial done");
                         Log.d("devicesIds",Tuya.devicesIds.size()+" "+Devices.size());
-                        settingInitialDevicesData(Devices, new RequestCallback() {
-                            @Override
-                            public void onSuccess() {
-                                runOnUiThread(() -> {
-                                    setCounters();
-                                    showRoomsOrders();
-                                });
-                                setAllListenersRecycler();
-                                Log.d("bootingOp","finish");
+                        settingInitialDevicesDataOffline();
+                        //deleteDevicesCurrentValues();
+                        runOnUiThread(() -> {
+                            setOfflineCounters();
+                            refreshOffline();
+                            setPowerCounters();
+                            refreshPower();
+                            setCounters();
+                            showRoomsOrders();
+                            setAllListenersRecycler();
+                            if (loading != null) {
+                                loading.stop();
                             }
-
-                            @Override
-                            public void onFail(String error) {
-
-                            }
+                            Log.d("bootingOp","finish");
                         });
-
+//                        settingInitialDevicesData(Devices, new RequestCallback() {
+//                            @Override
+//                            public void onSuccess() {
+//                                runOnUiThread(() -> {
+//                                    setOfflineCounters();
+//                                    refreshOffline();
+//                                    setPowerCounters();
+//                                    refreshPower();
+//                                    setCounters();
+//                                    showRoomsOrders();
+//                                    setAllListenersRecycler();
+//                                    if (loading != null) {
+//                                        loading.stop();
+//                                    }
+//                                });
+//                                Log.d("bootingOp","finish");
+//                            }
+//
+//                            @Override
+//                            public void onFail(String error) {
+//                                if (loading != null) {
+//                                    loading.stop();
+//                                }
+//                                createRestartConfirmationDialog(act,"setting initial data failed \n"+error);
+//                            }
+//                        });
                         //progress.setProgress(9);
                     }
 
                     @Override
                     public void onError(String error) {
-                        loading.stop();
+                        if (loading != null) {
+                            loading.stop();
+                        }
                         createRestartConfirmationDialog(act,"getting devices failed \n"+error);
                     }
                 });
@@ -520,7 +551,9 @@ public class ReceptionScreen extends AppCompatActivity {
 
             @Override
             public void onError(String error) {
-                loading.stop();
+                if (loading != null) {
+                    loading.stop();
+                }
                 createRestartConfirmationDialog(act,"getting devices failed \n"+error);
             }
         });
@@ -690,6 +723,66 @@ public class ReceptionScreen extends AppCompatActivity {
                     callback.onFail(error);
                 }
             });
+        }
+    }
+
+    void settingInitialDevicesDataOffline() {
+        for (int i=0;i<beds.size();i++) {
+            Bed b = beds.get(i);
+            if (b.isRoom()) {
+                Room r = b.room;
+                if (r.isHasServiceSwitch()) {
+                    r.getMainServiceSwitch().setInitialCurrentValuesOffline(storage);
+                }
+                if (r.isHasPower()) {
+                    r.getPowerModule().setInitialCurrentValuesOffline(storage);
+                }
+                if (r.isHasGateway()) {
+                    r.getRoomGateway().setInitialCurrentValuesOffline(storage);
+                }
+            }
+            else if (b.isSuite()) {
+                Suite s = b.suite;
+                if (s.isHasServiceSwitch()) {
+                    s.getMainServiceSwitch().setInitialCurrentValuesOffline(storage);
+                }
+                if (s.isHasPower()) {
+                    s.getPowerModule().setInitialCurrentValuesOffline(storage);
+                }
+                if (s.isHasGateway()) {
+                    s.getSuiteGateway().setInitialCurrentValuesOffline(storage);
+                }
+            }
+        }
+    }
+
+    void deleteDevicesCurrentValues() {
+        for (int i=0;i<beds.size();i++) {
+            Bed b = beds.get(i);
+            if (b.isRoom()) {
+                Room r = b.room;
+                if (r.isHasServiceSwitch()) {
+                    r.getMainServiceSwitch().deleteServiceValues(storage);
+                }
+                if (r.isHasPower()) {
+                    r.getPowerModule().deletePowerValues(storage);
+                }
+                if (r.isHasGateway()) {
+                    r.getRoomGateway().deleteOnlineValue(storage);
+                }
+            }
+            else if (b.isSuite()) {
+                Suite s = b.suite;
+                if (s.isHasServiceSwitch()) {
+                    s.getMainServiceSwitch().deleteServiceValues(storage);
+                }
+                if (s.isHasPower()) {
+                    s.getPowerModule().deletePowerValues(storage);
+                }
+                if (s.isHasGateway()) {
+                    s.getSuiteGateway().deleteOnlineValue(storage);
+                }
+            }
         }
     }
 
@@ -1055,11 +1148,526 @@ public class ReceptionScreen extends AppCompatActivity {
 
     void setAllListenersRecycler() {
         Log.d("Listeners","start "+beds.size());
+//        for (int i=0;i<beds.size();i++) {
+//            Bed b = beds.get(i);
+//            if (b.isRoom()) {
+//                Room r = b.room;
+//                Log.d("Listeners","room "+r.RoomNumber);
+//                if (r.isHasServiceSwitch()) {
+//                    Log.d("Listeners","service not null");
+//                    r.getMainServiceSwitch().listen(new ServiceListener() {
+//                        @Override
+//                        public void cleanup() {
+//                            Log.d("ListenersCleanup","cleanup "+r.RoomNumber);
+//                            Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
+//                            player0.start();
+//                            r.getMainServiceSwitch().storeCleanupValue(storage,true);
+//                            if (r.getMainServiceSwitch().cleanup != null) {
+//                                Log.d("ListenersCleanup","not null");
+//                                if (r.getRoomGateway().device.getIsLocalOnline()) {
+//                                    Log.d("ListenersCleanup","local online");
+//                                    r.getMainServiceSwitch().cleanup.setCurrent(true);
+//                                }
+//                                else {
+//                                    Log.d("ListenersCleanup","offline");
+//                                }
+//                            }
+//                            else {
+//                                Log.d("ListenersCleanup","null");
+//                            }
+//                            setCleanupLists();
+//                            refreshCleanup();
+//                        }
+//
+//                        @Override
+//                        public void cancelCleanup() {
+//                            Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
+//                            r.getMainServiceSwitch().storeCleanupValue(storage,false);
+//                            if (r.getMainServiceSwitch().cleanup != null) {
+//                                r.getMainServiceSwitch().cleanup.setCurrent(false);
+//                            }
+//                            setCleanupLists();
+//                            refreshCleanup();
+//                        }
+//
+//                        @Override
+//                        public void laundry() {
+//                            Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
+//                            player1.start();
+//                            r.getMainServiceSwitch().storeLaundryValue(storage,true);
+//                            if (r.getMainServiceSwitch().laundry != null) {
+//                                if (r.getRoomGateway().device.getIsLocalOnline()) {
+//                                    r.getMainServiceSwitch().laundry.setCurrent(true);
+//                                }
+//                            }
+//                            setLaundryLists();
+//                            refreshLaundry();
+//                        }
+//
+//                        @Override
+//                        public void cancelLaundry() {
+//                            Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
+//                            r.getMainServiceSwitch().storeLaundryValue(storage,false);
+//                            if (r.getMainServiceSwitch().laundry != null) {
+//                                r.getMainServiceSwitch().laundry.setCurrent(false);
+//                            }
+//                            setLaundryLists();
+//                            refreshLaundry();
+//                        }
+//
+//                        @Override
+//                        public void dnd() {
+//                            Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
+//                            player2.start();
+//                            r.getMainServiceSwitch().storeDNDValue(storage,true);
+//                            if (r.getMainServiceSwitch().dnd != null) {
+//                                if (r.getRoomGateway().device.getIsLocalOnline()) {
+//                                    r.getMainServiceSwitch().dnd.setCurrent(true);
+//                                }
+//                            }
+//                            setDndLists();
+//                            refreshDND();
+//                        }
+//
+//                        @Override
+//                        public void cancelDnd() {
+//                            Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
+//                            r.getMainServiceSwitch().storeDNDValue(storage,false);
+//                            if (r.getMainServiceSwitch().dnd != null) {
+//                                r.getMainServiceSwitch().dnd.setCurrent(false);
+//                            }
+//                            setDndLists();
+//                            refreshDND();
+//                        }
+//
+//                        @Override
+//                        public void checkout() {
+//                            Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
+//                            player3.start();
+//                            r.getMainServiceSwitch().storeCheckoutValue(storage,true);
+//                            if (r.getMainServiceSwitch().checkout != null) {
+//                                if (r.getRoomGateway().device.getIsLocalOnline()) {
+//                                    r.getMainServiceSwitch().checkout.setCurrent(true);
+//                                }
+//                            }
+//                            setCheckoutLists();
+//                            refreshCheckout();
+//                        }
+//
+//                        @Override
+//                        public void cancelCheckout() {
+//                            Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
+//                            r.getMainServiceSwitch().storeCheckoutValue(storage,false);
+//                            if (r.getMainServiceSwitch().checkout != null) {
+//                                r.getMainServiceSwitch().checkout.setCurrent(false);
+//                            }
+//                            setCheckoutLists();
+//                            refreshCheckout();
+//                        }
+//
+//                        @Override
+//                        public void online(boolean online) {
+//                            r.getMainServiceSwitch().online = online;
+//                        }
+//                        @Override
+//                        public void lightOn() {}
+//
+//                        @Override
+//                        public void lightOff() {}
+//                    });
+//                }
+//                if (r.isHasPower()) {
+//                    Log.d("Listeners","power not null");
+//                    r.getPowerModule().listen(new PowerListener() {
+//                        @Override
+//                        public void powerOn() {
+//                            Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
+//                            r.getPowerModule().storeDp1Value(storage,true);
+//                            r.getPowerModule().storeDp2Value(storage,true);
+//                            if (r.getPowerModule().dp1 != null && r.getPowerModule().dp2 != null) {
+//                                r.getPowerModule().dp1.setCurrent(true);
+//                                r.getPowerModule().dp2.setCurrent(true);
+//                            }
+//                            setPowerCounters();
+//                            refreshPower();
+//                        }
+//
+//                        @Override
+//                        public void powerOff() {
+//                            Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
+//                            r.getPowerModule().storeDp1Value(storage,false);
+//                            r.getPowerModule().storeDp2Value(storage,false);
+//                            if (r.getPowerModule().dp1 != null && r.getPowerModule().dp2 != null) {
+//                                r.getPowerModule().dp1.setCurrent(false);
+//                                r.getPowerModule().dp2.setCurrent(false);
+//                            }
+//                            setPowerCounters();
+//                            refreshPower();
+//                        }
+//
+//                        @Override
+//                        public void powerByCard() {
+//                            Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
+//                            r.getPowerModule().storeDp1Value(storage,true);
+//                            r.getPowerModule().storeDp2Value(storage,false);
+//                            if (r.getPowerModule().dp1 != null && r.getPowerModule().dp2 != null) {
+//                                r.getPowerModule().dp1.setCurrent(true);
+//                                r.getPowerModule().dp2.setCurrent(false);
+//                            }
+//                            setPowerCounters();
+//                            refreshPower();
+//                        }
+//
+//                        @Override
+//                        public void online(boolean online) {
+//                            r.getPowerModule().online = online;
+//                            Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
+//                        }
+//                    });
+//                }
+//                if (r.isHasGateway()) {
+//                    Log.d("Listeners","gateway not null");
+//                    r.getRoomGateway().listen(online -> {
+//                        Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
+//                        Log.d("Listeners","online "+online);
+//                        r.getRoomGateway().storeOnlineValue(storage,online);
+//                        r.getRoomGateway().currentOnline = online;
+//                        setOfflineCounters();
+//                        refreshOffline();
+//                    });
+//                }
+//            }
+//            else if (b.isSuite()) {
+//                Suite s = b.suite;
+//                Log.d("Listeners","suite "+s.SuiteNumber);
+//                if (s.isHasServiceSwitch()) {
+//                    Log.d("Listeners","service not null");
+//                    s.getMainServiceSwitch().listen(new ServiceListener() {
+//                        @Override
+//                        public void cleanup() {
+//                            Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
+//                            player0.start();
+//                            s.getMainServiceSwitch().storeCleanupValue(storage,true);
+//                            if (s.getMainServiceSwitch().cleanup != null) {
+//                                if (s.getSuiteGateway().device.getIsLocalOnline()) {
+//                                    s.getMainServiceSwitch().cleanup.setCurrent(true);
+//                                }
+//                            }
+//                            setCleanupLists();
+//                            refreshCleanup();
+//                        }
+//
+//                        @Override
+//                        public void cancelCleanup() {
+//                            Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
+//                            s.getMainServiceSwitch().storeCleanupValue(storage,false);
+//                            if (s.getMainServiceSwitch().cleanup != null) {
+//                                s.getMainServiceSwitch().cleanup.setCurrent(false);
+//                            }
+//                            setCleanupLists();
+//                            refreshCleanup();
+//                        }
+//
+//                        @Override
+//                        public void laundry() {
+//                            Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
+//                            player1.start();
+//                            s.getMainServiceSwitch().storeLaundryValue(storage,true);
+//                            if (s.getMainServiceSwitch().laundry != null) {
+//                                if (s.getSuiteGateway().device.getIsLocalOnline()) {
+//                                    s.getMainServiceSwitch().laundry.setCurrent(true);
+//                                }
+//                            }
+//                            setLaundryLists();
+//                            refreshLaundry();
+//                        }
+//
+//                        @Override
+//                        public void cancelLaundry() {
+//                            Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
+//                            s.getMainServiceSwitch().storeLaundryValue(storage,false);
+//                            if (s.getMainServiceSwitch().laundry != null) {
+//
+//                                s.getMainServiceSwitch().laundry.setCurrent(false);
+//                            }
+//                            setLaundryLists();
+//                            refreshLaundry();
+//                        }
+//
+//                        @Override
+//                        public void dnd() {
+//                            Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
+//                            player2.start();
+//                            s.getMainServiceSwitch().storeDNDValue(storage,true);
+//                            if (s.getMainServiceSwitch().dnd != null) {
+//                                if (s.getSuiteGateway().device.getIsLocalOnline()) {
+//                                    s.getMainServiceSwitch().dnd.setCurrent(true);
+//                                }
+//                            }
+//                            setDndLists();
+//                            refreshDND();
+//                        }
+//
+//                        @Override
+//                        public void cancelDnd() {
+//                            Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
+//                            s.getMainServiceSwitch().storeDNDValue(storage,false);
+//                            if (s.getMainServiceSwitch().dnd != null) {
+//                                s.getMainServiceSwitch().dnd.setCurrent(false);
+//                            }
+//                            setDndLists();
+//                            refreshDND();
+//                        }
+//
+//                        @Override
+//                        public void checkout() {
+//                            Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
+//                            player3.start();
+//                            s.getMainServiceSwitch().storeCheckoutValue(storage,true);
+//                            if (s.getMainServiceSwitch().checkout != null) {
+//                                if (s.getSuiteGateway().device.getIsLocalOnline()) {
+//                                    s.getMainServiceSwitch().checkout.setCurrent(true);
+//                                }
+//                            }
+//                            setCheckoutLists();
+//                            refreshCheckout();
+//                        }
+//
+//                        @Override
+//                        public void cancelCheckout() {
+//                            Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
+//                            s.getMainServiceSwitch().storeCheckoutValue(storage,false);
+//                            if (s.getMainServiceSwitch().checkout != null) {
+//                                s.getMainServiceSwitch().checkout.setCurrent(false);
+//                            }
+//                            setCheckoutLists();
+//                            refreshCheckout();
+//                        }
+//
+//                        @Override
+//                        public void online(boolean online) {
+//                            s.getMainServiceSwitch().online = online;
+//                        }
+//
+//                        @Override
+//                        public void lightOn() {}
+//
+//                        @Override
+//                        public void lightOff() {}
+//                    });
+//                }
+//                if (s.isHasPower()) {
+//                    s.getPowerModule().listen(new PowerListener() {
+//                        @Override
+//                        public void powerOn() {
+//                            Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
+//                            s.getPowerModule().storeDp1Value(storage,true);
+//                            s.getPowerModule().storeDp2Value(storage,true);
+//                            if (s.getPowerModule().dp1 != null && s.getPowerModule().dp2 != null) {
+//                                s.getPowerModule().dp1.setCurrent(true);
+//                                s.getPowerModule().dp2.setCurrent(true);
+//                            }
+//                            setPowerCounters();
+//                            refreshPower();
+//                        }
+//
+//                        @Override
+//                        public void powerOff() {
+//                            Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
+//                            s.getPowerModule().storeDp1Value(storage,false);
+//                            s.getPowerModule().storeDp2Value(storage,false);
+//                            if (s.getPowerModule().dp1 != null && s.getPowerModule().dp2 != null) {
+//                                s.getPowerModule().dp1.setCurrent(false);
+//                                s.getPowerModule().dp2.setCurrent(false);
+//                            }
+//                            setPowerCounters();
+//                            refreshPower();
+//                        }
+//
+//                        @Override
+//                        public void powerByCard() {
+//                            Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
+//                            s.getPowerModule().storeDp1Value(storage,true);
+//                            s.getPowerModule().storeDp2Value(storage,false);
+//                            if (s.getPowerModule().dp1 != null && s.getPowerModule().dp2 != null) {
+//                                s.getPowerModule().dp1.setCurrent(true);
+//                                s.getPowerModule().dp2.setCurrent(false);
+//                            }
+//                            setPowerCounters();
+//                            refreshPower();
+//                        }
+//
+//                        @Override
+//                        public void online(boolean online) {
+//                            s.getPowerModule().online = online;
+//                        }
+//                    });
+//                }
+//                if (s.isHasGateway()) {
+//                    Log.d("suiteOnline" , s.SuiteNumber+" has gateway ");
+//                    if (s.getSuiteGateway() != null) {
+//                        s.getSuiteGateway().listen( online ->{
+//                            Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
+//                            s.getSuiteGateway().storeOnlineValue(storage,online);
+//                            s.getSuiteGateway().currentOnline = online;
+//                            setOfflineCounters();
+//                            refreshOffline();
+//                        });
+//                    }
+//                }
+//            }
+//        }
+        setGatewaysListeners();
+        setPowerListeners();
+        setServiceListeners();
+    }
+
+    void setGatewaysListeners() {
         for (int i=0;i<beds.size();i++) {
             Bed b = beds.get(i);
             if (b.isRoom()) {
                 Room r = b.room;
-                Log.d("Listeners","room "+r.RoomNumber);
+                if (r.isHasGateway()) {
+                    Log.d("Listeners","gateway not null");
+                    r.getRoomGateway().listen(online -> {
+                        Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
+                        Log.d("Listeners","online "+online);
+                        r.getRoomGateway().storeOnlineValue(storage,online);
+                        r.getRoomGateway().currentOnline = online;
+                        setOfflineCounters();
+                        refreshOffline();
+                    });
+                }
+            }
+            else if (b.isSuite()) {
+                Suite s = b.suite;
+                if (s.isHasGateway()) {
+                    Log.d("suiteOnline" , s.SuiteNumber+" has gateway ");
+                    if (s.getSuiteGateway() != null) {
+                        s.getSuiteGateway().listen( online ->{
+                            Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
+                            s.getSuiteGateway().storeOnlineValue(storage,online);
+                            s.getSuiteGateway().currentOnline = online;
+                            setOfflineCounters();
+                            refreshOffline();
+                        });
+                    }
+                }
+            }
+        }
+    }
+    void setPowerListeners() {
+        for (int i=0;i<beds.size();i++) {
+            Bed b = beds.get(i);
+            if (b.isRoom()) {
+                Room r = b.room;
+                if (r.isHasPower()) {
+                    Log.d("Listeners","power not null");
+                    r.getPowerModule().listen(new PowerListener() {
+                        @Override
+                        public void powerOn() {
+                            Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
+                            r.getPowerModule().storeDp1Value(storage,true);
+                            r.getPowerModule().storeDp2Value(storage,true);
+                            if (r.getPowerModule().dp1 != null && r.getPowerModule().dp2 != null) {
+                                r.getPowerModule().dp1.setCurrent(true);
+                                r.getPowerModule().dp2.setCurrent(true);
+                            }
+                            setPowerCounters();
+                            refreshPower();
+                        }
+
+                        @Override
+                        public void powerOff() {
+                            Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
+                            r.getPowerModule().storeDp1Value(storage,false);
+                            r.getPowerModule().storeDp2Value(storage,false);
+                            if (r.getPowerModule().dp1 != null && r.getPowerModule().dp2 != null) {
+                                r.getPowerModule().dp1.setCurrent(false);
+                                r.getPowerModule().dp2.setCurrent(false);
+                            }
+                            setPowerCounters();
+                            refreshPower();
+                        }
+
+                        @Override
+                        public void powerByCard() {
+                            Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
+                            r.getPowerModule().storeDp1Value(storage,true);
+                            r.getPowerModule().storeDp2Value(storage,false);
+                            if (r.getPowerModule().dp1 != null && r.getPowerModule().dp2 != null) {
+                                r.getPowerModule().dp1.setCurrent(true);
+                                r.getPowerModule().dp2.setCurrent(false);
+                            }
+                            setPowerCounters();
+                            refreshPower();
+                        }
+
+                        @Override
+                        public void online(boolean online) {
+                            r.getPowerModule().online = online;
+                            Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
+                        }
+                    });
+                }
+            }
+            else if (b.isSuite()) {
+                Suite s = b.suite;
+                if (s.isHasPower()) {
+                    s.getPowerModule().listen(new PowerListener() {
+                        @Override
+                        public void powerOn() {
+                            Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
+                            s.getPowerModule().storeDp1Value(storage,true);
+                            s.getPowerModule().storeDp2Value(storage,true);
+                            if (s.getPowerModule().dp1 != null && s.getPowerModule().dp2 != null) {
+                                s.getPowerModule().dp1.setCurrent(true);
+                                s.getPowerModule().dp2.setCurrent(true);
+                            }
+                            setPowerCounters();
+                            refreshPower();
+                        }
+
+                        @Override
+                        public void powerOff() {
+                            Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
+                            s.getPowerModule().storeDp1Value(storage,false);
+                            s.getPowerModule().storeDp2Value(storage,false);
+                            if (s.getPowerModule().dp1 != null && s.getPowerModule().dp2 != null) {
+                                s.getPowerModule().dp1.setCurrent(false);
+                                s.getPowerModule().dp2.setCurrent(false);
+                            }
+                            setPowerCounters();
+                            refreshPower();
+                        }
+
+                        @Override
+                        public void powerByCard() {
+                            Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
+                            s.getPowerModule().storeDp1Value(storage,true);
+                            s.getPowerModule().storeDp2Value(storage,false);
+                            if (s.getPowerModule().dp1 != null && s.getPowerModule().dp2 != null) {
+                                s.getPowerModule().dp1.setCurrent(true);
+                                s.getPowerModule().dp2.setCurrent(false);
+                            }
+                            setPowerCounters();
+                            refreshPower();
+                        }
+
+                        @Override
+                        public void online(boolean online) {
+                            s.getPowerModule().online = online;
+                        }
+                    });
+                }
+            }
+        }
+    }
+    void setServiceListeners() {
+        for (int i=0;i<beds.size();i++) {
+            Bed b = beds.get(i);
+            if (b.isRoom()) {
+                Room r = b.room;
                 if (r.isHasServiceSwitch()) {
                     Log.d("Listeners","service not null");
                     r.getMainServiceSwitch().listen(new ServiceListener() {
@@ -1068,9 +1676,10 @@ public class ReceptionScreen extends AppCompatActivity {
                             Log.d("ListenersCleanup","cleanup "+r.RoomNumber);
                             Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
                             player0.start();
+                            r.getMainServiceSwitch().storeCleanupValue(storage,true);
                             if (r.getMainServiceSwitch().cleanup != null) {
                                 Log.d("ListenersCleanup","not null");
-                                if (r.getMainServiceSwitch().device.getIsLocalOnline()) {
+                                if (r.getRoomGateway().device.getIsLocalOnline()) {
                                     Log.d("ListenersCleanup","local online");
                                     r.getMainServiceSwitch().cleanup.setCurrent(true);
                                 }
@@ -1081,87 +1690,94 @@ public class ReceptionScreen extends AppCompatActivity {
                             else {
                                 Log.d("ListenersCleanup","null");
                             }
-                            setCleanupLists();
-                            refreshCleanup();
+                            setCleanupLists(act);
+                            refreshCleanup(act);
                         }
 
                         @Override
                         public void cancelCleanup() {
                             Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
+                            r.getMainServiceSwitch().storeCleanupValue(storage,false);
                             if (r.getMainServiceSwitch().cleanup != null) {
                                 r.getMainServiceSwitch().cleanup.setCurrent(false);
                             }
-                            setCleanupLists();
-                            refreshCleanup();
+                            setCleanupLists(act);
+                            refreshCleanup(act);
                         }
 
                         @Override
                         public void laundry() {
                             Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
                             player1.start();
+                            r.getMainServiceSwitch().storeLaundryValue(storage,true);
                             if (r.getMainServiceSwitch().laundry != null) {
-                                if (r.getMainServiceSwitch().device.getIsLocalOnline()) {
+                                if (r.getRoomGateway().device.getIsLocalOnline()) {
                                     r.getMainServiceSwitch().laundry.setCurrent(true);
                                 }
                             }
-                            setLaundryLists();
-                            refreshLaundry();
+                            setLaundryLists(act);
+                            refreshLaundry(act);
                         }
 
                         @Override
                         public void cancelLaundry() {
                             Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
+                            r.getMainServiceSwitch().storeLaundryValue(storage,false);
                             if (r.getMainServiceSwitch().laundry != null) {
                                 r.getMainServiceSwitch().laundry.setCurrent(false);
                             }
-                            setLaundryLists();
-                            refreshLaundry();
+                            setLaundryLists(act);
+                            refreshLaundry(act);
                         }
 
                         @Override
                         public void dnd() {
                             Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
                             player2.start();
+                            r.getMainServiceSwitch().storeDNDValue(storage,true);
                             if (r.getMainServiceSwitch().dnd != null) {
-                                if (r.getMainServiceSwitch().device.getIsLocalOnline()) {
+                                if (r.getRoomGateway().device.getIsLocalOnline()) {
                                     r.getMainServiceSwitch().dnd.setCurrent(true);
                                 }
                             }
-                            setDndLists();
-                            refreshDND();
+                            setDndLists(act);
+                            refreshDND(act);
                         }
 
                         @Override
                         public void cancelDnd() {
                             Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
+                            r.getMainServiceSwitch().storeDNDValue(storage,false);
                             if (r.getMainServiceSwitch().dnd != null) {
                                 r.getMainServiceSwitch().dnd.setCurrent(false);
                             }
-                            setDndLists();
-                            refreshDND();
+                            setDndLists(act);
+                            refreshDND(act);
                         }
 
                         @Override
                         public void checkout() {
                             Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
                             player3.start();
+                            r.getMainServiceSwitch().storeCheckoutValue(storage,true);
                             if (r.getMainServiceSwitch().checkout != null) {
-                                if (r.getMainServiceSwitch().device.getIsLocalOnline()) {
+                                if (r.getRoomGateway().device.getIsLocalOnline()) {
                                     r.getMainServiceSwitch().checkout.setCurrent(true);
                                 }
                             }
-                            setCheckoutLists();
-                            refreshCheckout();
+                            setCheckoutLists(act);
+                            refreshCheckout(act);
                         }
 
                         @Override
                         public void cancelCheckout() {
                             Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
+                            r.getMainServiceSwitch().storeCheckoutValue(storage,false);
                             if (r.getMainServiceSwitch().checkout != null) {
                                 r.getMainServiceSwitch().checkout.setCurrent(false);
                             }
-                            setCheckoutLists();
-                            refreshCheckout();
+                            setCheckoutLists(act);
+                            refreshCheckout(act);
                         }
 
                         @Override
@@ -1175,58 +1791,9 @@ public class ReceptionScreen extends AppCompatActivity {
                         public void lightOff() {}
                     });
                 }
-                if (r.isHasPower()) {
-                    Log.d("Listeners","power not null");
-                    r.getPowerModule().listen(new PowerListener() {
-                        @Override
-                        public void powerOn() {
-                            Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
-                            r.getPowerModule().dp1.setCurrent(true);
-                            r.getPowerModule().dp2.setCurrent(true);
-                            setPowerCounters();
-                            refreshPower();
-                        }
-
-                        @Override
-                        public void powerOff() {
-                            Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
-                            r.getPowerModule().dp1.setCurrent(false);
-                            r.getPowerModule().dp2.setCurrent(false);
-                            setPowerCounters();
-                            refreshPower();
-                        }
-
-                        @Override
-                        public void powerByCard() {
-                            Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
-                            r.getPowerModule().dp1.setCurrent(true);
-                            r.getPowerModule().dp2.setCurrent(false);
-                            setPowerCounters();
-                            refreshPower();
-                        }
-
-                        @Override
-                        public void online(boolean online) {
-                            r.getPowerModule().online = online;
-                            Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
-                        }
-                    });
-                }
-                if (r.isHasGateway()) {
-                    Log.d("Listeners","gateway not null");
-                    r.getRoomGateway().listen(online -> {
-                        Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
-                        Log.d("Listeners","online "+online);
-                        r.getRoomGateway().currentOnline = online;
-                        //refreshRoom(finalI);
-                        setOfflineCounters();
-                        refreshOffline();
-                    });
-                }
             }
             else if (b.isSuite()) {
                 Suite s = b.suite;
-                Log.d("Listeners","suite "+s.SuiteNumber);
                 if (s.isHasServiceSwitch()) {
                     Log.d("Listeners","service not null");
                     s.getMainServiceSwitch().listen(new ServiceListener() {
@@ -1234,92 +1801,101 @@ public class ReceptionScreen extends AppCompatActivity {
                         public void cleanup() {
                             Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
                             player0.start();
+                            s.getMainServiceSwitch().storeCleanupValue(storage,true);
                             if (s.getMainServiceSwitch().cleanup != null) {
-                                if (s.getMainServiceSwitch().device.getIsLocalOnline()) {
+                                if (s.getSuiteGateway().device.getIsLocalOnline()) {
                                     s.getMainServiceSwitch().cleanup.setCurrent(true);
                                 }
                             }
-                            setCleanupLists();
-                            refreshCleanup();
+                            setCleanupLists(act);
+                            refreshCleanup(act);
                         }
 
                         @Override
                         public void cancelCleanup() {
                             Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
+                            s.getMainServiceSwitch().storeCleanupValue(storage,false);
                             if (s.getMainServiceSwitch().cleanup != null) {
                                 s.getMainServiceSwitch().cleanup.setCurrent(false);
                             }
-                            setCleanupLists();
-                            refreshCleanup();
+                            setCleanupLists(act);
+                            refreshCleanup(act);
                         }
 
                         @Override
                         public void laundry() {
                             Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
                             player1.start();
+                            s.getMainServiceSwitch().storeLaundryValue(storage,true);
                             if (s.getMainServiceSwitch().laundry != null) {
-                                if (s.getMainServiceSwitch().device.getIsLocalOnline()) {
+                                if (s.getSuiteGateway().device.getIsLocalOnline()) {
                                     s.getMainServiceSwitch().laundry.setCurrent(true);
                                 }
                             }
-                            setLaundryLists();
-                            refreshLaundry();
+                            setLaundryLists(act);
+                            refreshLaundry(act);
                         }
 
                         @Override
                         public void cancelLaundry() {
                             Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
+                            s.getMainServiceSwitch().storeLaundryValue(storage,false);
                             if (s.getMainServiceSwitch().laundry != null) {
+
                                 s.getMainServiceSwitch().laundry.setCurrent(false);
                             }
-                            setLaundryLists();
-                            refreshLaundry();
+                            setLaundryLists(act);
+                            refreshLaundry(act);
                         }
 
                         @Override
                         public void dnd() {
                             Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
                             player2.start();
+                            s.getMainServiceSwitch().storeDNDValue(storage,true);
                             if (s.getMainServiceSwitch().dnd != null) {
-                                if (s.getMainServiceSwitch().device.getIsLocalOnline()) {
+                                if (s.getSuiteGateway().device.getIsLocalOnline()) {
                                     s.getMainServiceSwitch().dnd.setCurrent(true);
                                 }
                             }
-                            setDndLists();
-                            refreshDND();
+                            setDndLists(act);
+                            refreshDND(act);
                         }
 
                         @Override
                         public void cancelDnd() {
                             Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
+                            s.getMainServiceSwitch().storeDNDValue(storage,false);
                             if (s.getMainServiceSwitch().dnd != null) {
                                 s.getMainServiceSwitch().dnd.setCurrent(false);
                             }
-                            setDndLists();
-                            refreshDND();
+                            setDndLists(act);
+                            refreshDND(act);
                         }
 
                         @Override
                         public void checkout() {
                             Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
                             player3.start();
+                            s.getMainServiceSwitch().storeCheckoutValue(storage,true);
                             if (s.getMainServiceSwitch().checkout != null) {
-                                if (s.getMainServiceSwitch().device.getIsLocalOnline()) {
+                                if (s.getSuiteGateway().device.getIsLocalOnline()) {
                                     s.getMainServiceSwitch().checkout.setCurrent(true);
                                 }
                             }
-                            setCheckoutLists();
-                            refreshCheckout();
+                            setCheckoutLists(act);
+                            refreshCheckout(act);
                         }
 
                         @Override
                         public void cancelCheckout() {
                             Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
+                            s.getMainServiceSwitch().storeCheckoutValue(storage,false);
                             if (s.getMainServiceSwitch().checkout != null) {
                                 s.getMainServiceSwitch().checkout.setCurrent(false);
                             }
-                            setCheckoutLists();
-                            refreshCheckout();
+                            setCheckoutLists(act);
+                            refreshCheckout(act);
                         }
 
                         @Override
@@ -1333,54 +1909,6 @@ public class ReceptionScreen extends AppCompatActivity {
                         @Override
                         public void lightOff() {}
                     });
-                }
-                if (s.isHasPower()) {
-                    s.getPowerModule().listen(new PowerListener() {
-                        @Override
-                        public void powerOn() {
-                            Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
-                            s.getPowerModule().dp1.setCurrent(true);
-                            s.getPowerModule().dp2.setCurrent(true);
-                            setPowerCounters();
-                            refreshPower();
-                        }
-
-                        @Override
-                        public void powerOff() {
-                            Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
-                            s.getPowerModule().dp1.setCurrent(false);
-                            s.getPowerModule().dp2.setCurrent(false);
-
-                            setPowerCounters();
-                            refreshPower();
-                        }
-
-                        @Override
-                        public void powerByCard() {
-                            Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
-                            s.getPowerModule().dp1.setCurrent(true);
-                            s.getPowerModule().dp2.setCurrent(false);
-                            //refreshRoom(finalI);
-                            setPowerCounters();
-                            refreshPower();
-                        }
-
-                        @Override
-                        public void online(boolean online) {
-                            s.getPowerModule().online = online;
-                        }
-                    });
-                }
-                if (s.isHasGateway()) {
-                    Log.d("suiteOnline" , s.SuiteNumber+" has gateway ");
-                    if (s.getSuiteGateway() != null) {
-                        s.getSuiteGateway().listen( online ->{
-                            Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
-                            s.getSuiteGateway().currentOnline = online;
-                            setOfflineCounters();
-                            refreshOffline();
-                        });
-                    }
                 }
             }
         }
@@ -1755,7 +2283,7 @@ public class ReceptionScreen extends AppCompatActivity {
         dndTv.setText(String.valueOf(dndCounter));
     }
 
-    void setCleanupLists() {
+    public static void setCleanupLists(Activity act) {
         cleanupCounter = 0;
         cleanupBeds.clear();
         for (Bed b:beds) {
@@ -1795,7 +2323,7 @@ public class ReceptionScreen extends AppCompatActivity {
         TextView cleanupTv = act.findViewById(R.id.textView15);
         cleanupTv.setText(String.valueOf(cleanupCounter));
     }
-    void setLaundryLists() {
+    public static void setLaundryLists(Activity act) {
         laundryCounter = 0;
         laundryBeds.clear();
         for (Bed b:beds) {
@@ -1827,7 +2355,7 @@ public class ReceptionScreen extends AppCompatActivity {
         TextView laundryTv = act.findViewById(R.id.textView4);
         laundryTv.setText(String.valueOf(laundryCounter));
     }
-    void setCheckoutLists() {
+    public static void setCheckoutLists(Activity act) {
         checkoutCounter = 0;
         checkoutBeds.clear();
         for (Bed b:beds) {
@@ -1859,7 +2387,7 @@ public class ReceptionScreen extends AppCompatActivity {
         TextView checkoutTv = act.findViewById(R.id.textView14);
         checkoutTv.setText(String.valueOf(checkoutCounter));
     }
-    void setDndLists() {
+    public static void setDndLists(Activity act) {
         dndCounter = 0;
         dndBeds.clear();
         for (Bed b:beds) {
@@ -1980,18 +2508,20 @@ public class ReceptionScreen extends AppCompatActivity {
     }
 
     void setRefreshTimer() {
-        Timer t = new Timer();
-        t.schedule(new TimerTask() {
+        Log.d("closeTimer","start");
+        Timer terminateTimer0 = new Timer();
+        terminateTimer0.schedule(new TimerTask() {
             @Override
             public void run() {
+                Log.d("closeTimer","terminate");
                 Intent i = getPackageManager().getLaunchIntentForPackage(getPackageName());
                 if (i != null) {
                     i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 }
                 startActivity(i);
-                Process.killProcess(Process.myPid());
+                act.finishAffinity();
             }
-        },1000*60*60);
+        },1000 * 60 * 5);
     }
 
     List<Bed> setBeds(List<Suite> suites) {
@@ -2042,26 +2572,26 @@ public class ReceptionScreen extends AppCompatActivity {
         }
     }
 
-    void refreshCleanup() {
-        RecyclerView cleanupRecycler = findViewById(R.id.cleanupRecycler);
+    public static void refreshCleanup(Activity act) {
+        RecyclerView cleanupRecycler = act.findViewById(R.id.cleanupRecycler);
         cleanupAdapter = new RoomOrder_Adapter(cleanupBeds);
         cleanupRecycler.setAdapter(cleanupAdapter);
     }
 
-    void refreshLaundry() {
-        RecyclerView laundryRecycler = findViewById(R.id.laundryRecycler);
+    public static void refreshLaundry(Activity act) {
+        RecyclerView laundryRecycler = act.findViewById(R.id.laundryRecycler);
         laundryAdapter = new RoomOrder_Adapter(laundryBeds);
         laundryRecycler.setAdapter(laundryAdapter);
     }
 
-    void refreshCheckout() {
-        RecyclerView checkoutRecycler = findViewById(R.id.checkoutRecycler);
+    public static void refreshCheckout(Activity act) {
+        RecyclerView checkoutRecycler = act.findViewById(R.id.checkoutRecycler);
         checkoutAdapter = new RoomOrder_Adapter(checkoutBeds);
         checkoutRecycler.setAdapter(checkoutAdapter);
     }
 
-    void refreshDND() {
-        RecyclerView dndRecycler = findViewById(R.id.dndRecycler);
+    public static void refreshDND(Activity act) {
+        RecyclerView dndRecycler = act.findViewById(R.id.dndRecycler);
         dndAdapter = new RoomOrder_Adapter(dndBeds);
         dndRecycler.setAdapter(dndAdapter);
     }

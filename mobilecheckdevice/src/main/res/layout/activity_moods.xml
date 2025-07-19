@@ -55,6 +55,7 @@
                         android:paddingTop="20dp"
                         android:paddingBottom="20dp"
                         android:text="Living Mood"
+                        android:textAllCaps="false"
                         android:textColor="@color/light_blue_A200"
                         android:textSize="16sp"
                         android:textStyle="bold" />
@@ -70,6 +71,7 @@
                         android:paddingTop="20dp"
                         android:paddingBottom="20dp"
                         android:text="Sleep Mood"
+                        android:textAllCaps="false"
                         android:textColor="@color/light_blue_A200"
                         android:textSize="16sp"
                         android:textStyle="bold" />
@@ -85,6 +87,7 @@
                         android:paddingTop="20dp"
                         android:paddingBottom="20dp"
                         android:text="Romance Mood"
+                        android:textAllCaps="false"
                         android:textColor="@color/light_blue_A200"
                         android:textSize="16sp"
                         android:textStyle="bold" />
@@ -100,6 +103,7 @@
                         android:paddingTop="20dp"
                         android:paddingBottom="20dp"
                         android:text="Work Mood"
+                        android:textAllCaps="false"
                         android:textColor="@color/light_blue_A200"
                         android:textSize="16sp"
                         android:textStyle="bold" />
@@ -115,6 +119,7 @@
                         android:paddingTop="20dp"
                         android:paddingBottom="20dp"
                         android:text="Read Mood"
+                        android:textAllCaps="false"
                         android:textColor="@color/light_blue_A200"
                         android:textSize="16sp"
                         android:textStyle="bold" />
@@ -130,6 +135,7 @@
                         android:paddingTop="20dp"
                         android:paddingBottom="20dp"
                         android:text="Master Off"
+                        android:textAllCaps="false"
                         android:textColor="@color/light_blue_A200"
                         android:textSize="16sp"
                         android:textStyle="bold" />

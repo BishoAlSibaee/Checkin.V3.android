@@ -16,7 +16,7 @@ public class DeviceDPBool extends DeviceDP implements onOff {
 
     @Override
     public void turnOn(IResultCallback result) {
-        String onString = "{\""+dpId+"\": "+boolValues.True+"}";
+        String onString = "{\" "+dpId+" \": true }";
         device.control.publishDps(onString, new IResultCallback() {
             @Override
             public void onError(String code, String error) {
@@ -33,7 +33,7 @@ public class DeviceDPBool extends DeviceDP implements onOff {
 
     @Override
     public void turnOff(IResultCallback result) {
-        String onString = "{\""+dpId+"\": "+boolValues.False+"}";
+        String onString = "{\""+dpId+"\": false}";
         device.control.publishDps(onString, new IResultCallback() {
             @Override
             public void onError(String code, String error) {

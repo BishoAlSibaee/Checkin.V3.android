@@ -477,7 +477,7 @@ public class RoomManager extends AppCompatActivity {
                 MY_SCENES.add(s);
             }
         }
-        if (MY_SCENES.size() > 0) {
+        if (!MY_SCENES.isEmpty()) {
             for (int i=0;i<MY_SCENES.size();i++) {
                 Log.d("scenesAre","my scenes "+MY_SCENES.get(i).getName());
                 if (MY_SCENES.get(i).getName().contains("Living")) {

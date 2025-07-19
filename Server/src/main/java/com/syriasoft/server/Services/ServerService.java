@@ -33,6 +33,8 @@ import com.syriasoft.server.Classes.Interfaces.GerRoomsCallback;
 import com.syriasoft.server.Classes.Interfaces.GetBuildingsCallback;
 import com.syriasoft.server.Classes.Interfaces.GetDevicesCallback;
 import com.syriasoft.server.Classes.Interfaces.GetFloorsCallback;
+import com.syriasoft.server.Classes.Interfaces.GetHomeScenesCallback;
+import com.syriasoft.server.Classes.Interfaces.GetSuitesCallBack;
 import com.syriasoft.server.Classes.Interfaces.getDeviceDataCallback;
 import com.syriasoft.server.Classes.LocalDataStore;
 import com.syriasoft.server.Classes.PROJECT_VARIABLES;
@@ -40,6 +42,7 @@ import com.syriasoft.server.Classes.Property.Building;
 import com.syriasoft.server.Classes.Property.Floor;
 import com.syriasoft.server.Classes.Property.PropertyDB;
 import com.syriasoft.server.Classes.Property.Room;
+import com.syriasoft.server.Classes.Property.Suite;
 import com.syriasoft.server.Classes.Tuya;
 import com.syriasoft.server.Dialogs.MessageDialog;
 import com.syriasoft.server.Interface.RequestCallback;
@@ -49,6 +52,7 @@ import com.syriasoft.server.Rooms;
 import com.tuya.smart.android.user.api.ILoginCallback;
 import com.tuya.smart.android.user.bean.User;
 import com.tuya.smart.home.sdk.bean.HomeBean;
+import com.tuya.smart.home.sdk.bean.scene.SceneBean;
 import com.tuya.smart.home.sdk.callback.ITuyaGetHomeListCallback;
 
 import java.io.File;
@@ -91,7 +95,6 @@ public class ServerService extends Service {
         defineRequestQueues();
         defineLists();
         setFirebaseReferences();
-        setServerDeviceRunningFunction();
         getFirebaseTokenContinually();
     }
 
@@ -122,6 +125,13 @@ public class ServerService extends Service {
                 }
                 else if (intent.getAction().equals("stop")) {
                     stopForegroundService();
+                }
+                else if (intent.getAction().equals("reGetDevicesDataFromFirebase")) {
+                    Log.d("reGetData" , "start");
+                    db.deleteAll();
+                    Tuya.deleteHomesFromLocalStorage(storage);
+                    stopListeners();
+                    gettingAndPreparingData();
                 }
             }
         }
@@ -186,6 +196,7 @@ public class ServerService extends Service {
                                 if (!pDB.isFloorsInserted()) {
                                     PropertyDB.insertAllFloors(MyApp.Floors,pDB);
                                 }
+
                                 MyApp.controlDeviceMe.getMyRooms(ServerDevice,REQ,pDB, new GerRoomsCallback() {
                                     @Override
                                     public void onSuccess(List<Room> rooms) {
@@ -197,77 +208,186 @@ public class ServerService extends Service {
                                         if (!pDB.isRoomsInserted()) {
                                             PropertyDB.insertAllRooms(MyApp.ROOMS,pDB);
                                         }
-                                        Tuya.loginTuya(MyApp.My_PROJECT, new ILoginCallback() {
+                                        Suite.getSuites(MyApp.My_PROJECT.url, REQ, new GetSuitesCallBack() {
                                             @Override
-                                            public void onSuccess(User user) {
-                                                Log.d("bootingOp","tuya login done");
-                                                MyApp.TuyaUser = user;
-                                                Tuya.getProjectHomes(MyApp.My_PROJECT,storage, new ITuyaGetHomeListCallback() {
-                                                    @Override
-                                                    public void onSuccess(List<HomeBean> homeBeans) {
-                                                        Log.d("bootingOp","tuya project homes done "+homeBeans.size());
-                                                        MyApp.PROJECT_HOMES = homeBeans;
-                                                        if (Tuya.getHomesFromStorage(storage).isEmpty()) {
-                                                            Tuya.saveHomesToStorage(storage,homeBeans);
+                                            public void onSuccess(List<Suite> suites) {
+                                                Log.d("suites",suites.size()+"");
+                                                MyApp.suites = suites;
+                                                Suite.setSuitesBuildingsAndFloors(MyApp.suites,MyApp.Buildings,MyApp.Floors);
+                                                Suite.setSuitesFireSuites(MyApp.suites,database);
+                                                if (Tuya.getIsLoggedInBefore(storage)) {
+                                                    Log.d("bootingOp","tuya log in before");
+                                                    Tuya.getProjectHomes(MyApp.My_PROJECT,storage, new ITuyaGetHomeListCallback() {
+                                                        @Override
+                                                        public void onSuccess(List<HomeBean> homeBeans) {
+                                                            Log.d("bootingOp","tuya project homes done "+homeBeans.size());
+                                                            MyApp.PROJECT_HOMES = homeBeans;
+                                                            if (Tuya.getHomesFromStorage(storage).isEmpty()) {
+                                                                Tuya.saveHomesToStorage(storage,homeBeans);
+                                                            }
+                                                            Tuya.getDevicesNoTimers(homeBeans,MyApp.ROOMS, new GetDevicesCallback() {
+                                                                @Override
+                                                                public void devices(List<CheckinDevice> devices) {
+                                                                    Log.d("bootingOp","tuya devices done "+devices.size());
+                                                                    Devices = devices;
+                                                                    Tuya.gettingInitialDevicesData(Devices,db, new getDeviceDataCallback() {
+                                                                        @Override
+                                                                        public void onSuccess() {
+                                                                            Log.d("bootingOp","getting initial done");
+                                                                            Log.d("devicesIds",Tuya.devicesIds.size()+" "+Devices.size());
+                                                                            settingInitialDevicesData(Devices, new RequestCallback() {
+                                                                                @Override
+                                                                                public void onSuccess() {
+                                                                                    Log.d("bootingOp","setting initial done");
+                                                                                    setAllListeners(Rooms.actionsNow);
+                                                                                    //Tuya.setDevicesListenersWatcher(Devices,setDevicesListenersCallback());
+                                                                                    Log.d("bootingOp","finish "+PROJECT_VARIABLES.CheckinModeTime);
+                                                                                    startForegroundService("service booting done");
+                                                                                }
+
+                                                                                @Override
+                                                                                public void onFail(String error) {
+
+                                                                                }
+                                                                            });
+                                                                        }
+
+                                                                        @Override
+                                                                        public void onError(String error) {
+                                                                            Log.d("bootingOp","getting devices data failed "+error);
+                                                                            restartWhenErrorGettingData("getting devices data failed "+error);
+                                                                        }
+                                                                    });
+                                                                }
+
+                                                                @Override
+                                                                public void onError(String error) {
+                                                                    Log.d("bootingOp","getting devices failed "+error);
+                                                                    restartWhenErrorGettingData("getting devices failed "+error);
+                                                                }
+                                                            });
+                                                            Tuya.getScenesNoTimer(homeBeans, new GetHomeScenesCallback() {
+                                                                @Override
+                                                                public void onSuccess(List<SceneBean> scenes) {
+                                                                    for (SceneBean s : scenes) {
+                                                                        Log.d("getScenes",s.getName());
+                                                                    }
+                                                                    Log.d("getScenes",scenes.size()+"");
+                                                                    Room.setRoomsScenes(MyApp.ROOMS,scenes);
+                                                                }
+
+                                                                @Override
+                                                                public void inFail(String error) {
+
+                                                                }
+                                                            });
                                                         }
-                                                        Tuya.getDevicesNoTimers(homeBeans,MyApp.ROOMS, new GetDevicesCallback() {
-                                                            @Override
-                                                            public void devices(List<CheckinDevice> devices) {
-                                                                Log.d("bootingOp","tuya devices done "+devices.size());
-                                                                Devices = devices;
-                                                                Tuya.gettingInitialDevicesData(Devices,db, new getDeviceDataCallback() {
-                                                                    @Override
-                                                                    public void onSuccess() {
-                                                                        Log.d("bootingOp","getting initial done");
-                                                                        Log.d("devicesIds",Tuya.devicesIds.size()+" "+Devices.size());
-                                                                        settingInitialDevicesData(Devices, new RequestCallback() {
-                                                                            @Override
-                                                                            public void onSuccess() {
-                                                                                Log.d("bootingOp","setting initial done");
-                                                                                setAllListeners(Rooms.actionsNow);
-                                                                                Tuya.setDevicesListenersWatcher(setDevicesListenersCallback());
-                                                                                Log.d("bootingOp","finish "+PROJECT_VARIABLES.CheckinModeTime);
-                                                                                startForegroundService("service booting done");
-                                                                            }
 
-                                                                            @Override
-                                                                            public void onFail(String error) {
-
-                                                                            }
-                                                                        });
+                                                        @Override
+                                                        public void onError(String errorCode, String error) {
+                                                            Log.d("bootingOp","getting homes failed "+error);
+                                                            restartWhenErrorGettingData("getting homes failed "+error);
+                                                        }
+                                                    });
+                                                }
+                                                else {
+                                                    Log.d("bootingOp","tuya not log in before");
+                                                    Tuya.loginTuya(MyApp.My_PROJECT, new ILoginCallback() {
+                                                        @Override
+                                                        public void onSuccess(User user) {
+                                                            Log.d("bootingOp","tuya login done");
+                                                            MyApp.TuyaUser = user;
+                                                            Tuya.getProjectHomes(MyApp.My_PROJECT,storage, new ITuyaGetHomeListCallback() {
+                                                                @Override
+                                                                public void onSuccess(List<HomeBean> homeBeans) {
+                                                                    Log.d("bootingOp","tuya project homes done "+homeBeans.size());
+                                                                    MyApp.PROJECT_HOMES = homeBeans;
+                                                                    if (Tuya.getHomesFromStorage(storage).isEmpty()) {
+                                                                        Tuya.saveHomesToStorage(storage,homeBeans);
                                                                     }
+                                                                    Tuya.getDevicesNoTimers(homeBeans,MyApp.ROOMS, new GetDevicesCallback() {
+                                                                        @Override
+                                                                        public void devices(List<CheckinDevice> devices) {
+                                                                            Log.d("bootingOp","tuya devices done "+devices.size());
+                                                                            Devices = devices;
+                                                                            Tuya.gettingInitialDevicesData(Devices,db, new getDeviceDataCallback() {
+                                                                                @Override
+                                                                                public void onSuccess() {
+                                                                                    Log.d("bootingOp","getting initial done");
+                                                                                    Log.d("devicesIds",Tuya.devicesIds.size()+" "+Devices.size());
+                                                                                    settingInitialDevicesData(Devices, new RequestCallback() {
+                                                                                        @Override
+                                                                                        public void onSuccess() {
+                                                                                            Log.d("bootingOp","setting initial done");
+                                                                                            setAllListeners(Rooms.actionsNow);
+                                                                                            //Tuya.setDevicesListenersWatcher(Devices,setDevicesListenersCallback());
+                                                                                            Log.d("bootingOp","finish "+PROJECT_VARIABLES.CheckinModeTime);
+                                                                                            startForegroundService("service booting done");
+                                                                                        }
 
-                                                                    @Override
-                                                                    public void onError(String error) {
-                                                                        Log.d("bootingOp","getting devices data failed "+error);
-                                                                        restartWhenErrorGettingData("getting devices data failed "+error);
-                                                                    }
-                                                                });
+                                                                                        @Override
+                                                                                        public void onFail(String error) {
 
-                                                            }
+                                                                                        }
+                                                                                    });
+                                                                                }
 
-                                                            @Override
-                                                            public void onError(String error) {
-                                                                Log.d("bootingOp","getting devices failed "+error);
-                                                                restartWhenErrorGettingData("getting devices failed "+error);
-                                                            }
-                                                        });
-                                                    }
+                                                                                @Override
+                                                                                public void onError(String error) {
+                                                                                    Log.d("bootingOp","getting devices data failed "+error);
+                                                                                    restartWhenErrorGettingData("getting devices data failed "+error);
+                                                                                }
+                                                                            });
 
-                                                    @Override
-                                                    public void onError(String errorCode, String error) {
-                                                        Log.d("bootingOp","getting homes failed "+error);
-                                                        restartWhenErrorGettingData("getting homes failed "+error);
-                                                    }
-                                                });
+                                                                        }
+
+                                                                        @Override
+                                                                        public void onError(String error) {
+                                                                            Log.d("bootingOp","getting devices failed "+error);
+                                                                            restartWhenErrorGettingData("getting devices failed "+error);
+                                                                        }
+                                                                    });
+                                                                    Tuya.getScenesNoTimer(homeBeans, new GetHomeScenesCallback() {
+                                                                        @Override
+                                                                        public void onSuccess(List<SceneBean> scenes) {
+                                                                            for (SceneBean s : scenes) {
+                                                                                Log.d("getScenes",s.getName());
+                                                                            }
+                                                                            Log.d("getScenes",scenes.size()+"");
+                                                                            Room.setRoomsScenes(MyApp.ROOMS,scenes);
+                                                                        }
+
+                                                                        @Override
+                                                                        public void inFail(String error) {
+
+                                                                        }
+                                                                    });
+                                                                }
+
+                                                                @Override
+                                                                public void onError(String errorCode, String error) {
+                                                                    Log.d("bootingOp","getting homes failed "+error);
+                                                                    restartWhenErrorGettingData("getting homes failed "+error);
+                                                                }
+                                                            });
+                                                        }
+
+                                                        @Override
+                                                        public void onError(String code, String error) {
+                                                            Log.d("bootingOp","getting login t failed "+error);
+                                                            restartWhenErrorGettingData("getting login t failed "+error);
+                                                        }
+                                                    });
+                                                }
                                             }
 
                                             @Override
-                                            public void onError(String code, String error) {
-                                                Log.d("bootingOp","getting login t failed "+error);
-                                                restartWhenErrorGettingData("getting login t failed "+error);
+                                            public void onError(String error) {
+                                                Log.d("bootingOp","getting suites failed "+error);
+                                                restartWhenErrorGettingData("getting suites failed "+error);
                                             }
                                         });
+
                                     }
 
                                     @Override
@@ -325,6 +445,11 @@ public class ServerService extends Service {
         Room.setRoomsDevicesListener(MyApp.ROOMS,actionsNow,CLEANUP_QUEUE,LAUNDRY_QUEUE,CHECKOUT_QUEUE);
         Room.setRoomsFireRoomsListener(MyApp.ROOMS);
         Room.setRoomsFireRoomsDevicesControlListener(MyApp.ROOMS);
+    }
+
+    void stopListeners() {
+        Log.d("reGetData" , "stop listeners");
+        Room.stopAllRoomListeners(MyApp.ROOMS);
     }
 
     void setAllListeners() {
@@ -430,13 +555,16 @@ public class ServerService extends Service {
         t.schedule(new TimerTask() {
             @Override
             public void run() {
+                Log.d("ListenersWatching","checking run "+Tuya.ListenersWorking);
                 if (Tuya.ListenersWorking) {
+                    Log.d("ListenersWatching","working");
                     long x = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
                     Log.d(MyApp.Running_Tag,"set device working");
                     ServerDevice.child("working").setValue(x);
                     setServerDeviceRunningFunction();
                 }
                 else {
+                    Log.d("ListenersWatching","not working");
                     setServerDeviceRunningFunction();
                 }
             }
@@ -505,7 +633,7 @@ public class ServerService extends Service {
                 Tuya.ListenersWorking = true;
                 PROJECT_VARIABLES.setDevicesListenersWorking(1);
                 PROJECT_VARIABLES.addServerStart();
-                Tuya.setDevicesListenersWorking(this);
+                Tuya.setDevicesListenersWorking(Devices,this);
             }
         };
     }

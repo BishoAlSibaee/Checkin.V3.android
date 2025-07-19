@@ -13,6 +13,7 @@ import com.syriasoft.server.Classes.Interfaces.Listen;
 import com.syriasoft.server.Classes.Interfaces.ServiceListener;
 import com.syriasoft.server.Classes.Interfaces.SetFirebaseDevicesControl;
 import com.syriasoft.server.Classes.Interfaces.SetInitialValues;
+import com.syriasoft.server.Classes.LocalDataStore;
 import com.syriasoft.server.Classes.PROJECT_VARIABLES;
 import com.syriasoft.server.Classes.Property.Room;
 import com.syriasoft.server.Classes.Property.Suite;
@@ -773,6 +774,393 @@ public class CheckinServiceSwitch extends CheckinDevice implements SetInitialVal
         callback.onSuccess();
     }
 
+    public void setInitialCurrentValuesOffline(LocalDataStore storage) {
+        Log.d("setInitValues"+device.name , "service");
+//        if (MyApp.isInternetConnected) {
+//            if (my_room != null) {
+//                my_room.fireRoom.child("ServiceButtons").addListenerForSingleValueEvent(new ValueEventListener() {
+//                    @Override
+//                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+//                        Log.d("serviceButtons"+my_room.RoomNumber,"reading values done");
+//                        if (snapshot.getValue() != null) {
+//                            Log.d("serviceButtons"+my_room.RoomNumber,"not null "+snapshot.getChildren());
+//                            serviceRoom = true;
+//                            for (DataSnapshot ss : snapshot.getChildren()) {
+//                                if (Objects.requireNonNull(ss.getValue()).toString().equals("cleanup")) {
+//                                    cleanupRoom = Integer.parseInt(Objects.requireNonNull(ss.getKey()));
+//                                }
+//                                else if (Objects.requireNonNull(ss.getValue()).toString().equals("laundry")) {
+//                                    laundryRoom = Integer.parseInt(Objects.requireNonNull(ss.getKey()));
+//                                }
+//                                else if (Objects.requireNonNull(ss.getValue()).toString().equals("dnd")) {
+//                                    dndRoom = Integer.parseInt(Objects.requireNonNull(ss.getKey()));
+//                                }
+//                                else if (Objects.requireNonNull(ss.getValue()).toString().equals("checkout")) {
+//                                    checkoutRoom = Integer.parseInt(Objects.requireNonNull(ss.getKey()));
+//                                }
+//                            }
+//                            Log.d("serviceButtons"+my_room.RoomNumber,"cleanup "+cleanupRoom+" laundry "+laundryRoom+" dnd "+dndRoom+" checkout "+checkoutRoom);
+//                        }
+//                        else {
+//                            Log.d("serviceButtons"+my_room.RoomNumber,"null");
+//                            serviceRoom = false;
+//                        }
+//
+//                        if (serviceRoom) {
+//                            for (DeviceDP dp : deviceDPS) {
+//                                if (dp.dpId == cleanupRoom) {
+//                                    cleanup = (DeviceDPBool) dp;
+//                                }
+//                                else if (dp.dpId == laundryRoom) {
+//                                    laundry = (DeviceDPBool) dp;
+//                                }
+//                                else if (dp.dpId == checkoutRoom) {
+//                                    checkout = (DeviceDPBool) dp;
+//                                }
+//                                else if (dp.dpId == dndRoom) {
+//                                    dnd = (DeviceDPBool) dp;
+//                                }
+//                            }
+//                            Log.d("serviceButtons"+my_room.RoomNumber,"set room buttons "+deviceDPS.size());
+//                        }
+//                        else {
+//                            for (DeviceDP dp : deviceDPS) {
+//                                if (dp.dpId == PROJECT_VARIABLES.cleanupButton) {
+//                                    cleanup = (DeviceDPBool) dp;
+//                                }
+//                                else if (dp.dpId == PROJECT_VARIABLES.laundryButton) {
+//                                    laundry = (DeviceDPBool) dp;
+//                                }
+//                                else if (dp.dpId == PROJECT_VARIABLES.checkoutButton) {
+//                                    checkout = (DeviceDPBool) dp;
+//                                }
+//                                else if (dp.dpId == PROJECT_VARIABLES.dndButton) {
+//                                    dnd = (DeviceDPBool) dp;
+//                                }
+//                            }
+//                        }
+//
+//                        if (cleanup != null) {
+//                            cleanup.current = Boolean.parseBoolean(Objects.requireNonNull(device.dps.get(String.valueOf(cleanup.dpId))).toString());
+//                            if (my_room != null) {
+//                                if (my_room.roomStatus == 2) {
+//                                    if (cleanup.current) {
+//                                        my_room.fireRoom.child("Cleanup").setValue(Calendar.getInstance(Locale.getDefault()).getTimeInMillis());
+//                                    }
+//                                    else {
+//                                        my_room.fireRoom.child("Cleanup").setValue(0);
+//                                    }
+//                                }
+//                            }
+//                            else if (my_suite != null) {
+//                                if (my_suite.Status == 1) {
+//                                    if (cleanup.current) {
+//                                        my_suite.fireSuite.child("Cleanup").setValue(Calendar.getInstance(Locale.getDefault()).getTimeInMillis());
+//                                    }
+//                                    else {
+//                                        my_suite.fireSuite.child("Cleanup").setValue(0);
+//                                    }
+//                                }
+//                            }
+//                            Log.d("serviceInfo",device.name+" cleanup "+cleanup.dpId+" "+cleanup.current);
+//                        }
+//                        if (laundry != null) {
+//                            laundry.current = Boolean.parseBoolean(Objects.requireNonNull(device.dps.get(String.valueOf(laundry.dpId))).toString());
+//                            if (my_room != null) {
+//                                if (my_room.roomStatus == 2) {
+//                                    if (laundry.current) {
+//                                        my_room.fireRoom.child("Laundry").setValue(Calendar.getInstance(Locale.getDefault()).getTimeInMillis());
+//                                    }
+//                                    else {
+//                                        my_room.fireRoom.child("Laundry").setValue(0);
+//                                    }
+//                                }
+//                            }
+//                            else if (my_suite != null) {
+//                                if (my_suite.Status == 1) {
+//                                    if (laundry.current) {
+//                                        my_suite.fireSuite.child("Laundry").setValue(Calendar.getInstance(Locale.getDefault()).getTimeInMillis());
+//                                    }
+//                                    else {
+//                                        my_suite.fireSuite.child("Laundry").setValue(0);
+//                                    }
+//                                }
+//                            }
+//                            Log.d("serviceInfo",device.name+" laundry "+laundry.dpId+" "+laundry.current);
+//                        }
+//                        if (checkout != null) {
+//                            checkout.current = Boolean.parseBoolean(Objects.requireNonNull(device.dps.get(String.valueOf(checkout.dpId))).toString());
+//                            if (my_room != null) {
+//                                if (my_room.roomStatus == 2) {
+//                                    if (checkout.current) {
+//                                        my_room.fireRoom.child("Checkout").setValue(Calendar.getInstance(Locale.getDefault()).getTimeInMillis());
+//                                    }
+//                                    else {
+//                                        my_room.fireRoom.child("Checkout").setValue(0);
+//                                    }
+//                                }
+//                            }
+//                            else if (my_suite != null) {
+//                                //if (my_suite.Status == 1) {
+//                                if (checkout.current) {
+//                                    my_suite.fireSuite.child("Checkout").setValue(Calendar.getInstance(Locale.getDefault()).getTimeInMillis());
+//                                }
+//                                else {
+//                                    my_suite.fireSuite.child("Checkout").setValue(0);
+//                                }
+//                                //}
+//                            }
+//                            Log.d("serviceInfo",device.name+" checkout "+checkout.dpId+" "+checkout.current);
+//                        }
+//                        if (dnd != null) {
+//                            dnd.current = Boolean.parseBoolean(Objects.requireNonNull(device.dps.get(String.valueOf(dnd.dpId))).toString());
+//                            if (my_room != null) {
+//                                if (my_room.roomStatus == 2) {
+//                                    if (dnd.current) {
+//                                        my_room.fireRoom.child("DND").setValue(Calendar.getInstance(Locale.getDefault()).getTimeInMillis());
+//                                    }
+//                                    else {
+//                                        my_room.fireRoom.child("DND").setValue(0);
+//                                    }
+//                                }
+//                            }
+//                            else if (my_suite != null) {
+//                                //if (my_suite.Status == 1) {
+//                                if (dnd.current) {
+//                                    my_suite.fireSuite.child("DND").setValue(Calendar.getInstance(Locale.getDefault()).getTimeInMillis());
+//                                }
+//                                else {
+//                                    my_suite.fireSuite.child("DND").setValue(0);
+//                                }
+//                                //}
+//                            }
+//                            Log.d("serviceInfo",device.name+" dnd "+dnd.dpId+" "+dnd.current);
+//                        }
+//                    }
+//
+//                    @Override
+//                    public void onCancelled(@NonNull DatabaseError error) {
+//
+//                    }
+//                });
+//            }
+//        }
+//        else {
+//            if (serviceRoom) {
+//                for (DeviceDP dp : deviceDPS) {
+//                    if (dp.dpId == cleanupRoom) {
+//                        cleanup = (DeviceDPBool) dp;
+//                    }
+//                    else if (dp.dpId == laundryRoom) {
+//                        laundry = (DeviceDPBool) dp;
+//                    }
+//                    else if (dp.dpId == checkoutRoom) {
+//                        checkout = (DeviceDPBool) dp;
+//                    }
+//                    else if (dp.dpId == dndRoom) {
+//                        dnd = (DeviceDPBool) dp;
+//                    }
+//                }
+//                Log.d("serviceButtons"+my_room.RoomNumber,"set room buttons "+deviceDPS.size());
+//            }
+//            else {
+//                for (DeviceDP dp : deviceDPS) {
+//                    if (dp.dpId == PROJECT_VARIABLES.cleanupButton) {
+//                        cleanup = (DeviceDPBool) dp;
+//                    }
+//                    else if (dp.dpId == PROJECT_VARIABLES.laundryButton) {
+//                        laundry = (DeviceDPBool) dp;
+//                    }
+//                    else if (dp.dpId == PROJECT_VARIABLES.checkoutButton) {
+//                        checkout = (DeviceDPBool) dp;
+//                    }
+//                    else if (dp.dpId == PROJECT_VARIABLES.dndButton) {
+//                        dnd = (DeviceDPBool) dp;
+//                    }
+//                }
+//            }
+//
+//            if (cleanup != null) {
+//                cleanup.current = Boolean.parseBoolean(Objects.requireNonNull(device.dps.get(String.valueOf(cleanup.dpId))).toString());
+//                if (my_room != null) {
+//                    if (my_room.roomStatus == 2) {
+//                        if (cleanup.current) {
+//                            my_room.fireRoom.child("Cleanup").setValue(Calendar.getInstance(Locale.getDefault()).getTimeInMillis());
+//                        }
+//                        else {
+//                            my_room.fireRoom.child("Cleanup").setValue(0);
+//                        }
+//                    }
+//                }
+//                else if (my_suite != null) {
+//                    if (my_suite.Status == 1) {
+//                        if (cleanup.current) {
+//                            my_suite.fireSuite.child("Cleanup").setValue(Calendar.getInstance(Locale.getDefault()).getTimeInMillis());
+//                        }
+//                        else {
+//                            my_suite.fireSuite.child("Cleanup").setValue(0);
+//                        }
+//                    }
+//                }
+//                Log.d("serviceInfo",device.name+" cleanup "+cleanup.dpId+" "+cleanup.current);
+//            }
+//            if (laundry != null) {
+//                laundry.current = Boolean.parseBoolean(Objects.requireNonNull(device.dps.get(String.valueOf(laundry.dpId))).toString());
+//                if (my_room != null) {
+//                    if (my_room.roomStatus == 2) {
+//                        if (laundry.current) {
+//                            my_room.fireRoom.child("Laundry").setValue(Calendar.getInstance(Locale.getDefault()).getTimeInMillis());
+//                        }
+//                        else {
+//                            my_room.fireRoom.child("Laundry").setValue(0);
+//                        }
+//                    }
+//                }
+//                else if (my_suite != null) {
+//                    if (my_suite.Status == 1) {
+//                        if (laundry.current) {
+//                            my_suite.fireSuite.child("Laundry").setValue(Calendar.getInstance(Locale.getDefault()).getTimeInMillis());
+//                        }
+//                        else {
+//                            my_suite.fireSuite.child("Laundry").setValue(0);
+//                        }
+//                    }
+//                }
+//                Log.d("serviceInfo",device.name+" laundry "+laundry.dpId+" "+laundry.current);
+//            }
+//            if (checkout != null) {
+//                checkout.current = Boolean.parseBoolean(Objects.requireNonNull(device.dps.get(String.valueOf(checkout.dpId))).toString());
+//                if (my_room != null) {
+//                    if (my_room.roomStatus == 2) {
+//                        if (checkout.current) {
+//                            my_room.fireRoom.child("Checkout").setValue(Calendar.getInstance(Locale.getDefault()).getTimeInMillis());
+//                        }
+//                        else {
+//                            my_room.fireRoom.child("Checkout").setValue(0);
+//                        }
+//                    }
+//                }
+//                else if (my_suite != null) {
+//                    //if (my_suite.Status == 1) {
+//                    if (checkout.current) {
+//                        my_suite.fireSuite.child("Checkout").setValue(Calendar.getInstance(Locale.getDefault()).getTimeInMillis());
+//                    }
+//                    else {
+//                        my_suite.fireSuite.child("Checkout").setValue(0);
+//                    }
+//                    //}
+//                }
+//                Log.d("serviceInfo",device.name+" checkout "+checkout.dpId+" "+checkout.current);
+//            }
+//            if (dnd != null) {
+//                dnd.current = Boolean.parseBoolean(Objects.requireNonNull(device.dps.get(String.valueOf(dnd.dpId))).toString());
+//                if (my_room != null) {
+//                    if (my_room.roomStatus == 2) {
+//                        if (dnd.current) {
+//                            my_room.fireRoom.child("DND").setValue(Calendar.getInstance(Locale.getDefault()).getTimeInMillis());
+//                        }
+//                        else {
+//                            my_room.fireRoom.child("DND").setValue(0);
+//                        }
+//                    }
+//                }
+//                else if (my_suite != null) {
+//                    //if (my_suite.Status == 1) {
+//                    if (dnd.current) {
+//                        my_suite.fireSuite.child("DND").setValue(Calendar.getInstance(Locale.getDefault()).getTimeInMillis());
+//                    }
+//                    else {
+//                        my_suite.fireSuite.child("DND").setValue(0);
+//                    }
+//                    //}
+//                }
+//                Log.d("serviceInfo",device.name+" dnd "+dnd.dpId+" "+dnd.current);
+//            }
+//        }
+        if (serviceRoom) {
+            for (DeviceDP dp : deviceDPS) {
+                if (dp.dpId == cleanupRoom) {
+                    cleanup = (DeviceDPBool) dp;
+                }
+                else if (dp.dpId == laundryRoom) {
+                    laundry = (DeviceDPBool) dp;
+                }
+                else if (dp.dpId == checkoutRoom) {
+                    checkout = (DeviceDPBool) dp;
+                }
+                else if (dp.dpId == dndRoom) {
+                    dnd = (DeviceDPBool) dp;
+                }
+            }
+            Log.d("serviceButtons"+my_room.RoomNumber,"set room buttons "+deviceDPS.size());
+        }
+        else {
+            for (DeviceDP dp : deviceDPS) {
+                if (dp.dpId == PROJECT_VARIABLES.cleanupButton) {
+                    cleanup = (DeviceDPBool) dp;
+                }
+                else if (dp.dpId == PROJECT_VARIABLES.laundryButton) {
+                    laundry = (DeviceDPBool) dp;
+                }
+                else if (dp.dpId == PROJECT_VARIABLES.checkoutButton) {
+                    checkout = (DeviceDPBool) dp;
+                }
+                else if (dp.dpId == PROJECT_VARIABLES.dndButton) {
+                    dnd = (DeviceDPBool) dp;
+                }
+                else if (dp.dpId == PROJECT_VARIABLES.lightButton) {
+                    light = (DeviceDPBool) dp;
+                }
+            }
+        }
+
+        if (cleanup != null) {
+            if (this.device.getIsLocalOnline()) {
+                cleanup.setCurrent(Boolean.parseBoolean(Objects.requireNonNull(device.dps.get(String.valueOf(cleanup.dpId))).toString()));
+                if (my_room != null) {
+                    Log.d("storeServiceV"+my_room.RoomNumber,"cleanup not stored");
+                }
+                else if (my_suite != null) {
+                    Log.d("storeServiceV"+my_suite.SuiteNumber,"cleanup not stored");
+                }
+            }
+            else {
+                cleanup.setCurrent(false);
+            }
+            Log.d("serviceInfo",device.name+" cleanup "+cleanup.dpId+" "+cleanup.current);
+        }
+        if (laundry != null) {
+            if (this.device.getIsLocalOnline()) {
+                laundry.setCurrent(Boolean.parseBoolean(Objects.requireNonNull(device.dps.get(String.valueOf(laundry.dpId))).toString()));
+            }
+            else {
+                laundry.setCurrent(false);
+            }
+            Log.d("serviceInfo",device.name+" laundry "+laundry.dpId+" "+laundry.current);
+        }
+        if (checkout != null) {
+                if (this.device.getIsLocalOnline()) {
+                    checkout.setCurrent(Boolean.parseBoolean(Objects.requireNonNull(device.dps.get(String.valueOf(checkout.dpId))).toString()));
+                }
+                else {
+                    checkout.setCurrent(false);
+                }
+            Log.d("serviceInfo",device.name+" checkout "+checkout.dpId+" "+checkout.current);
+        }
+        if (dnd != null) {
+            if (this.device.getIsLocalOnline()) {
+                dnd.setCurrent(Boolean.parseBoolean(Objects.requireNonNull(device.dps.get(String.valueOf(dnd.dpId))).toString()));
+            }
+            else {
+                dnd.setCurrent(false);
+            }
+            Log.d("serviceInfo",device.name+" dnd "+dnd.dpId+" "+dnd.current);
+        }
+        if (light != null) {
+            light.current = Boolean.parseBoolean(Objects.requireNonNull(device.dps.get(String.valueOf(light.dpId))).toString());
+        }
+    }
+
     @Override
     public void listen(DeviceAction action) {
         ServiceListener sl = (ServiceListener) action;
@@ -1219,5 +1607,44 @@ public class CheckinServiceSwitch extends CheckinDevice implements SetInitialVal
         if (checkoutControlListener != null) {
             roomReference.child("Checkout").removeEventListener(checkoutControlListener);
         }
+    }
+
+    public void storeCleanupValue(LocalDataStore storage, boolean value) {
+        storage.saveBoolean(value,this.device.name+"Cleanup");
+    }
+
+    public boolean getStoredCleanupValue(LocalDataStore storage) {
+        return storage.getBoolean(this.device.name+"Cleanup");
+    }
+
+    public void storeLaundryValue(LocalDataStore storage, boolean value) {
+        storage.saveBoolean(value,this.device.name+"Laundry");
+    }
+
+    public boolean getStoredLaundryValue(LocalDataStore storage) {
+        return storage.getBoolean(this.device.name+"Laundry");
+    }
+
+    public void storeDNDValue(LocalDataStore storage, boolean value) {
+        storage.saveBoolean(value,this.device.name+"DND");
+    }
+
+    public boolean getStoredDNDValue(LocalDataStore storage) {
+        return storage.getBoolean(this.device.name+"DND");
+    }
+
+    public void storeCheckoutValue(LocalDataStore storage, boolean value) {
+        storage.saveBoolean(value,this.device.name+"Checkout");
+    }
+
+    public boolean getStoredCheckoutValue(LocalDataStore storage) {
+        return storage.getBoolean(this.device.name+"Checkout");
+    }
+
+    public void deleteServiceValues(LocalDataStore storage) {
+        storage.deleteObject(this.device.name+"Cleanup");
+        storage.deleteObject(this.device.name+"Laundry");
+        storage.deleteObject(this.device.name+"DND");
+        storage.deleteObject(this.device.name+"Checkout");
     }
 }

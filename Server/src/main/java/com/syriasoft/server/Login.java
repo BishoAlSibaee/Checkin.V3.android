@@ -187,7 +187,7 @@ Login extends AppCompatActivity {
                 PROJECTS_SPINNER.setAdapter(adapter);
                 PROJECTS_SPINNER.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                     @Override
-                    public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                    public void onItemSelected(AdapterView<?> adapterVie_w, View view, int i, long l) {
                         selectedProject = projects.get(i);
                     }
 

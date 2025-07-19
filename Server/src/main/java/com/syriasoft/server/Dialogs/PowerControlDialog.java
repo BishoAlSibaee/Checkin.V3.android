@@ -2,6 +2,8 @@ package com.syriasoft.server.Dialogs;
 
 import android.app.Dialog;
 import android.content.Context;
+import android.os.Process;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -12,6 +14,8 @@ import com.syriasoft.server.ReceptionScreen;
 import com.tuya.smart.sdk.api.IResultCallback;
 
 import java.text.MessageFormat;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class PowerControlDialog {
     Dialog d;
@@ -42,6 +46,7 @@ public class PowerControlDialog {
                 if (b.room.getPowerModule() != null) {
                     if (b.room.getPowerModule().dp1 != null && b.room.getPowerModule().dp2 != null) {
                         powerOn.setOnClickListener(view -> {
+                            //resetCloseTimer();
                             b.room.getPowerModule().powerOnOffline(new IResultCallback() {
                                 @Override
                                 public void onError(String code, String error) {
@@ -56,6 +61,7 @@ public class PowerControlDialog {
                             });
                         });
                         powerOff.setOnClickListener(view->{
+                            //resetCloseTimer();
                             b.room.getPowerModule().powerOffOffline(new IResultCallback() {
                                 @Override
                                 public void onError(String code, String error) {
@@ -70,6 +76,7 @@ public class PowerControlDialog {
                             });
                         });
                         powerCard.setOnClickListener(view->{
+                            //resetCloseTimer();
                             b.room.getPowerModule().powerByCardOffline(new IResultCallback() {
                                 @Override
                                 public void onError(String code, String error) {
@@ -139,5 +146,28 @@ public class PowerControlDialog {
             }
         }
         d.show();
+    }
+
+    void resetCloseTimer() {
+        Log.d("closeTimer","reset");
+        if (ReceptionScreen.terminateTimer != null) {
+            ReceptionScreen.terminateTimer.cancel();
+            ReceptionScreen.terminateTimer = new Timer();
+            ReceptionScreen.terminateTimer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    Process.killProcess(Process.myPid());
+                }
+            },1000 * 60 * 1);
+        }
+        else {
+            ReceptionScreen.terminateTimer = new Timer();
+            ReceptionScreen.terminateTimer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    Process.killProcess(Process.myPid());
+                }
+            },1000 * 60 * 1);
+        }
     }
 }

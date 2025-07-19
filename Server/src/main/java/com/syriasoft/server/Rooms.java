@@ -17,9 +17,7 @@ import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Process;
-import android.text.Editable;
 import android.text.TextUtils;
-import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.view.Window;
@@ -123,7 +121,6 @@ public class Rooms extends AppCompatActivity {
     static RequestQueue MessagesQueue;
     loadingDialog loading;
     static RequestQueue REQ, REQ1 , CLEANUP_QUEUE , LAUNDRY_QUEUE , CHECKOUT_QUEUE ,DND_Queue,FirebaseTokenRegister ;
-    EditText searchText ;
     ExtendedBluetoothDevice TheFoundGateway ;
     private ConfigureGatewayInfo configureGatewayInfo;
     static List<SceneBean> SCENES ;
@@ -151,7 +148,7 @@ public class Rooms extends AppCompatActivity {
         Thread.setDefaultUncaughtExceptionHandler(new DefaultExceptionHandler(this,pIntent));
         // work by activity
         //gettingAndPreparingData(act);
-        //setServerDeviceRunningFunction();
+        setServerDeviceRunningFunction();
 
 
         // work by foreground service
@@ -230,38 +227,6 @@ public class Rooms extends AppCompatActivity {
     }
 
     void setActivityActions(Activity act) {
-        searchText.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-
-            }
-
-            @Override
-            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-
-            }
-
-            @Override
-            public void afterTextChanged(Editable editable) {
-                if (devicesListView.getVisibility() == View.VISIBLE ) {
-                    String Text = searchText.getText().toString();
-                    if (Text.isEmpty()) {
-                        Devices_Adapter adapter = new Devices_Adapter(Devices, act);
-                        devicesListView.setAdapter(adapter);
-                    }
-                    else {
-                        List<CheckinDevice> Results = new ArrayList<>();
-                        for (int i = 0; i < Devices.size(); i++) {
-                            if (Devices.get(i).getName().contains(Text)) {
-                                Results.add(Devices.get(i));
-                            }
-                        }
-                        Devices_Adapter adapter = new Devices_Adapter(Results, act);
-                        devicesListView.setAdapter(adapter);
-                    }
-                }
-            }
-        });
         mainLogo.setOnLongClickListener(v -> {
             Dialog  dd = new Dialog(act);
             dd.setContentView(R.layout.lock_unlock_dialog);
@@ -351,7 +316,6 @@ public class Rooms extends AppCompatActivity {
 
     void defineViews() {
         actionsNow = findViewById(R.id.textView26);
-        searchText = findViewById(R.id.search_text);
         toggle = findViewById(R.id.button9);
         mainLogo = findViewById(R.id.logoLyout) ;
         resetDevices = findViewById(R.id.button2);
@@ -366,7 +330,6 @@ public class Rooms extends AppCompatActivity {
         mainLogo.setVisibility(View.GONE);
         roomsListView.setVisibility(View.VISIBLE);
         devicesListView.setVisibility(View.GONE);
-        searchText.setVisibility(View.GONE);
         setActionText("Welcome",act);
         storage = new LocalDataStore();
     }
@@ -453,7 +416,7 @@ public class Rooms extends AppCompatActivity {
                                                                                 showDevices(act);
                                                                                 setAllListeners(actionsNow);
                                                                                 loading.stop();
-                                                                                Tuya.setDevicesListenersWatcher(setDevicesListenersCallback());
+                                                                                Tuya.setDevicesListenersWatcher(Devices,setDevicesListenersCallback());
                                                                                 Log.d("bootingOp","finish");
                                                                             }
 
@@ -655,7 +618,6 @@ public class Rooms extends AppCompatActivity {
         if (roomsListView.getVisibility() == View.VISIBLE) {
             roomsListView.setVisibility(View.GONE);
             devicesListView.setVisibility(View.VISIBLE);
-            searchText.setVisibility(View.VISIBLE);
             Button b = (Button) view;
             b.setText(getResources().getString(R.string.rooms));
             @SuppressLint("UseCompatLoadingForDrawables") Drawable d = getResources().getDrawable(R.drawable.ic_baseline_bedroom_child_24,null);
@@ -664,7 +626,6 @@ public class Rooms extends AppCompatActivity {
         else if (roomsListView.getVisibility() == View.GONE) {
             roomsListView.setVisibility(View.VISIBLE);
             devicesListView.setVisibility(View.GONE);
-            searchText.setVisibility(View.GONE);
             Button b = (Button) view;
             b.setText(getResources().getString(R.string.devices));
             @SuppressLint("UseCompatLoadingForDrawables") Drawable d = getResources().getDrawable(R.drawable.ic_baseline_podcasts_24,null);
@@ -1046,14 +1007,14 @@ public class Rooms extends AppCompatActivity {
                 PROJECT_VARIABLES.addServerStop();
                 Room.stopAllRoomListeners(MyApp.ROOMS);
                 gettingAndPreparingData(act);
-                Tuya.setDevicesListenersNotWorking(this);
+                Tuya.setDevicesListenersNotWorking(Devices,this);
             }
 
             @Override
             public void onListenersWork() {
                 Tuya.ListenersWorking = true;
                 PROJECT_VARIABLES.setDevicesListenersWorking(1);
-                Tuya.setDevicesListenersWorking(this);
+                Tuya.setDevicesListenersWorking(Devices,this);
             }
         };
     }
@@ -1075,4 +1036,18 @@ public class Rooms extends AppCompatActivity {
         }
     }
 
+    public void reGetDevicesDataFromFirebase(View view) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            Log.d("reGetData" , "pressed 1");
+            Intent i = new Intent(act, ServerService.class);
+            i.setAction("reGetDevicesDataFromFirebase");
+            startForegroundService(i);
+        }
+        else {
+            Log.d("reGetData" , "pressed 2");
+            if (!ServerService.isWorking && !ServerService2.isWorking) {
+                startService(new Intent(act, ServerService.class));
+            }
+        }
+    }
 }

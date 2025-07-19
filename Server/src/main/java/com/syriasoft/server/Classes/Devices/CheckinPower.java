@@ -9,6 +9,7 @@ import com.syriasoft.server.Classes.Interfaces.Listen;
 import com.syriasoft.server.Classes.Interfaces.PowerListener;
 import com.syriasoft.server.Classes.Interfaces.SetFirebaseDevicesControl;
 import com.syriasoft.server.Classes.Interfaces.SetInitialValues;
+import com.syriasoft.server.Classes.LocalDataStore;
 import com.syriasoft.server.Classes.Property.Room;
 import com.syriasoft.server.Classes.Property.Suite;
 import com.google.firebase.database.DataSnapshot;
@@ -161,9 +162,17 @@ public class CheckinPower extends CheckinDevice implements SetInitialValues, Lis
         }
         if (dp1 != null) {
             dp1.current = Boolean.parseBoolean(Objects.requireNonNull(device.dps.get(String.valueOf(dp1.dpId))).toString());
+            Log.d("powerProblem",device.name+" dp1 ok "+dp1.current);
+        }
+        else {
+            Log.d("powerProblem",device.name+" dp1 missing ");
         }
         if (dp2 != null) {
             dp2.current = Boolean.parseBoolean(Objects.requireNonNull(device.dps.get(String.valueOf(dp2.dpId))).toString());
+            Log.d("powerProblem",device.name+" dp2 ok "+dp2.current);
+        }
+        else {
+            Log.d("powerProblem",device.name+" dp2 missing ");
         }
         if (dp1 != null && dp2 != null) {
             if (dp1.current && dp2.current) {
@@ -175,7 +184,7 @@ public class CheckinPower extends CheckinDevice implements SetInitialValues, Lis
                     my_suite.setPowerStatus(2);
                 }
             }
-            else if (!dp2.current) {
+            else if (dp1.current) {
                 if (my_room != null) {
                     my_room.setPowerStatus(1);
                     my_room.devicesControlReference.child(device.name).child("1").setValue(1);
@@ -184,7 +193,7 @@ public class CheckinPower extends CheckinDevice implements SetInitialValues, Lis
                     my_suite.setPowerStatus(1);
                 }
             }
-            else {
+            else if (!dp2.current) {
                 if (my_room != null) {
                     my_room.setPowerStatus(0);
                     my_room.devicesControlReference.child(device.name).child("1").setValue(0);
@@ -197,6 +206,70 @@ public class CheckinPower extends CheckinDevice implements SetInitialValues, Lis
         callback.onSuccess();
     }
 
+    public void setInitialCurrentValuesOffline(LocalDataStore storage) {
+        ind++;
+        for (DeviceDP dp: deviceDPS) {
+            if (dp.dpId == 1) {
+                dp1 = (DeviceDPBool) dp;
+            }
+            else if (dp.dpId == 2) {
+                dp2 = (DeviceDPBool) dp;
+            }
+        }
+        if (dp1 != null) {
+            if (this.device.getIsLocalOnline()) {
+                dp1.setCurrent(Boolean.parseBoolean(Objects.requireNonNull(device.dps.get(String.valueOf(dp1.dpId))).toString()));
+            }
+            else {
+                dp1.setCurrent(false);
+            }
+//            if (storage.checkObjectStored(this.device.name+"Dp1")) {
+//                dp1.setCurrent(getStoredDp1Value(storage));
+//                if (my_room != null) {
+//                    Log.d("storePowerV"+my_room.RoomNumber,"1 stored "+dp1.current);
+//                }
+//                else if (my_suite != null) {
+//                    Log.d("storePowerV"+my_suite.SuiteNumber,"1 stored "+dp1.current);
+//                }
+//            }
+//            else {
+//                storeDp1Value(storage,dp1.current);
+//                if (my_room != null) {
+//                    Log.d("storePowerV"+my_room.RoomNumber,"1 not stored "+dp1.current);
+//                }
+//                else if (my_suite != null) {
+//                    Log.d("storePowerV"+my_suite.SuiteNumber,"1 not stored "+dp1.current);
+//                }
+//            }
+        }
+        if (dp2 != null) {
+            if (this.device.getIsLocalOnline()) {
+                dp2.setCurrent(Boolean.parseBoolean(Objects.requireNonNull(device.dps.get(String.valueOf(dp2.dpId))).toString()));
+            }
+            else {
+                dp2.setCurrent(false);
+            }
+//            if (storage.checkObjectStored(this.device.name+"Dp2")) {
+//                dp2.setCurrent(getStoredDp2Value(storage));
+//                if (my_room != null) {
+//                    Log.d("storePowerV"+my_room.RoomNumber,"2 stored "+dp2.current);
+//                }
+//                else if (my_suite != null) {
+//                    Log.d("storePowerV"+my_suite.SuiteNumber,"2 stored "+dp2.current);
+//                }
+//            }
+//            else {
+//                storeDp2Value(storage,dp2.current);
+//                if (my_room != null) {
+//                    Log.d("storePowerV"+my_room.RoomNumber,"2 not stored "+dp2.current);
+//                }
+//                else if (my_suite != null) {
+//                    Log.d("storePowerV"+my_suite.SuiteNumber,"2 not stored "+dp2.current);
+//                }
+//            }
+        }
+    }
+
     @Override
     public void listen(DeviceAction action) {
         PowerListener power = (PowerListener) action;
@@ -206,22 +279,30 @@ public class CheckinPower extends CheckinDevice implements SetInitialValues, Lis
                 Log.d("powerActionNew"+device.name,dpStr.toString());
                 if (dpStr.toString().length() <= 16) {
                     Log.d("powerActionNew"+device.name,dpStr.toString());
-                    if (dpStr.get("switch_"+dp1.dpId) != null) {
-                        dp1.current = Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_"+dp1.dpId)).toString());
+                    if (dp1 != null) {
+                        if (dpStr.get("switch_"+dp1.dpId) != null) {
+                            dp1.current = Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_"+dp1.dpId)).toString());
+                        }
                     }
-                    if (dpStr.get("switch_"+dp2.dpId) != null) {
-                        dp2.current = Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_"+dp2.dpId)).toString());
+                    if (dp2 != null) {
+                        if (dpStr.get("switch_"+dp2.dpId) != null) {
+                            dp2.current = Boolean.parseBoolean(Objects.requireNonNull(dpStr.get("switch_"+dp2.dpId)).toString());
+                        }
                     }
-                    Log.d("powerActionNew"+device.name,dp1.current+" "+dp2.current);
-                    if (dp1.current && dp2.current) {
-                        power.powerOn();
+
+                    //Log.d("powerActionNew"+device.name,dp1.current+" "+dp2.current);
+                    if (dp1 != null && dp2 != null) {
+                        if (dp1.current && dp2.current) {
+                            power.powerOn();
+                        }
+                        else if (dp1.current) {
+                            power.powerByCard();
+                        }
+                        else if (!dp2.current){
+                            power.powerOff();
+                        }
                     }
-                    else if (dp1.current) {
-                        power.powerByCard();
-                    }
-                    else if (!dp2.current){
-                        power.powerOff();
-                    }
+
                 }
             }
 
@@ -297,7 +378,7 @@ public class CheckinPower extends CheckinDevice implements SetInitialValues, Lis
                         powerOn(new IResultCallback() {
                             @Override
                             public void onError(String code, String error) {
-                                Log.d("deviceListener"+device.name,"error "+error);
+                                Log.d("deviceListener"+device.name,"error "+error+" "+code);
                             }
 
                             @Override
@@ -321,5 +402,26 @@ public class CheckinPower extends CheckinDevice implements SetInitialValues, Lis
         if (powerControlListener != null) {
             controlReference.child(device.name).child("1").removeEventListener(powerControlListener);
         }
+    }
+
+    public void storeDp1Value(LocalDataStore storage, boolean value) {
+        storage.saveBoolean(value,this.device.name+"Dp1");
+    }
+
+    public boolean getStoredDp1Value(LocalDataStore storage) {
+        return storage.getBoolean(this.device.name+"Dp1");
+    }
+
+    public void storeDp2Value(LocalDataStore storage, boolean value) {
+        storage.saveBoolean(value,this.device.name+"Dp2");
+    }
+
+    public boolean getStoredDp2Value(LocalDataStore storage) {
+        return storage.getBoolean(this.device.name+"Dp2");
+    }
+
+    public void deletePowerValues(LocalDataStore storage) {
+        storage.deleteObject(this.device.name+"Dp1");
+        storage.deleteObject(this.device.name+"Dp2");
     }
 }

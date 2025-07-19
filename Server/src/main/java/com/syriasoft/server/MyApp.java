@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.os.Process;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -131,6 +132,12 @@ public class MyApp  extends Application {
     public void onTrimMemory(int level) {
         super.onTrimMemory(level);
         Log.d("appLife","trim memory");
+        Intent i = getPackageManager().getLaunchIntentForPackage(getPackageName());
+        if (i != null) {
+            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        }
+        startActivity(i);
+        Process.killProcess(Process.myPid());
     }
 
     static void setTuyaApplication() {
@@ -139,7 +146,7 @@ public class MyApp  extends Application {
 
     public static void finishActivities() {
         for (Activity act : Activities) {
-            act.finishAndRemoveTask();
+            act.finishAffinity();
         }
     }
 

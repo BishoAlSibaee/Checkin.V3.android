@@ -1,5 +1,7 @@
 package com.syriasoft.server.Adapters;
 
+import android.os.Process;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,9 +13,12 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.hotelservicesstandalone.R;
 import com.syriasoft.server.Classes.Property.Bed;
 import com.syriasoft.server.Dialogs.PowerControlDialog;
+import com.syriasoft.server.ReceptionScreen;
 
 import java.text.MessageFormat;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class RoomPower_Adapter extends RecyclerView.Adapter<RoomPower_Adapter.Holder> {
 
@@ -38,6 +43,7 @@ public class RoomPower_Adapter extends RecyclerView.Adapter<RoomPower_Adapter.Ho
             holder.room.setText(MessageFormat.format("S{0}", b.suite.SuiteNumber));
         }
         holder.itemView.setOnClickListener(view->{
+            //resetCloseTimer();
             new PowerControlDialog(holder.itemView.getContext(),b);
         });
     }
@@ -45,6 +51,29 @@ public class RoomPower_Adapter extends RecyclerView.Adapter<RoomPower_Adapter.Ho
     @Override
     public int getItemCount() {
         return beds.size();
+    }
+
+    void resetCloseTimer() {
+        Log.d("closeTimer","reset");
+        if (ReceptionScreen.terminateTimer != null) {
+            ReceptionScreen.terminateTimer.cancel();
+            ReceptionScreen.terminateTimer = new Timer();
+            ReceptionScreen.terminateTimer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    Process.killProcess(Process.myPid());
+                }
+            },1000 * 60 * 1);
+        }
+        else {
+            ReceptionScreen.terminateTimer = new Timer();
+            ReceptionScreen.terminateTimer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    Process.killProcess(Process.myPid());
+                }
+            },1000 * 60 * 1);
+        }
     }
 
     public static class Holder extends RecyclerView.ViewHolder {

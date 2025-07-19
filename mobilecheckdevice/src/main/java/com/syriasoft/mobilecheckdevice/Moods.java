@@ -114,7 +114,7 @@ public class Moods extends AppCompatActivity {
         other7 = findViewById(R.id.other7Mood);
         other8 = findViewById(R.id.other8Mood);
         living.setOnClickListener(v -> {
-            if (livingMood.size() == 0) {
+            if (livingMood.isEmpty()) {
                 Intent i = new Intent(act,MakeMood.class);
                 i.putExtra("ModeName","Living Mood");
                 startActivity(i);
@@ -149,7 +149,7 @@ public class Moods extends AppCompatActivity {
 //            }
         });
         sleep.setOnClickListener(v -> {
-            if (sleepMood.size() == 0) {
+            if (sleepMood.isEmpty()) {
                 Intent i = new Intent(act,MakeMood.class);
                 i.putExtra("ModeName","Sleep Mood");
                 startActivity(i);

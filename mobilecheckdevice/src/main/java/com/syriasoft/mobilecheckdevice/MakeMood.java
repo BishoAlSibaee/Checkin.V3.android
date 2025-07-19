@@ -723,14 +723,14 @@ public class MakeMood extends AppCompatActivity {
     }
 
     public void createMod(View view) {
-        if (TaskMoodButtons.size() == 0) {
+        if (TaskMoodButtons.isEmpty()) {
             new MessageDialog("please select buttons first","No Buttons",act);
             return ;
         }
         LoadingDialog loading = new LoadingDialog(act);
         List<SceneCondition> condS = null;
         List<SceneTask> tasks = new ArrayList<>();
-        if (ConditionMoodButtons.size() > 0) {
+        if (!ConditionMoodButtons.isEmpty()) {
             condS = new ArrayList<>();
             for (int i=0;i<ConditionMoodButtons.size();i++) {
                 if (ConditionMoodButtons.get(i).statusString == null) {

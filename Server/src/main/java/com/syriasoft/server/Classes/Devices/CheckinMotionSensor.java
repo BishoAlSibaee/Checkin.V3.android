@@ -22,11 +22,13 @@ import java.util.Objects;
 
 public class CheckinMotionSensor extends CheckinDevice implements SetInitialValues, Listen {
 
-    private final String[] statusNames = {"State","PIR state","Motion State","condition"};
+    private final String[] statusNames = {"State","PIR state","Motion State","condition","CONDITION","motion sensor status"};
     private final String[] batteryNames = {"Battery","Battery level","battery"};
 
     DeviceDP statusDp;
     DeviceDPValue batteryDp;
+
+    public boolean somebody = false;
 
     public CheckinMotionSensor(DeviceBean device, Room room) {
         super(device,room);
@@ -40,6 +42,7 @@ public class CheckinMotionSensor extends CheckinDevice implements SetInitialValu
     public void setInitialCurrentValues(RequestCallback callback) {
         List<String> statuses = Arrays.asList(statusNames);
         for (DeviceDP dp:deviceDPS) {
+            Log.d("bootingOp",dp.dpName+" "+device.name);
             if (statuses.contains(dp.dpName)) {
                 statusDp = dp;
                 break;
@@ -63,8 +66,16 @@ public class CheckinMotionSensor extends CheckinDevice implements SetInitialValu
                 statusDp.getDpEnum().current = Objects.requireNonNull(device.dps.get(String.valueOf(statusDp.dpId))).toString();
             }
         }
+        else {
+            Log.d("bootingOp","motion sensor status null "+device.name);
+        }
         if (batteryDp != null) {
-            batteryDp.current = Objects.requireNonNull(device.dps.get(String.valueOf(batteryDp.dpId))).toString();
+            try {
+                batteryDp.current = Objects.requireNonNull(device.dps.get(String.valueOf(batteryDp.dpId))).toString();
+            }
+            catch (Exception e) {
+
+            }
         }
         callback.onSuccess();
     }
@@ -90,32 +101,23 @@ public class CheckinMotionSensor extends CheckinDevice implements SetInitialValu
                                     motion.motionDetected();
                                 }
                                 else if (en.equals("none") || en.equals("Nobody")) {
+                                    somebody = false;
                                     motion.nobody();
                                 }
                                 else if (en.equals("presence") || en.equals("Somebody")) {
+                                    somebody = true;
                                     motion.somebody();
                                 }
                             }
                         }
                     }
+                    else {
+                        Log.d("motionAction","status dp null "+device.name);
+                    }
                 }catch (JSONException e) {
                     //Log.d("motionActionError", Objects.requireNonNull(e.getMessage()));
+                    Log.d("motionAction",device.name+" "+e.getMessage());
                 }
-//                try{
-//                    JSONObject action = new JSONObject(dpStr);
-//                    if (my_room.RoomNumber == 210 || my_room.RoomNumber == 211) {
-//                        Log.d("motionAction","210 211");
-//                        String val = action.getString("9");
-//                        int x =Integer.parseInt(val);
-//                        Log.d("motionAction","hi");
-//                        if (x < 400) {
-//                            motion.motionDetected();
-//                            Log.d("motionAction","motion");
-//                        }
-//                    }
-//                }catch (Exception e) {
-//                    Log.d("motionAction", "error "+Objects.requireNonNull(e.getMessage()));
-//                }
             }
 
             @Override

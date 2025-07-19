@@ -175,6 +175,7 @@ public class MainActivity extends AppCompatActivity {
 
                                 @Override
                                 public void onFail(String error) {
+                                    Log.d("sendingProb",error);
                                     new MessageDialog(error,"error sending rerun",act);
                                 }
                             });

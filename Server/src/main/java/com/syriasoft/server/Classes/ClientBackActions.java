@@ -58,7 +58,7 @@ public class ClientBackActions {
                             room.turnAcOn();
                         }
                     }
-                },7000);
+                },15000);
 
                 room.powerByCardAfterMinutes(2, new RequestCallback() {
                     @Override

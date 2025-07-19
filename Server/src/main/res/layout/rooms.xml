@@ -115,18 +115,6 @@
             android:textAllCaps="false"
             android:textSize="12sp" />
 
-        <EditText
-            android:id="@+id/search_text"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical"
-            android:layout_weight="1"
-            android:ems="10"
-            android:hint="Search"
-            android:inputType="textPersonName"
-            android:minHeight="48dp"
-            android:textSize="12sp" />
-
         <Button
             android:id="@+id/button2"
             android:layout_width="match_parent"
@@ -144,12 +132,11 @@
         <Button
             android:id="@+id/button17"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:layout_gravity="center_vertical"
             android:layout_weight="1"
-            android:drawableEnd="@drawable/ic_baseline_door_back_24"
             android:onClick="goToLocks"
-            android:text="Locks"
+            android:text="Stop"
             android:textAllCaps="false"
             android:textSize="12sp" />
 
@@ -163,6 +150,30 @@
             android:onClick="logOut"
             android:text="logout"
             android:textAllCaps="false" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/btnsLayout2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="5dp"
+        android:layout_marginTop="5dp"
+        android:layout_marginEnd="5dp"
+        android:layout_marginBottom="5dp"
+        android:orientation="horizontal"
+        android:visibility="visible">
+
+        <Button
+            android:id="@+id/button150"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:layout_margin="2dp"
+            android:onClick="reGetDevicesDataFromFirebase"
+            android:text="Re Get Devices Data From Firebase"
+            android:textAllCaps="false"
+            android:textSize="12sp" />
+
     </LinearLayout>
 
     <GridView

@@ -7,9 +7,14 @@ public class EnumKeyValue {
     public List<enumUnit> enums;
 
     public EnumKeyValue(Object[] keys,Object[] values) {
-        enums = new ArrayList<>();
-        for (int i=0;i< keys.length;i++) {
-            enums.add(new enumUnit(keys[i].toString(),values[i].toString()));
+        try {
+            enums = new ArrayList<>();
+            for (int i = 0; i < keys.length; i++) {
+                enums.add(new enumUnit(keys[i].toString(), values[i].toString()));
+            }
+        }
+        catch (Exception e) {
+
         }
     }
 

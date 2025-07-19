@@ -1,6 +1,9 @@
 package com.syriasoft.server.Adapters;
 
+import android.app.Activity;
 import android.app.AlertDialog;
+import android.os.Process;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,6 +21,8 @@ import com.tuya.smart.sdk.api.IResultCallback;
 
 import java.text.MessageFormat;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class RoomOrder_Adapter extends RecyclerView.Adapter<RoomOrder_Adapter.Holder> {
 
@@ -41,6 +46,7 @@ public class RoomOrder_Adapter extends RecyclerView.Adapter<RoomOrder_Adapter.Ho
             holder.room.setText(String.valueOf(b.room.RoomNumber));
             if (beds == ReceptionScreen.cleanupBeds) {
                 holder.itemView.setOnClickListener(view->{
+                    //resetCloseTimer();
                     AlertDialog.Builder bb = new AlertDialog.Builder(holder.itemView.getContext());
                     bb.setTitle(room.RoomNumber+" Cleanup Off").setMessage("Turn "+room.RoomNumber+" Cleanup Off \n are you sure ?").setNegativeButton("no", (dialogInterface, i) -> dialogInterface.dismiss()).setPositiveButton("Yes", (dialogInterface, i) -> {
                         if (room.getMainServiceSwitch() != null) {
@@ -56,6 +62,10 @@ public class RoomOrder_Adapter extends RecyclerView.Adapter<RoomOrder_Adapter.Ho
 
                                     }
                                 });
+                                room.getMainServiceSwitch().cleanup.setCurrent(false);
+                                ReceptionScreen.setCleanupLists((Activity) holder.itemView.getContext());
+                                ReceptionScreen.refreshCleanup((Activity) holder.itemView.getContext());
+
                             }
                         }
                     }).create().show();
@@ -63,6 +73,7 @@ public class RoomOrder_Adapter extends RecyclerView.Adapter<RoomOrder_Adapter.Ho
             }
             if (beds == ReceptionScreen.laundryBeds) {
                 holder.itemView.setOnClickListener(view->{
+                    //resetCloseTimer();
                     AlertDialog.Builder bb = new AlertDialog.Builder(holder.itemView.getContext());
                     bb.setTitle(room.RoomNumber+" Laundry Off").setMessage("Turn "+room.RoomNumber+" Laundry Off \n are you sure ?").setNegativeButton("no", (dialogInterface, i) -> dialogInterface.dismiss()).setPositiveButton("Yes", (dialogInterface, i) -> {
                         if (room.getMainServiceSwitch() != null) {
@@ -78,6 +89,9 @@ public class RoomOrder_Adapter extends RecyclerView.Adapter<RoomOrder_Adapter.Ho
 
                                     }
                                 });
+                                room.getMainServiceSwitch().laundry.setCurrent(false);
+                                ReceptionScreen.setLaundryLists((Activity) holder.itemView.getContext());
+                                ReceptionScreen.refreshLaundry((Activity) holder.itemView.getContext());
                             }
                         }
                     }).create().show();
@@ -85,6 +99,7 @@ public class RoomOrder_Adapter extends RecyclerView.Adapter<RoomOrder_Adapter.Ho
             }
             if (beds == ReceptionScreen.checkoutBeds) {
                 holder.itemView.setOnClickListener(view->{
+                    //resetCloseTimer();
                     AlertDialog.Builder bb = new AlertDialog.Builder(holder.itemView.getContext());
                     bb.setTitle(room.RoomNumber+" Checkout Off").setMessage("Turn "+room.RoomNumber+" Checkout Off \n are you sure ?").setNegativeButton("no", (dialogInterface, i) -> dialogInterface.dismiss()).setPositiveButton("Yes", (dialogInterface, i) -> {
                         if (room.getMainServiceSwitch() != null) {
@@ -100,6 +115,9 @@ public class RoomOrder_Adapter extends RecyclerView.Adapter<RoomOrder_Adapter.Ho
 
                                     }
                                 });
+                                room.getMainServiceSwitch().checkout.setCurrent(false);
+                                ReceptionScreen.setCheckoutLists((Activity) holder.itemView.getContext());
+                                ReceptionScreen.refreshCheckout((Activity) holder.itemView.getContext());
                             }
                         }
                     }).create().show();
@@ -107,6 +125,7 @@ public class RoomOrder_Adapter extends RecyclerView.Adapter<RoomOrder_Adapter.Ho
             }
             if (beds == ReceptionScreen.dndBeds) {
                 holder.itemView.setOnClickListener(view->{
+                    //resetCloseTimer();
                     AlertDialog.Builder bb = new AlertDialog.Builder(holder.itemView.getContext());
                     bb.setTitle(room.RoomNumber+" DND Off").setMessage("Turn "+room.RoomNumber+" DND Off \n are you sure ?").setNegativeButton("no", (dialogInterface, i) -> dialogInterface.dismiss()).setPositiveButton("Yes", (dialogInterface, i) -> {
                         if (room.getMainServiceSwitch() != null) {
@@ -122,6 +141,9 @@ public class RoomOrder_Adapter extends RecyclerView.Adapter<RoomOrder_Adapter.Ho
 
                                     }
                                 });
+                                room.getMainServiceSwitch().dnd.setCurrent(false);
+                                ReceptionScreen.setDndLists((Activity) holder.itemView.getContext());
+                                ReceptionScreen.refreshDND((Activity) holder.itemView.getContext());
                             }
                         }
                     }).create().show();
@@ -133,6 +155,7 @@ public class RoomOrder_Adapter extends RecyclerView.Adapter<RoomOrder_Adapter.Ho
             holder.room.setText(MessageFormat.format("S{0}", b.suite.SuiteNumber));
             if (beds == ReceptionScreen.cleanupBeds) {
                 holder.itemView.setOnClickListener(view->{
+                    //resetCloseTimer();
                     AlertDialog.Builder bb = new AlertDialog.Builder(holder.itemView.getContext());
                     bb.setTitle(suite.SuiteNumber+" Cleanup Off").setMessage("Turn "+suite.SuiteNumber+" Cleanup Off \n are you sure ?").setNegativeButton("no", (dialogInterface, i) -> dialogInterface.dismiss()).setPositiveButton("Yes", (dialogInterface, i) -> {
                         if (suite.getMainServiceSwitch() != null) {
@@ -155,6 +178,7 @@ public class RoomOrder_Adapter extends RecyclerView.Adapter<RoomOrder_Adapter.Ho
             }
             if (beds == ReceptionScreen.laundryBeds) {
                 holder.itemView.setOnClickListener(view->{
+                    //resetCloseTimer();
                     AlertDialog.Builder bb = new AlertDialog.Builder(holder.itemView.getContext());
                     bb.setTitle(suite.SuiteNumber+" Laundry Off").setMessage("Turn "+suite.SuiteNumber+" Laundry Off \n are you sure ?").setNegativeButton("no", (dialogInterface, i) -> dialogInterface.dismiss()).setPositiveButton("Yes", (dialogInterface, i) -> {
                         if (suite.getMainServiceSwitch() != null) {
@@ -177,6 +201,7 @@ public class RoomOrder_Adapter extends RecyclerView.Adapter<RoomOrder_Adapter.Ho
             }
             if (beds == ReceptionScreen.checkoutBeds) {
                 holder.itemView.setOnClickListener(view->{
+                    //resetCloseTimer();
                     AlertDialog.Builder bb = new AlertDialog.Builder(holder.itemView.getContext());
                     bb.setTitle(suite.SuiteNumber+" Checkout Off").setMessage("Turn "+suite.SuiteNumber+" Checkout Off \n are you sure ?").setNegativeButton("no", (dialogInterface, i) -> dialogInterface.dismiss()).setPositiveButton("Yes", (dialogInterface, i) -> {
                         if (suite.getMainServiceSwitch() != null) {
@@ -199,6 +224,7 @@ public class RoomOrder_Adapter extends RecyclerView.Adapter<RoomOrder_Adapter.Ho
             }
             if (beds == ReceptionScreen.dndBeds) {
                 holder.itemView.setOnClickListener(view->{
+                    //resetCloseTimer();
                     AlertDialog.Builder bb = new AlertDialog.Builder(holder.itemView.getContext());
                     bb.setTitle(suite.SuiteNumber+" DND Off").setMessage("Turn "+suite.SuiteNumber+" DND Off \n are you sure ?").setNegativeButton("no", (dialogInterface, i) -> dialogInterface.dismiss()).setPositiveButton("Yes", (dialogInterface, i) -> {
                         if (suite.getMainServiceSwitch() != null) {
@@ -232,6 +258,29 @@ public class RoomOrder_Adapter extends RecyclerView.Adapter<RoomOrder_Adapter.Ho
         public Holder(@NonNull View itemView) {
             super(itemView);
             room = itemView.findViewById(R.id.textView32);
+        }
+    }
+
+    void resetCloseTimer() {
+        Log.d("closeTimer","reset");
+        if (ReceptionScreen.terminateTimer != null) {
+            ReceptionScreen.terminateTimer.cancel();
+            ReceptionScreen.terminateTimer = new Timer();
+            ReceptionScreen.terminateTimer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    Process.killProcess(Process.myPid());
+                }
+            },1000 * 60 * 1);
+        }
+        else {
+            ReceptionScreen.terminateTimer = new Timer();
+            ReceptionScreen.terminateTimer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    Process.killProcess(Process.myPid());
+                }
+            },1000 * 60 * 1);
         }
     }
 }

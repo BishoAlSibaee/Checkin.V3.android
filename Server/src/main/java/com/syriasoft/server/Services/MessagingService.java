@@ -2,9 +2,7 @@ package com.syriasoft.server.Services;
 
 import android.content.Intent;
 import android.util.Log;
-
 import androidx.annotation.NonNull;
-
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.StringRequest;
@@ -13,10 +11,8 @@ import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 import com.syriasoft.server.Classes.LocalDataStore;
 import com.syriasoft.server.Classes.Property.Room;
-import com.syriasoft.server.Login;
 import com.syriasoft.server.MyApp;
 import com.tuya.smart.sdk.api.IResultCallback;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -28,7 +24,7 @@ public class MessagingService extends FirebaseMessagingService {
 
     @Override
     public void onMessageReceived(@NonNull RemoteMessage remoteMessage) {
-        Log.d("MessageRecieved" , "message arrived");
+        Log.d("MessageReceived" , "message arrived");
         Log.d(MyApp.Running_Tag,"message received successfully");
         if (remoteMessage.getData().get("title") != null ) {
             Log.d("MessageRecieved" , Objects.requireNonNull(remoteMessage.getData().get("title")));
@@ -93,10 +89,12 @@ public class MessagingService extends FirebaseMessagingService {
                         break;
                     }
                     case "reRun":
-                        Intent i = new Intent(getBaseContext(), Login.class);
-                        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        Intent i = getPackageManager().getLaunchIntentForPackage(getPackageName());
+                        if (i != null) {
+                            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        }
                         startActivity(i);
-                        Log.d("MessageRecieved" , "start");
+                        android.os.Process.killProcess(android.os.Process.myPid());
                         break;
                 }
             }

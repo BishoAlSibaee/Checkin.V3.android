@@ -225,7 +225,7 @@ public class ServerService2 extends Service {
                                                                         Log.d("devicesIds",Tuya.devicesIds.size()+" "+Devices.size());
                                                                         settingInitialDevicesData(Devices);
                                                                         setAllListeners();
-                                                                        Tuya.setDevicesListenersWatcher(setDevicesListenersCallback());
+                                                                        Tuya.setDevicesListenersWatcher(Devices,setDevicesListenersCallback());
                                                                         Log.d("bootingOp","finish");
                                                                         startForegroundService("service 2 booting done");
                                                                     }
@@ -486,7 +486,7 @@ public class ServerService2 extends Service {
                 Tuya.ListenersWorking = true;
                 PROJECT_VARIABLES.setDevicesListenersWorking(1);
                 PROJECT_VARIABLES.addServerStart();
-                Tuya.setDevicesListenersWorking(this);
+                Tuya.setDevicesListenersWorking(Devices,this);
             }
         };
     }

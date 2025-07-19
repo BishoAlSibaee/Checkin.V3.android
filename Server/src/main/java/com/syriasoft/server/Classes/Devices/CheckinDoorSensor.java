@@ -2,6 +2,7 @@ package com.syriasoft.server.Classes.Devices;
 
 import android.util.Log;
 
+import com.syriasoft.server.Classes.Enumes.DpTypes;
 import com.syriasoft.server.Classes.Interfaces.DeviceAction;
 import com.syriasoft.server.Classes.Interfaces.DoorListener;
 import com.syriasoft.server.Classes.Interfaces.Listen;
@@ -48,6 +49,7 @@ public class CheckinDoorSensor extends CheckinDevice implements SetInitialValues
                 statusDp = (DeviceDPBool) dp;
                 break;
             }
+            Log.d("doorStatus"+my_room.RoomNumber , dp.dpId+" "+dp.dpName);
         }
         List<String> batteries = Arrays.asList(batteryNames);
         for (DeviceDP dp:deviceDPS) {
@@ -64,6 +66,7 @@ public class CheckinDoorSensor extends CheckinDevice implements SetInitialValues
             else {
                 my_room.fireRoom.child("doorStatus").setValue(0);
             }
+            Log.d("doorStatus"+my_room.RoomNumber , statusDp.current+"");
         }
         if (batteryDp != null) {
             batteryDp.current = Objects.requireNonNull(device.dps.get(String.valueOf(batteryDp.dpId))).toString();
@@ -96,13 +99,15 @@ public class CheckinDoorSensor extends CheckinDevice implements SetInitialValues
                     }
                 }
                 if (batteryDp != null) {
-                    try {
-                        JSONObject action = new JSONObject(dpStr);
-                        int battery = Integer.parseInt(action.getString(String.valueOf(batteryDp.dpId)));
-                        Battery = battery;
-                        door.battery(battery);
-                    } catch (JSONException e) {
-                        Log.d("doorAction", Objects.requireNonNull(e.getMessage()));
+                    if (batteryDp.dpType == DpTypes.value) {
+                        try {
+                            JSONObject action = new JSONObject(dpStr);
+                            int battery = Integer.parseInt(action.getString(String.valueOf(batteryDp.dpId)));
+                            Battery = battery;
+                            door.battery(battery);
+                        } catch (Exception e) {
+                            Log.d("doorAction", Objects.requireNonNull(e.getMessage()));
+                        }
                     }
                 }
             }

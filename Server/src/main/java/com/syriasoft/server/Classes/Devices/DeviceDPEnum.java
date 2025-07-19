@@ -10,7 +10,7 @@ public class DeviceDPEnum extends DeviceDP implements enumControl {
 
     public EnumKeyValue enumKeyValue;
 
-    String current;
+    public String current;
 
     public DeviceDPEnum(long dpId, String dpName, DpTypes dpType, CheckinDevice device) {
         super(dpId, dpName, dpType,device);

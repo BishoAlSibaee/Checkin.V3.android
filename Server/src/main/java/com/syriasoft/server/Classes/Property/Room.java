@@ -115,9 +115,10 @@ public class Room extends Bed {
     List<CheckinAC> acs;
     List<CheckinDoorSensor> doorSensors;
     List<CheckinCurtain> curtains;
-    List<CheckinMotionSensor> motionSensors;
+    public List<CheckinMotionSensor> motionSensors;
     List<CheckinLock> locks;
     List<CheckinShutter> shutters;
+    List<SceneBean> scenes;
     public DatabaseReference fireRoom,devicesControlReference,devicesDataReference;
     Timer acScenarioTimer,doorWarningTimer,electricTimer;
     boolean acScenarioStarted = false;
@@ -520,8 +521,13 @@ public class Room extends Bed {
                         if (!firstRun[0]) {
                             Log.d("checkinMood"+RoomNumber,"not first run "+ firstDoorOpen);
                             setFirstDoorOpen(true);
-                            if (MyApp.My_PROJECT.projectName.equals("apiTest") || MyApp.My_PROJECT.projectName.equals("P0004")) {
+                            if (MyApp.My_PROJECT.projectName.equals("apiTest") || MyApp.My_PROJECT.projectName.equals("P0005")) {
+                                Log.d("lightsOnMood","roomBooked");
                                 PROJECT_VARIABLES.checkInMood.startCheckinMood(r);
+                            }
+                            else if (MyApp.My_PROJECT.projectName.equals("P0003") || MyApp.My_PROJECT.projectName.equals("P0004")) {
+                                PROJECT_VARIABLES.checkInMood.startPowerOnMood(r);
+                                activateMood(RoomNumber+"LightsOn");
                             }
                         }
                     }
@@ -611,7 +617,7 @@ public class Room extends Bed {
                 services.add(ss);
                 devs.add(ss);
             }
-            else if (d.getName().equals(RoomNumber+DeviceTypes.MotionSensor.toString())) {
+            else if (d.getName().contains(RoomNumber+DeviceTypes.MotionSensor.toString())) {
                 if (motionSensors == null) {
                     motionSensors = new ArrayList<>();
                 }
@@ -619,7 +625,7 @@ public class Room extends Bed {
                 motionSensors.add(mm);
                 devs.add(mm);
             }
-            else if (d.getName().equals(RoomNumber+DeviceTypes.Switch.toString()+"1") || d.getName().equals(RoomNumber+DeviceTypes.Switch.toString()+"2") || d.getName().equals(RoomNumber+DeviceTypes.Switch.toString()+"3") || d.getName().equals(RoomNumber+DeviceTypes.Switch.toString()+"4") || d.getName().equals(RoomNumber+DeviceTypes.Switch.toString()+"5")||d.getName().equals(RoomNumber+DeviceTypes.Switch.toString()+"6") || d.getName().equals(RoomNumber+DeviceTypes.Switch.toString()+"7") || d.getName().equals(RoomNumber+DeviceTypes.Switch.toString()+"8")) {
+            else if (d.getName().equals(RoomNumber+DeviceTypes.Switch.toString()+"1") || d.getName().equals(RoomNumber+DeviceTypes.Switch.toString()+"2") || d.getName().equals(RoomNumber+DeviceTypes.Switch.toString()+"3") || d.getName().equals(RoomNumber+DeviceTypes.Switch.toString()+"4") || d.getName().equals(RoomNumber+DeviceTypes.Switch.toString()+"5")||d.getName().equals(RoomNumber+DeviceTypes.Switch.toString()+"6") || d.getName().equals(RoomNumber+DeviceTypes.Switch.toString()+"7") || d.getName().equals(RoomNumber+DeviceTypes.Switch.toString()+"8") || d.getName().equals(RoomNumber+DeviceTypes.Switch.toString()+"9") || d.getName().equals(RoomNumber+DeviceTypes.Switch.toString()+"10") || d.getName().equals(RoomNumber+DeviceTypes.Switch.toString()+"11") || d.getName().equals(RoomNumber+DeviceTypes.Switch.toString()+"12") || d.getName().equals(RoomNumber+DeviceTypes.Switch.toString()+"13") || d.getName().equals(RoomNumber+DeviceTypes.Switch.toString()+"14") || d.getName().equals(RoomNumber+DeviceTypes.Switch.toString()+"15")) {
                 if (switches == null) {
                     switches = new ArrayList<>();
                 }
@@ -663,6 +669,137 @@ public class Room extends Bed {
         return devs;
     }
 
+    public void setRoomScenes(List<SceneBean> scenes) {
+        for (SceneBean s : scenes) {
+            String roomNumber = Room.getRoomNumberFromSceneName(s);
+            if (roomNumber != null) {
+                if (roomNumber.equals(String.valueOf(RoomNumber)))  {
+                    if (this.scenes == null) {
+                        this.scenes = new ArrayList<>();
+                    }
+                    this.scenes.add(s);
+                }
+            }
+        }
+        if (this.scenes != null) {
+            Log.d("getScenes",RoomNumber+" "+this.scenes.size()+" scenes");
+        }
+        else {
+            Log.d("getScenes",RoomNumber+" scenes null");
+        }
+    }
+
+    public SceneBean getLightsOnMood() {
+        if (scenes != null) {
+            for (SceneBean s : scenes) {
+                if (s.getName().contains("LightsOn")) {
+                    return s;
+                }
+            }
+        }
+        return null;
+    }
+
+    public SceneBean getMoodByName(String name) {
+        if (scenes != null) {
+            for (SceneBean s : scenes) {
+                if (s.getName().equals(name)) {
+                    return s;
+                }
+            }
+        }
+        return null;
+    }
+
+    void activateMood(String name) {
+        SceneBean s = getMoodByName(name);
+        if (s != null) {
+            Log.d("lightsOnMood","mood found");
+            TuyaHomeSdk.newSceneInstance(s.getId()).enableScene(s.getId(), new IResultCallback() {
+                @Override
+                public void onError(String code, String error) {
+                    Log.d("lightsOnMood","mood activate error "+error);
+                }
+
+                @Override
+                public void onSuccess() {
+                    Log.d("lightsOnMood","mood activated");
+                }
+            });
+        }
+        else {
+            Log.d("lightsOnMood","mood null");
+        }
+    }
+
+    void inActivateMood(String name) {
+        Log.d("lightsOnMood","mood inactivate");
+        SceneBean s = getMoodByName(name);
+        if (s != null) {
+            Log.d("lightsOnMood","mood found");
+            Timer t = new Timer();
+            if (MyApp.My_PROJECT.projectName.equals("P0003")) {
+                t.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                        TuyaHomeSdk.newSceneInstance(s.getId()).disableScene(s.getId(), new IResultCallback() {
+                            @Override
+                            public void onError(String code, String error) {
+                                Log.d("lightsOnMood","mood inactive error");
+                            }
+
+                            @Override
+                            public void onSuccess() {
+                                Log.d("lightsOnMood","mood inactivated");
+                            }
+                        });
+                    }
+                },1000 * 134);
+            }
+            else if (MyApp.My_PROJECT.projectName.equals("P0004")) {
+                t.schedule(new TimerTask() {
+                    @Override
+                    public void run() {
+                        TuyaHomeSdk.newSceneInstance(s.getId()).disableScene(s.getId(), new IResultCallback() {
+                            @Override
+                            public void onError(String code, String error) {
+                                Log.d("lightsOnMood","mood inactive error");
+                            }
+
+                            @Override
+                            public void onSuccess() {
+                                Log.d("lightsOnMood","mood inactivated");
+                            }
+                        });
+                    }
+                },1000 * 15);
+            }
+        }
+        else {
+            Log.d("lightsOnMood","mood null");
+        }
+    }
+
+    void runMood(String name) {
+        SceneBean s = getMoodByName(name);
+        if (s != null) {
+            Log.d("powerScenario"+RoomNumber, "scene found");
+            TuyaHomeSdk.newSceneInstance(s.getId()).executeScene(new IResultCallback() {
+                @Override
+                public void onError(String code, String error) {
+                    Log.d("moodExecute"+name,"error "+error);
+                    Log.d("powerScenario"+RoomNumber, "scene execute error"+error);
+                }
+
+                @Override
+                public void onSuccess() {
+                    Log.d("moodExecute"+name,"done");
+                    Log.d("powerScenario"+RoomNumber, "scene execute done");
+                }
+            });
+        }
+    }
+
     public List<CheckinDevice> getMyDevices() {
         List<CheckinDevice> devices = new ArrayList<>();
         if (isHasPower()) {
@@ -703,6 +840,8 @@ public class Room extends Bed {
                 public void powerOn() {
                     Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
                     setRoomPowerStatus(2);
+                    power.dp1.setCurrent(true);
+                    power.dp2.setCurrent(true);
                     ControlDevice.setCurrentAction(tv,"Room " + RoomNumber + " power on");
                 }
 
@@ -710,6 +849,8 @@ public class Room extends Bed {
                 public void powerOff() {
                     Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
                     setRoomPowerStatus(0);
+                    power.dp1.setCurrent(false);
+                    power.dp2.setCurrent(false);
                     ControlDevice.setCurrentAction(tv,"Room " + RoomNumber + " power off");
                 }
 
@@ -717,6 +858,8 @@ public class Room extends Bed {
                 public void powerByCard() {
                     Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
                     setRoomPowerStatus(1);
+                    power.dp1.setCurrent(true);
+                    power.dp2.setCurrent(false);
                     ControlDevice.setCurrentAction(tv,"Room " + RoomNumber + " power byCard");
                 }
 
@@ -835,10 +978,6 @@ public class Room extends Bed {
 
                 @Override
                 public void online(boolean online) {
-                    if (first[0]) {
-                        first[0] = false;
-                        Log.d(FirstRunDevices,RoomNumber+" service online");
-                    }
                     Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
                     getMainServiceSwitch().online = online;
                     if (!isHasMotion()) {
@@ -875,12 +1014,14 @@ public class Room extends Bed {
                     @Override
                     public void open() {
                         Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
+                        ControlDevice.setCurrentAction(tv,"Room " + RoomNumber + " curtain open");
                         setRoomCurtainStatus(1);
                     }
 
                     @Override
                     public void close() {
                         Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
+                        ControlDevice.setCurrentAction(tv,"Room " + RoomNumber + " curtain close");
                         setRoomCurtainStatus(0);
                     }
 
@@ -1004,12 +1145,19 @@ public class Room extends Bed {
         if (isHasGateway()) {
             if (gateways.get(0) != null) {
                 gateways.get(0).listen(this::setRoomOnline);
+                gateways.get(0).listen(online -> {
+                    getRoomGateway().online = online;
+                    Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
+                    setRoomOnline(online);
+                    ControlDevice.setCurrentAction(tv,"Room " + RoomNumber + " online "+online);
+                });
             }
         }
         if (isHasLock()) {
             getRoomLock().listen(new LockListener() {
                 @Override
                 public void unlocked() {
+                    Log.d("lock"+RoomNumber, "unlocked");
                     Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
                     devicesControlReference.child(getRoomLock().device.name).child("1").setValue(0);
                     ControlDevice.setCurrentAction(tv,"Room " + RoomNumber + " lock unlocked");
@@ -1094,19 +1242,24 @@ public class Room extends Bed {
                 public void open() {
                     Log.d("powerScenario"+RoomNumber, RoomNumber + "door open");
                     Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
+                    ControlDevice.setCurrentAction(tv,"Room " + RoomNumber + " door open");
                     setRoomDoorStatus(1);
                     if (roomStatus == 2) {
                         if (firstDoorOpen) {
                             Log.d("checkinMood"+RoomNumber,"first open");
-                            PROJECT_VARIABLES.checkInMood.startCheckinMood(r);
+                            //TODO
+                            // on first door open Do
+                            if (MyApp.My_PROJECT.projectName.equals("apiTest")) {
+                                PROJECT_VARIABLES.checkInMood.startCheckinMood(r);
+                            }
+                            else if (MyApp.My_PROJECT.projectName.equals("P0003") || MyApp.My_PROJECT.projectName.equals("P0004")) {
+                                inActivateMood(RoomNumber+"LightsOn");
+                            }
+                            else {
+                                PROJECT_VARIABLES.checkInMood.startCheckinMood(r);
+                            }
                             setFirstDoorOpen(false);
                         }
-//                        else if (getMainServiceSwitch() != null) {
-//                            if (!getMainServiceSwitch().online) {
-//                                Log.d("clientBack" + RoomNumber, "run client back");
-//                                PROJECT_VARIABLES.clientBackActions.start(r);
-//                            }
-//                        }
                     }
                     if (doorWarningTimer == null) {
                         doorWarningTimer = new Timer();
@@ -1125,139 +1278,172 @@ public class Room extends Bed {
 
                 @Override
                 public void close() {
-                    Log.d("powerScenario"+RoomNumber, RoomNumber + "door closed");
+                    Log.d("powerScenario"+RoomNumber, RoomNumber + " door closed");
                     Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
+                    ControlDevice.setCurrentAction(tv,"Room " + RoomNumber + " door close");
                     setRoomDoorStatus(0);
                     if (doorWarningTimer != null) {
                         doorWarningTimer.cancel();
                         doorWarningTimer = null;
                     }
-                    if (roomStatus == 2) {
-//                        if (MyApp.My_PROJECT.projectName.equals("P0003")) {
-//                            if (closeCurtainTimer == null) {
-//                                Log.d("closeCurtain","timer is null");
-//                                closeCurtainTimer = new Timer();
-//                                Log.d("closeCurtain","close curtain timer scheduled");
-//                                closeCurtainTimer.schedule(new TimerTask() {
-//                                    @Override
-//                                    public void run() {
-//                                        if (getMainServiceSwitch() != null) {
-//                                            if (!getMainServiceSwitch().online) {
-//                                                Log.d("closeCurtain", "service still " + getMainServiceSwitch().online);
-//                                                CloseCurtains.start(r);
-//                                            } else {
-//                                                Log.d("closeCurtain", "service back " + getMainServiceSwitch().online);
-//                                            }
-//                                        }
-//                                    }
-//                                }, 20000);
-//                            }
-//                            else {
-//                                Log.d("closeCurtain","timer not null");
-//                                closeCurtainTimer.cancel();
-//                                closeCurtainTimer = null;
-//                                closeCurtainTimer = new Timer();
-//                                Log.d("closeCurtain","close curtain timer scheduled");
-//                                closeCurtainTimer.schedule(new TimerTask() {
-//                                    @Override
-//                                    public void run() {
-//                                        if (getMainServiceSwitch() != null) {
-//                                            if (!getMainServiceSwitch().online) {
-//                                                Log.d("closeCurtain", "service still " + getMainServiceSwitch().online);
-//                                                CloseCurtains.start(r);
-//                                            } else {
-//                                                Log.d("closeCurtain", "service back " + getMainServiceSwitch().online);
-//                                            }
-//                                        }
-//                                    }
-//                                }, 20000);
-//                            }
-//                        }
-                    }
+//                    if (roomStatus == 2) {
+////                        if (MyApp.My_PROJECT.projectName.equals("P0003")) {
+//////                            if (closeCurtainTimer == null) {
+//////                                Log.d("closeCurtain","timer is null");
+//////                                closeCurtainTimer = new Timer();
+//////                                Log.d("closeCurtain","close curtain timer scheduled");
+//////                                if (!firstDoorOpen) {
+//////                                    closeCurtainTimer.schedule(new TimerTask() {
+//////                                    @Override
+//////                                    public void run() {
+//////                                        if (getMainServiceSwitch() != null) {
+//////                                            if (!getMainServiceSwitch().online) {
+//////                                                Log.d("closeCurtain", "service still " + getMainServiceSwitch().online);
+//////                                                CloseCurtains.start(r);
+//////                                            } else {
+//////                                                Log.d("closeCurtain", "service back " + getMainServiceSwitch().online);
+//////                                            }
+//////                                        }
+//////                                    }
+//////                                }, 60000);
+//////                                }
+//////                            }
+//////                            else {
+//////                                Log.d("closeCurtain", "timer not null");
+//////                                closeCurtainTimer.cancel();
+//////                                closeCurtainTimer = null;
+//////                                closeCurtainTimer = new Timer();
+//////                                Log.d("closeCurtain", "close curtain timer scheduled");
+//////                                if (!firstDoorOpen) {
+//////                                closeCurtainTimer.schedule(new TimerTask() {
+//////                                    @Override
+//////                                    public void run() {
+//////                                        if (getMainServiceSwitch() != null) {
+//////                                            if (!getMainServiceSwitch().online) {
+//////                                                Log.d("closeCurtain", "service still " + getMainServiceSwitch().online);
+//////                                                CloseCurtains.start(r);
+//////                                            } else {
+//////                                                Log.d("closeCurtain", "service back " + getMainServiceSwitch().online);
+//////                                            }
+//////                                        }
+//////                                    }
+//////                                }, 60000);
+//////                            }
+//////                            }
+////                        }
+//                    }
                     //TODO only for samples project remove it for other projects
-                    if (MyApp.My_PROJECT.projectName.equals("kfu")) {
-                        Log.d("powerScenario"+RoomNumber, RoomNumber + "door closed");
-                        powerScene = true;
-                        if (electricTimer == null) {
-                            Log.d("powerScenario"+RoomNumber, RoomNumber + " timer start " + powerScene+ " time "+PROJECT_VARIABLES.Interval);
-                            electricTimer = new Timer();
-                            electricTimer.schedule(new TimerTask() {
-                                @Override
-                                public void run() {
-                                    Log.d("powerScenario"+RoomNumber, RoomNumber + " timer finish power scenario: " + powerScene + " somebody: " + somebody);
-                                    electricTimer.cancel();
-                                    electricTimer = null;
-                                    if (!somebody && powerScene) {
-                                        // do the required
-                                        if (isHasAC()) {
-                                            setAcToSetPoint();
-                                        }
-                                        if (isHasSwitch()) {
-                                            for (CheckinSwitch cs : switches) {
-                                                if (cs.device.name.contains("Switch1")) {
-                                                    if (cs.dp4 != null) {
-                                                        cs.dp4.turnOn(new IResultCallback() {
-                                                            @Override
-                                                            public void onError(String code, String error) {
+//                    if (MyApp.My_PROJECT.projectName.equals("kfu")) {
+////                        Log.d("powerScenario"+RoomNumber, RoomNumber + "door closed");
+////                        powerScene = true;
+////                        if (electricTimer == null) {
+////                            Log.d("powerScenario"+RoomNumber, RoomNumber + " timer start " + powerScene+ " time "+PROJECT_VARIABLES.Interval);
+////                            electricTimer = new Timer();
+////                            electricTimer.schedule(new TimerTask() {
+////                                @Override
+////                                public void run() {
+////                                    Log.d("powerScenario"+RoomNumber, RoomNumber + " timer finish power scenario: " + powerScene + " somebody: " + somebody);
+////                                    electricTimer.cancel();
+////                                    electricTimer = null;
+////                                    if (!somebody && powerScene) {
+////                                        // do the required
+////                                        if (isHasAC()) {
+////                                            setAcToSetPoint();
+////                                        }
+////                                        if (isHasSwitch()) {
+////                                            for (CheckinSwitch cs : switches) {
+////                                                if (cs.device.name.contains("Switch1")) {
+////                                                    if (cs.dp4 != null) {
+////                                                        cs.dp4.turnOn(new IResultCallback() {
+////                                                            @Override
+////                                                            public void onError(String code, String error) {
+////
+////                                                            }
+////
+////                                                            @Override
+////                                                            public void onSuccess() {
+////
+////                                                            }
+////                                                        });
+////                                                    }
+////                                                }
+////                                            }
+////                                        }
+////                                    }
+////                                    powerScene = false;
+////                                }
+////                            }, PROJECT_VARIABLES.Interval);
+////                        }
+////                        else {
+////                            electricTimer.cancel();
+////                            electricTimer = null;
+////                            Log.d("powerScenario"+RoomNumber, RoomNumber + " timer start " + powerScene+ "time "+PROJECT_VARIABLES.Interval);
+////                            electricTimer = new Timer();
+////                            electricTimer.schedule(new TimerTask() {
+////                                @Override
+////                                public void run() {
+////                                    Log.d("powerScenario"+RoomNumber, RoomNumber + " timer finish power scenario: " + powerScene + " somebody: " + somebody);
+////                                    electricTimer.cancel();
+////                                    electricTimer = null;
+////                                    if (!somebody && powerScene) {
+////                                        // do the required
+////                                        if (isHasAC()) {
+////                                            setAcToSetPoint();
+////                                        }
+////                                        if (isHasSwitch()) {
+////                                            for (CheckinSwitch cs : switches) {
+////                                                if (cs.device.name.contains("Switch1")) {
+////                                                    if (cs.dp4 != null) {
+////                                                        cs.dp4.turnOn(new IResultCallback() {
+////                                                            @Override
+////                                                            public void onError(String code, String error) {
+////
+////                                                            }
+////
+////                                                            @Override
+////                                                            public void onSuccess() {
+////
+////                                                            }
+////                                                        });
+////                                                    }
+////                                                }
+////                                            }
+////                                        }
+////                                    }
+////                                    powerScene = false;
+////                                }
+////                            }, PROJECT_VARIABLES.Interval);
+////                        }
+//                        if (electricTimer == null) {
+//                            electricTimer = new Timer();
+//                            electricTimer.schedule(new TimerTask() {
+//                                @Override
+//                                public void run() {
+//                                    Log.d("powerScenario"+RoomNumber , RoomNumber+" time out "+somebody);
+//                                    if (!somebody) {
+//                                        Log.d("powerScenario"+RoomNumber , RoomNumber+" run power off");
+//                                        runMood(RoomNumber+"Other6 Mood");
+//                                    }
+//                                }
+//                            },1000 * 90);
+//                        }
+//                        else {
+//                            electricTimer.cancel();
+//                            electricTimer = new Timer();
+//                            electricTimer.schedule(new TimerTask() {
+//                                @Override
+//                                public void run() {
+//                                    Log.d("powerScenario"+RoomNumber , RoomNumber+" time out "+somebody);
+//                                    if (!somebody) {
+//                                        Log.d("powerScenario"+RoomNumber , RoomNumber+" run power off");
+//                                        runMood(RoomNumber+"Other6 Mood");
+//                                    }
+//                                }
+//                            },1000 * 100);
+//                        }
+//                    }
 
-                                                            }
-
-                                                            @Override
-                                                            public void onSuccess() {
-
-                                                            }
-                                                        });
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                    powerScene = false;
-                                }
-                            }, PROJECT_VARIABLES.Interval);
-                        }
-                        else {
-                            electricTimer.cancel();
-                            electricTimer = null;
-                            Log.d("powerScenario"+RoomNumber, RoomNumber + " timer start " + powerScene+ "time "+PROJECT_VARIABLES.Interval);
-                            electricTimer = new Timer();
-                            electricTimer.schedule(new TimerTask() {
-                                @Override
-                                public void run() {
-                                    Log.d("powerScenario"+RoomNumber, RoomNumber + " timer finish power scenario: " + powerScene + " somebody: " + somebody);
-                                    electricTimer.cancel();
-                                    electricTimer = null;
-                                    if (!somebody && powerScene) {
-                                        // do the required
-                                        if (isHasAC()) {
-                                            setAcToSetPoint();
-                                        }
-                                        if (isHasSwitch()) {
-                                            for (CheckinSwitch cs : switches) {
-                                                if (cs.device.name.contains("Switch1")) {
-                                                    if (cs.dp4 != null) {
-                                                        cs.dp4.turnOn(new IResultCallback() {
-                                                            @Override
-                                                            public void onError(String code, String error) {
-
-                                                            }
-
-                                                            @Override
-                                                            public void onSuccess() {
-
-                                                            }
-                                                        });
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                    powerScene = false;
-                                }
-                            }, PROJECT_VARIABLES.Interval);
-                        }
-                    }
-                    else if (MyApp.My_PROJECT.projectName.equals("apiTest")) {
+                    if (MyApp.My_PROJECT.projectName.equals("apiTest")) {
                         powerScene = true;
                         if (RoomNumber == 110 || RoomNumber == 109) {
                             Timer t = new Timer();
@@ -1377,11 +1563,70 @@ public class Room extends Bed {
                             }
                         }
                     }
+                    else if (MyApp.My_PROJECT.projectName.equals("P0007")) {
+                        if (electricTimer == null) {
+                            electricTimer = new Timer();
+                            electricTimer.schedule(new TimerTask() {
+                                @Override
+                                public void run() {
+                                    Log.d("powerScenario"+RoomNumber , RoomNumber+" time out "+somebody);
+                                    if (!somebody) {
+                                        Log.d("powerScenario"+RoomNumber , RoomNumber+" run power off");
+                                        runMood(RoomNumber+"Other6 Mood");
+                                    }
+                                }
+                            },1000 * 60 * 6);
+                        }
+                        else {
+                            electricTimer.cancel();
+                            electricTimer = new Timer();
+                            electricTimer.schedule(new TimerTask() {
+                                @Override
+                                public void run() {
+                                    Log.d("powerScenario"+RoomNumber , RoomNumber+" time out "+somebody);
+                                    if (!somebody) {
+                                        Log.d("powerScenario"+RoomNumber , RoomNumber+" run power off");
+                                        runMood(RoomNumber+"Other6 Mood");
+                                    }
+                                }
+                            },1000 * 60 * 6);
+                        }
+                    }
+//                    else if (MyApp.My_PROJECT.projectName.equals("kfu")) {
+//                        if (electricTimer == null) {
+//                            electricTimer = new Timer();
+//                            electricTimer.schedule(new TimerTask() {
+//                                @Override
+//                                public void run() {
+//                                    Log.d("powerScenario"+RoomNumber , RoomNumber+" time out "+somebody);
+//                                    if (!somebody) {
+//                                        Log.d("powerScenario"+RoomNumber , RoomNumber+" run power off");
+//                                        runMood(RoomNumber+"Other6 Mood");
+//                                    }
+//                                }
+//                            },1000 * 60 );
+//                        }
+//                        else {
+//                            electricTimer.cancel();
+//                            electricTimer = new Timer();
+//                            electricTimer.schedule(new TimerTask() {
+//                                @Override
+//                                public void run() {
+//                                    Log.d("powerScenario"+RoomNumber , RoomNumber+" time out "+somebody);
+//                                    if (!somebody) {
+//                                        Log.d("powerScenario"+RoomNumber , RoomNumber+" run power off");
+//                                        runMood(RoomNumber+"Other6 Mood");
+//                                    }
+//                                }
+//                            },1000 * 60 );
+//                        }
+//                    }
                 }
 
                 @Override
                 public void battery(int battery) {
                     Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
+                    ControlDevice.setCurrentAction(tv,"Room " + RoomNumber + " lock battery "+battery);
                 }
 
                 @Override
@@ -1393,6 +1638,7 @@ public class Room extends Bed {
         }
         if (isHasMotion()) {
             for (CheckinMotionSensor ms : motionSensors) {
+                Log.d("powerScenario"+RoomNumber , "listener set "+ms.device.name);
                 ms.listen(new MotionListener() {
                     @Override
                     public void motionDetected() {
@@ -1413,7 +1659,6 @@ public class Room extends Bed {
                                 }
                             });
                         }
-
                         if (PROJECT_VARIABLES.isAcScenarioActive()) {
                             if (acScenarioStarted) {
                                 acScenarioStarted = false;
@@ -1421,18 +1666,20 @@ public class Room extends Bed {
                             }
                             else {
                                 Log.d("acScenario", RoomNumber+" motion detected temp back ");
-                                for (CheckinAC ac :acs) {
-                                    ac.setTemperature(Integer.parseInt(ac.clientSetTemp), new IResultCallback() {
-                                        @Override
-                                        public void onError(String code, String error) {
-                                            Log.d("acScenario", RoomNumber+" temp back error "+error+" "+ac.clientSetTemp );
-                                        }
+                                if (isHasAC()) {
+                                    for (CheckinAC ac : acs) {
+                                        ac.setTemperature(Integer.parseInt(ac.clientSetTemp), new IResultCallback() {
+                                            @Override
+                                            public void onError(String code, String error) {
+                                                Log.d("acScenario", RoomNumber + " temp back error " + error + " " + ac.clientSetTemp);
+                                            }
 
-                                        @Override
-                                        public void onSuccess() {
-                                            Log.d("acScenario",RoomNumber+" temp done "+ac.clientSetTemp);
-                                        }
-                                    });
+                                            @Override
+                                            public void onSuccess() {
+                                                Log.d("acScenario", RoomNumber + " temp done " + ac.clientSetTemp);
+                                            }
+                                        });
+                                    }
                                 }
                             }
                         }
@@ -1441,6 +1688,7 @@ public class Room extends Bed {
                     @Override
                     public void nobody() {
                         Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
+                        ControlDevice.setCurrentAction(tv,"Room " + RoomNumber + " nobody");
                         Log.d("powerScenario"+RoomNumber , RoomNumber+" nobody");
                         Log.d("acScenario"+RoomNumber, RoomNumber+" nobody");
                         setClientIn(false);
@@ -1469,11 +1717,15 @@ public class Room extends Bed {
                                 }
                             }
                         }
+//                        else if (MyApp.My_PROJECT.projectName.equals("P0007")) {
+//                            Log.d("powerScenario"+RoomNumber, "no body");
+//                        }
                     }
 
                     @Override
                     public void somebody() {
                         Tuya.LastListenersActionTime = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
+                        ControlDevice.setCurrentAction(tv,"Room " + RoomNumber + " somebody");
                         Log.d("powerScenario"+RoomNumber , RoomNumber+" somebody");
                         Log.d("acScenario"+RoomNumber , RoomNumber+" somebody");
                         setClientIn(true);
@@ -1503,40 +1755,40 @@ public class Room extends Bed {
                                 }
                             }
                         }
-                        else if (MyApp.My_PROJECT.projectName.equals("kfu")) {
-                            Log.d("powerScenario"+RoomNumber , RoomNumber+" somebody "+powerScene);
-                            if (powerScene) {
-                                powerScene = false;
-                            }
-                            else {
-                               setAcToGuestTemperature();
-                               if (isHasSwitch()) {
-                                   for (CheckinSwitch cs :switches) {
-                                       if (cs.device.name.contains("Switch1")) {
-                                           Log.d("powerScenario"+RoomNumber , RoomNumber+" switch 1 found ");
-                                           if (cs.dp1 != null) {
-                                               Log.d("powerScenario"+RoomNumber , RoomNumber+" button 1 not null ");
-                                               cs.dp1.turnOn(new IResultCallback() {
-                                                   @Override
-                                                   public void onError(String code, String error) {
-                                                       Log.d("powerScenario"+RoomNumber , RoomNumber+" turn on error "+error);
-                                                   }
-
-                                                   @Override
-                                                   public void onSuccess() {
-                                                       Log.d("powerScenario"+RoomNumber , RoomNumber+" turn on done ");
-                                                   }
-                                               });
-                                           }
-                                           else {
-                                               Log.d("powerScenario"+RoomNumber , RoomNumber+" button 1 null ");
-                                           }
-                                       }
-                                   }
-
-                               }
-                            }
-                        }
+//                        else if (MyApp.My_PROJECT.projectName.equals("kfu")) {
+//                            Log.d("powerScenario"+RoomNumber , RoomNumber+" somebody "+powerScene);
+//                            if (powerScene) {
+//                                powerScene = false;
+//                            }
+//                            else {
+//                               setAcToGuestTemperature();
+//                               if (isHasSwitch()) {
+//                                   for (CheckinSwitch cs :switches) {
+//                                       if (cs.device.name.contains("Switch1")) {
+//                                           Log.d("powerScenario"+RoomNumber , RoomNumber+" switch 1 found ");
+//                                           if (cs.dp1 != null) {
+//                                               Log.d("powerScenario"+RoomNumber , RoomNumber+" button 1 not null ");
+//                                               cs.dp1.turnOn(new IResultCallback() {
+//                                                   @Override
+//                                                   public void onError(String code, String error) {
+//                                                       Log.d("powerScenario"+RoomNumber , RoomNumber+" turn on error "+error);
+//                                                   }
+//
+//                                                   @Override
+//                                                   public void onSuccess() {
+//                                                       Log.d("powerScenario"+RoomNumber , RoomNumber+" turn on done ");
+//                                                   }
+//                                               });
+//                                           }
+//                                           else {
+//                                               Log.d("powerScenario"+RoomNumber , RoomNumber+" button 1 null ");
+//                                           }
+//                                       }
+//                                   }
+//
+//                               }
+//                            }
+//                        }
                     }
 
                     @Override
@@ -3131,6 +3383,12 @@ public class Room extends Bed {
         return devs;
     }
 
+    public static void setRoomsScenes(List<Room> rooms,List<SceneBean> scenes) {
+        for (Room r:rooms) {
+            r.setRoomScenes(scenes);
+        }
+    }
+
     public static void setRoomsDevicesListener(List<Room> rooms,TextView tv,RequestQueue CQ,RequestQueue LQ,RequestQueue CHQ) {
         for (Room room:rooms) {
             Log.d("deviceListener"+room.RoomNumber,"started");
@@ -3656,17 +3914,92 @@ public class Room extends Bed {
                     if (cs.device.name.contains("Switch3")) {
                         Log.d("checkinMood"+RoomNumber,"switch found done");
                         Log.d("clientBack","switch found done ");
-                        cs.dp1.turnOn(new IResultCallback() {
+                        cs.turn1On(new IResultCallback() {
                             @Override
                             public void onError(String code, String error) {
-                                Log.d("lightsOn",error);
+                                Log.d("checkinMood"+RoomNumber,"switch3 1 error "+error+" code "+code);
+                                Timer t = new Timer();
+                                t.schedule(new TimerTask() {
+                                    @Override
+                                    public void run() {
+                                        cs.turn1On(new IResultCallback() {
+                                            @Override
+                                            public void onError(String code, String error) {
+                                                Timer t = new Timer();
+                                                t.schedule(new TimerTask() {
+                                                    @Override
+                                                    public void run() {
+                                                        cs.turn1On(new IResultCallback() {
+                                                            @Override
+                                                            public void onError(String code, String error) {
+
+                                                            }
+
+                                                            @Override
+                                                            public void onSuccess() {
+
+                                                            }
+                                                        }, "1");
+                                                    }
+                                                },2000);
+                                            }
+
+                                            @Override
+                                            public void onSuccess() {
+
+                                            }
+                                        }, "1");
+                                    }
+                                },2000);
                             }
 
                             @Override
                             public void onSuccess() {
-                                Log.d("checkinMood"+RoomNumber,"done ");
+                                Log.d("checkinMood"+RoomNumber,"switch3 1 done");
                             }
-                        });
+                        },"1");
+                    }
+                    if (cs.device.name.contains("Switch8")) {
+                        cs.turn1On(new IResultCallback() {
+                            @Override
+                            public void onError(String code, String error) {
+                                Log.d("checkinMood"+RoomNumber,"switch8 1 error "+error+" code "+code);
+                            }
+
+                            @Override
+                            public void onSuccess() {
+                                Log.d("checkinMood"+RoomNumber,"switch8 1 done");
+                            }
+                        },"1");
+                    }
+                    if (cs.device.name.contains("Switch13")) {
+                        Log.d("checkinMood"+RoomNumber,"switch 13 found done");
+                        cs.turn1On(new IResultCallback() {
+                            @Override
+                            public void onError(String code, String error) {
+                                Log.d("checkinMood"+RoomNumber,"switch13 1 error "+error+" code "+code);
+                            }
+
+                            @Override
+                            public void onSuccess() {
+                                Log.d("checkinMood"+RoomNumber,"switch13 1 done");
+                            }
+                        },"1");
+                    }
+                    if (cs.device.name.contains("Switch1")) {
+                        if (RoomNumber == 215) {
+                            cs.turn1On(new IResultCallback() {
+                                @Override
+                                public void onError(String code, String error) {
+
+                                }
+
+                                @Override
+                                public void onSuccess() {
+
+                                }
+                            },"1");
+                        }
                     }
                 }
             }
@@ -3794,7 +4127,7 @@ public class Room extends Bed {
     }
 
     public void setClientIn(boolean status) {
-        somebody = status;
+        somebody = getIstSomebody();
         int val = 0;
         if (status) {
             val = 1;
@@ -3809,5 +4142,52 @@ public class Room extends Bed {
             }
         }
         return true;
+    }
+
+    public static String getRoomNumberFromSceneName(SceneBean s) {
+        if (s.getName().contains("Living Mood")) {
+            return s.getName().split("Living Mood")[0];
+        }
+        else if (s.getName().contains("Sleep Mood")) {
+            return s.getName().split("Sleep Mood")[0];
+        }
+        else if (s.getName().contains("Work Mood")) {
+            return s.getName().split("Work Mood")[0];
+        }
+        else if (s.getName().contains("Romance Mood")) {
+            return s.getName().split("Romance Mood")[0];
+        }
+        else if (s.getName().contains("Read Mood")) {
+            return s.getName().split("Read Mood")[0];
+        }
+        else if (s.getName().contains("MasterOff Mood")) {
+            return s.getName().split("MasterOff Mood")[0];
+        }
+        else if (s.getName().contains("LightsOn")) {
+            return s.getName().split("LightsOn")[0];
+        }
+        else if (s.getName().contains("Opposite")) {
+            return s.getName().split("Opposite")[0];
+        }
+        else if (s.getName().contains("Other")) {
+            return s.getName().split("Other")[0];
+        }
+        else {
+            return null;
+        }
+    }
+
+    boolean getIstSomebody() {
+        if (isHasMotion()) {
+            for (CheckinMotionSensor ms : motionSensors) {
+                if (ms.somebody) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        else {
+            return false;
+        }
     }
 }

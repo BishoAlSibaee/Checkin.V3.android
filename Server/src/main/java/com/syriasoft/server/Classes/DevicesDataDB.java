@@ -185,6 +185,7 @@ public class DevicesDataDB extends SQLiteOpenHelper {
     }
 
     public void deleteAll() {
+        Log.d("reGetData" , "delete all data");
         db.execSQL(SQL_DELETE_ENTRIES);
         db.execSQL("DROP TABLE IF EXISTS enums");
         onCreate(db);
@@ -311,23 +312,18 @@ public class DevicesDataDB extends SQLiteOpenHelper {
     }
 
     public void getAllDevicesData(List<CheckinDevice> devices,RequestCallback callback) {
-        Runnable r = new Runnable() {
-            @Override
-            public void run() {
-                Cursor c = db.rawQuery("SELECT * FROM "+FeedEntry.TABLE_NAME,null);
-                c.moveToFirst();
-                while(c.moveToNext()) {
-                    boolean res = getDPAndWriteItToDevice(c,devices);
-                    if (!res) {
-                        callback.onFail("row error:  "+c.getString(2));
-                        break;
-                    }
-                }
-                c.close();
-                callback.onSuccess();
-            }
-        };
-        new Thread(r).start();
+    Cursor c = db.rawQuery("SELECT * FROM "+FeedEntry.TABLE_NAME,null);
+    c.moveToFirst();
+    while(c.moveToNext()) {
+        boolean res = getDPAndWriteItToDevice(c,devices);
+        if (!res) {
+            callback.onFail("row error:  "+c.getString(2));
+            break;
+        }
+    }
+    c.close();
+    callback.onSuccess();
+
 //        Cursor c = db.rawQuery("SELECT * FROM "+FeedEntry.TABLE_NAME,null);
 //        Log.d("dbCount", c.getCount()+" ");
 //        c.moveToFirst();

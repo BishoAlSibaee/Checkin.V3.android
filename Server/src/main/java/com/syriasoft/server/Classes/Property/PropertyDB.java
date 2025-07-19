@@ -167,6 +167,11 @@ public class PropertyDB extends SQLiteOpenHelper {
         onCreate(db);
     }
 
+    public void deleteRooms() {
+        db.execSQL("DROP TABLE IF EXISTS Rooms");
+        onCreate(db);
+    }
+
     public static void insertAllBuildings(List<Building> buildings,PropertyDB db) {
         for (Building b : buildings) {
             db.insertBuilding(b);

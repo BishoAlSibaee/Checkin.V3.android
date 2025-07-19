@@ -126,7 +126,7 @@ public class CheckInMood {
                                                 room.turnLightsOn();
                                             }
                                         }
-                                    },7000);
+                                    },5000);
 
                                     room.powerByCardAfterMinutes(PROJECT_VARIABLES.CheckinModeTime, new RequestCallback() {
                                         @Override
@@ -175,6 +175,102 @@ public class CheckInMood {
             @Override
             public void onError(String error) {
 
+            }
+        });
+    }
+
+    public void startPowerOnMood(Room room) {
+        room.getRoomReservationType(new GetReservationType() {
+            @Override
+            public void onSuccess(int type) {
+                if (type == 1) {
+                    // by link
+                    Log.d("powerOnMood"+room.RoomNumber,"reservation type is link");
+                    room.powerOnRoom(new IResultCallback() {
+                        @Override
+                        public void onError(String code, String error) {
+                        }
+
+                        @Override
+                        public void onSuccess() {
+                            Log.d("powerOnMood"+room.RoomNumber,"power on success");
+                        }
+                    });
+                }
+                else if (type == 0) {
+                    // by card
+                    Log.d("powerOnMood"+room.RoomNumber,"reservation type is card");
+                    if (isActive()) {
+                        Log.d("powerOnMood"+room.RoomNumber,"mood is active");
+                        if (isPower()) {
+                            Log.d("powerOnMood"+room.RoomNumber,"power is active");
+                            room.powerOnRoom(new IResultCallback() {
+                                @Override
+                                public void onError(String code, String error) {
+                                    Log.d("powerOnMood"+room.RoomNumber,error);
+                                }
+
+                                @Override
+                                public void onSuccess() {
+                                    Log.d("powerOnMood"+room.RoomNumber,"power success "+PROJECT_VARIABLES.CheckinModeTime);
+                                    room.powerByCardAfterMinutes(PROJECT_VARIABLES.CheckinModeTime, new RequestCallback() {
+                                        @Override
+                                        public void onSuccess() {
+
+                                        }
+
+                                        @Override
+                                        public void onFail(String error) {
+
+                                        }
+                                    });
+                                }
+                            });
+                        }
+                        else {
+                            Log.d("powerOnMood"+room.RoomNumber,"power is inactive");
+                            room.powerByCardRoom(new IResultCallback() {
+                                @Override
+                                public void onError(String code, String error) {
+
+                                }
+
+                                @Override
+                                public void onSuccess() {
+
+                                }
+                            });
+                        }
+                    }
+                    else {
+                        room.powerByCardRoom(new IResultCallback() {
+                            @Override
+                            public void onError(String code, String error) {
+
+                            }
+
+                            @Override
+                            public void onSuccess() {
+
+                            }
+                        });
+                    }
+                }
+            }
+
+            @Override
+            public void onError(String error) {
+                room.powerByCardRoom(new IResultCallback() {
+                    @Override
+                    public void onError(String code, String error) {
+
+                    }
+
+                    @Override
+                    public void onSuccess() {
+
+                    }
+                });
             }
         });
     }

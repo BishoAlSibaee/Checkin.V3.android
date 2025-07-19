@@ -4,6 +4,10 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.ValueEventListener;
 import com.syriasoft.server.Classes.Interfaces.DeviceAction;
 import com.syriasoft.server.Classes.Interfaces.Listen;
 import com.syriasoft.server.Classes.Interfaces.SetFirebaseDevicesControl;
@@ -11,13 +15,11 @@ import com.syriasoft.server.Classes.Interfaces.SetInitialValues;
 import com.syriasoft.server.Classes.Interfaces.SwitchListener;
 import com.syriasoft.server.Classes.Property.Room;
 import com.syriasoft.server.Classes.Property.Suite;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.ValueEventListener;
 import com.syriasoft.server.Interface.RequestCallback;
+import com.tuya.smart.home.sdk.TuyaHomeSdk;
 import com.tuya.smart.sdk.api.IDeviceListener;
 import com.tuya.smart.sdk.api.IResultCallback;
+import com.tuya.smart.sdk.api.ITuyaDevice;
 import com.tuya.smart.sdk.bean.DeviceBean;
 
 import java.util.Map;
@@ -43,7 +45,7 @@ public class CheckinSwitch extends CheckinDevice implements SetInitialValues, Li
         super(device,suite);
     }
 
-    void turn1On(IResultCallback result) {
+    public void turn1On(IResultCallback result) {
         if (dp1 == null) {
             result.onError("no","dp1 null");
         }
@@ -62,7 +64,24 @@ public class CheckinSwitch extends CheckinDevice implements SetInitialValues, Li
         }
     }
 
-    void turn2On(IResultCallback result) {
+    public void turn1On(IResultCallback result,String dp) {
+        String onString = "{\" "+dp+" \": true }";
+        ITuyaDevice control = TuyaHomeSdk.newDeviceInstance(device.devId);
+        control.publishDps(onString, new IResultCallback() {
+            @Override
+            public void onError(String code, String error) {
+                result.onError(code,error);
+            }
+
+            @Override
+            public void onSuccess() {
+                //nowValue = boolValues.True;
+                result.onSuccess();
+            }
+        });
+    }
+
+    public void turn2On(IResultCallback result) {
         if (dp2 == null) {
             result.onError("no","dp1 null");
         }
@@ -81,7 +100,7 @@ public class CheckinSwitch extends CheckinDevice implements SetInitialValues, Li
         }
     }
 
-    void turn3On(IResultCallback result) {
+    public void turn3On(IResultCallback result) {
         if (dp3 == null) {
             result.onError("no","dp1 null");
         }
@@ -100,7 +119,7 @@ public class CheckinSwitch extends CheckinDevice implements SetInitialValues, Li
         }
     }
 
-    void turn4On(IResultCallback result) {
+    public void turn4On(IResultCallback result) {
         if (dp4 == null) {
             result.onError("no","dp1 null");
         }
@@ -119,7 +138,7 @@ public class CheckinSwitch extends CheckinDevice implements SetInitialValues, Li
         }
     }
 
-    void turn1Off(IResultCallback result) {
+    public void turn1Off(IResultCallback result) {
         if (dp1 == null) {
             result.onError("no","dp1 null");
         }
@@ -138,7 +157,7 @@ public class CheckinSwitch extends CheckinDevice implements SetInitialValues, Li
         }
     }
 
-    void turn2Off(IResultCallback result) {
+    public void turn2Off(IResultCallback result) {
         if (dp2 == null) {
             result.onError("no","dp1 null");
         }
@@ -157,7 +176,7 @@ public class CheckinSwitch extends CheckinDevice implements SetInitialValues, Li
         }
     }
 
-    void turn3Off(IResultCallback result) {
+    public void turn3Off(IResultCallback result) {
         if (dp3 == null) {
             result.onError("no","dp1 null");
         }
@@ -176,7 +195,7 @@ public class CheckinSwitch extends CheckinDevice implements SetInitialValues, Li
         }
     }
 
-    void turn4Off(IResultCallback result) {
+    public void turn4Off(IResultCallback result) {
         if (dp4 == null) {
             result.onError("no","dp1 null");
         }

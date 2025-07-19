@@ -5,6 +5,7 @@ import android.util.Log;
 import com.syriasoft.server.Classes.Interfaces.DeviceAction;
 import com.syriasoft.server.Classes.Interfaces.Listen;
 import com.syriasoft.server.Classes.Interfaces.SetInitialValues;
+import com.syriasoft.server.Classes.LocalDataStore;
 import com.syriasoft.server.Classes.Property.Room;
 import com.syriasoft.server.Classes.Property.Suite;
 import com.syriasoft.server.Interface.RequestCallback;
@@ -73,5 +74,28 @@ public class CheckinGateway extends CheckinDevice implements Listen, SetInitialV
             my_suite.setSuiteOnline(this.device.getIsOnline());
         }
         callback.onSuccess();
+    }
+
+    public void setInitialCurrentValuesOffline(LocalDataStore storage) {
+        Log.d("onlineProblem" , device.name+" init "+this.device.getIsOnline());
+        currentOnline = this.device.getIsLocalOnline();
+//        if (storage.checkObjectStored(this.device.name)) {
+//            currentOnline = getStoredOnlineValue(storage);
+//        }
+//        else {
+//            storeOnlineValue(storage,currentOnline);
+//        }
+    }
+
+    public void storeOnlineValue(LocalDataStore storage, boolean value) {
+        storage.saveBoolean(value,this.device.name);
+    }
+
+    public boolean getStoredOnlineValue(LocalDataStore storage) {
+        return storage.getBoolean(this.device.name);
+    }
+
+    public void deleteOnlineValue(LocalDataStore storage) {
+        storage.deleteObject(this.device.name);
     }
 }

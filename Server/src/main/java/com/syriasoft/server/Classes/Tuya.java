@@ -7,18 +7,20 @@ import com.syriasoft.server.Classes.Devices.CheckinDevice;
 import com.syriasoft.server.Classes.Interfaces.DevicesListenerWatcherCallback;
 import com.syriasoft.server.Classes.Interfaces.GetDevicesCallback;
 import com.syriasoft.server.Classes.Interfaces.GetHomeDevicesCallback;
+import com.syriasoft.server.Classes.Interfaces.GetHomeScenesCallback;
 import com.syriasoft.server.Classes.Interfaces.getDeviceDataCallback;
 import com.syriasoft.server.Classes.Property.Room;
 import com.syriasoft.server.Classes.Property.Suite;
 import com.syriasoft.server.Dialogs.ProgressDialog;
-import com.syriasoft.server.Interface.RequestCallback;
 import com.syriasoft.server.MyApp;
 import com.tuya.smart.android.user.api.ILoginCallback;
 import com.tuya.smart.android.user.bean.User;
 import com.tuya.smart.home.sdk.TuyaHomeSdk;
 import com.tuya.smart.home.sdk.bean.HomeBean;
+import com.tuya.smart.home.sdk.bean.scene.SceneBean;
 import com.tuya.smart.home.sdk.callback.ITuyaGetHomeListCallback;
 import com.tuya.smart.home.sdk.callback.ITuyaHomeResultCallback;
+import com.tuya.smart.home.sdk.callback.ITuyaResultCallback;
 import com.tuya.smart.sdk.bean.DeviceBean;
 
 import java.util.ArrayList;
@@ -36,8 +38,8 @@ public class Tuya {
     static User User;
     public static List<String> devicesIds = new ArrayList<>();
     public static boolean ListenersWorking = true;
-    public static long ListenersWaitingTimeWorking = 10 * 60 * 1000;
-    public static long ListenersWaitingTimeNotWorking = 5 * 60 * 1000;
+    public static long ListenersWaitingTimeWorking = 100 * 60 * 1000;
+    public static long ListenersWaitingTimeNotWorking = 50 * 60 * 1000;
     public static long LastListenersActionTime = 0;
     public static Timer ListenersTimerWorking;
     static int stopsCounter;
@@ -59,6 +61,10 @@ public class Tuya {
                 result.onError(code,error);
             }
         });
+    }
+
+    public static boolean getIsLoggedInBefore(LocalDataStore storage) {
+        return !Tuya.getHomesFromStorage(storage).isEmpty();
     }
 
     public static void getProjectHomes(PROJECT project,LocalDataStore storage,ITuyaGetHomeListCallback result) {
@@ -164,6 +170,65 @@ public class Tuya {
         });
     }
 
+    public static void getDevicesNoTimersLocally(List<HomeBean> homeBeans, List<Room> rooms, GetDevicesCallback callback) {
+        Log.d("getDevicesLocally","______________");
+        List<CheckinDevice> Devices = new ArrayList<>();
+        final int[] counter = {0};
+        HomeBean h = homeBeans.get(counter[0]);
+        Log.d("getDevicesLocally", h.getName());
+        getHomeDevicesLocally(h, new GetHomeDevicesCallback() {
+            @Override
+            public void devices(List<DeviceBean> devices) {
+                counter[0]++;
+                Devices.addAll(Room.setRoomsDevices(rooms,devices,h));
+                Log.d("getDevicesLocally", "devices "+Devices.size());
+                if (counter[0] == homeBeans.size()) {
+                    Log.d("getDevicesLocally", "finish");
+                    callback.devices(Devices);
+                }
+                else {
+                    Log.d("getDevicesLocally", "next");
+                    HomeBean h = homeBeans.get(counter[0]);
+                    Log.d("getDevicesLocally", h.getName());
+                    getHomeDevicesLocally(h,this);
+                }
+            }
+
+            @Override
+            public void oError(String error) {
+                callback.onError(error);
+            }
+        });
+    }
+
+    public static void getScenesNoTimer(List<HomeBean> homeBeans ,GetHomeScenesCallback callback) {
+        Log.d("getScenes","start");
+        final int[] counter = {0};
+        HomeBean h = homeBeans.get(counter[0]);
+        List<SceneBean> Scenes = new ArrayList<>();
+        getHomeScenes(h, new GetHomeScenesCallback() {
+            @Override
+            public void onSuccess(List<SceneBean> scenes) {
+                Log.d("getScenes",h.getName());
+                counter[0]++;
+                Scenes.addAll(scenes);
+                if (counter[0] == homeBeans.size()) {
+                    Log.d("getScenes", "finish");
+                    callback.onSuccess(Scenes);
+                }
+                else {
+                    HomeBean h = homeBeans.get(counter[0]);
+                    getHomeScenes(h,this);
+                }
+            }
+
+            @Override
+            public void inFail(String error) {
+                callback.inFail(error);
+            }
+        });
+    }
+
     static void getHomeDevices(HomeBean h, GetHomeDevicesCallback callback) {
         TuyaHomeSdk.newHomeInstance(h.getHomeId()).getHomeDetail(new ITuyaHomeResultCallback() {
             @Override
@@ -176,6 +241,36 @@ public class Tuya {
             @Override
             public void onError(String errorCode, String errorMsg) {
                 callback.oError(errorMsg);
+            }
+        });
+    }
+
+    static void getHomeDevicesLocally(HomeBean h, GetHomeDevicesCallback callback) {
+        TuyaHomeSdk.newHomeInstance(h.getHomeId()).getHomeLocalCache(new ITuyaHomeResultCallback() {
+            @Override
+            public void onSuccess(HomeBean bean) {
+                List<DeviceBean> devices = bean.getDeviceList();
+                devices.addAll(bean.getSharedDeviceList());
+                callback.devices(devices);
+            }
+
+            @Override
+            public void onError(String errorCode, String errorMsg) {
+                callback.oError(errorMsg);
+            }
+        });
+    }
+
+    static void getHomeScenes(HomeBean h, GetHomeScenesCallback callback) {
+        TuyaHomeSdk.getSceneManagerInstance().getSceneList(h.getHomeId(), new ITuyaResultCallback<List<SceneBean>>() {
+            @Override
+            public void onSuccess(List<SceneBean> scenes) {
+                callback.onSuccess(scenes);
+            }
+
+            @Override
+            public void onError(String errorCode, String errorMessage) {
+                callback.inFail(errorMessage);
             }
         });
     }
@@ -599,7 +694,7 @@ public class Tuya {
                             index[0]++;
                             if (index[0] == devices.size()) {
                                 //DevicesDataDB.saveDevicesData(devices,db);
-                                db.getAll();
+                                //db.getAll();
                                 callback.onSuccess();
                             }
                         }
@@ -658,49 +753,53 @@ public class Tuya {
 
     public static void gettingInitialDevicesData(List<CheckinDevice> devices,DevicesDataDB db, getDeviceDataCallback callback)  {
         devicesIds.clear();
-        if (db.isDevicesDataSaved()) {
-            Log.d("bootingOp","getting devices data from db");
-            db.getAllDevicesData(devices, new RequestCallback() {
-                @Override
-                public void onSuccess() {
-                    callback.onSuccess();
-                }
-
-                @Override
-                public void onFail(String error) {
-                    Log.d("bootingOp","getting devices data from db error "+error);
-                    callback.onError(error);
-                }
-            });
-        }
-        else {
+//        if (db.isDevicesDataSaved()) {
+//            Log.d("bootingOp","getting devices data from db");
+//            db.getAllDevicesData(devices, new RequestCallback() {
+//                @Override
+//                public void onSuccess() {
+//                    callback.onSuccess();
+//                }
+//
+//                @Override
+//                public void onFail(String error) {
+//                    Log.d("bootingOp","getting devices data from db error "+error);
+//                    callback.onError(error);
+//                }
+//            });
+//        }
+//        else {
             final int[] index = {0};
             if (PROJECT_VARIABLES.isGettingDevicesData) {
-                Log.d("bootingOp","getting devices data from firebase");
+                Log.d("bootingOp","getting devices data from firebase "+devices.size());
                 for (int i=0;i<devices.size();i++) {
                     CheckinDevice cd = devices.get(i);
                     cd.getDeviceDpsFromFirebase(new getDeviceDataCallback() {
                         @Override
                         public void onSuccess() {
                             index[0]++;
+                            Log.d("bootingOp",cd.device.name+"getting devices data from firebase done "+index[0]);
                             if (index[0] == devices.size()) {
-                                DevicesDataDB.saveDevicesData(devices, db, new RequestCallback() {
-                                    @Override
-                                    public void onSuccess() {
-                                        Log.d("bootingOp","devices data saved ");
-                                        callback.onSuccess();
-                                    }
-
-                                    @Override
-                                    public void onFail(String error) {
-                                        callback.onError(error);
-                                    }
-                                });
+                                Log.d("bootingOp","getting devices data from firebase finish");
+                                callback.onSuccess();
+//                                DevicesDataDB.saveDevicesData(devices, db, new RequestCallback() {
+//                                    @Override
+//                                    public void onSuccess() {
+//                                        Log.d("bootingOp","devices data saved ");
+//                                        callback.onSuccess();
+//                                    }
+//
+//                                    @Override
+//                                    public void onFail(String error) {
+//                                        callback.onError(error);
+//                                    }
+//                                });
                             }
                         }
 
                         @Override
                         public void onError(String error) {
+                            Log.d("bootingOp",cd.device.name+"error "+error);
                             callback.onError(error);
                         }
                     });
@@ -742,28 +841,33 @@ public class Tuya {
                     },i*2000L);
                 }
             }
-        }
+        //}
     }
 
-    public static void setDevicesListenersWatcher(DevicesListenerWatcherCallback callback) {
+    public static void setDevicesListenersWatcher(List<CheckinDevice> allDevices,DevicesListenerWatcherCallback callback) {
         if (ListenersWorking) {
             Log.d(MyApp.Running_Tag,"listeners working");
-            setDevicesListenersWorking(callback);
+            setDevicesListenersWorking(allDevices,callback);
         }
         else {
             Log.d(MyApp.Running_Tag,"listeners stop");
-            setDevicesListenersNotWorking(callback);
+            setDevicesListenersNotWorking(allDevices,callback);
         }
     }
 
-    public static void setDevicesListenersWorking(DevicesListenerWatcherCallback callback) {
-        Log.d("devicesListenersListener", "start "+ListenersWaitingTimeWorking);
-        if (MyApp.My_PROJECT.projectName.equals("P0003") || MyApp.My_PROJECT.projectName.equals("Seafront")) {
-            ListenersWaitingTimeWorking = 5 * 60 * 1000;
-        }
-        else if (MyApp.My_PROJECT.projectName.equals("apiTest") || MyApp.My_PROJECT.projectName.equals("P0001")) {
-            ListenersWaitingTimeWorking = 10 * 60 * 1000;
-        }
+    public static void setDevicesListenersWorking(List<CheckinDevice> devices,DevicesListenerWatcherCallback callback) {
+//        if (MyApp.My_PROJECT.projectName.equals("P0003") || MyApp.My_PROJECT.projectName.equals("Seafront")) {
+//            ListenersWaitingTimeWorking = 5 * 60 * 1000;
+//        }
+//        else if (MyApp.My_PROJECT.projectName.equals("apiTest") || MyApp.My_PROJECT.projectName.equals("P0001")) {
+//            ListenersWaitingTimeWorking = 10 * 60 * 1000;
+//        }
+//        else if (MyApp.My_PROJECT.projectName.equals("P0007")) {
+//            ListenersWaitingTimeWorking = 4 * 60 * 1000;
+//        }
+        int minutes = getDevicesListenersWatcherTime(true, devices);
+        ListenersWaitingTimeWorking = (long) minutes * 60 * 1000;
+        Log.d("devicesListenersListener", "start "+minutes);
         if (ListenersTimerWorking == null) {
             ListenersTimerWorking = new Timer();
         }
@@ -772,26 +876,30 @@ public class Tuya {
             public void run() {
                 long now = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
                 if (now > (LastListenersActionTime + ListenersWaitingTimeWorking)) {
-                    Log.d("devicesListenersListener", "listeners stop 10");
+                    Log.d("devicesListenersListener", "listeners stop");
                     callback.onListenersStop();
                 }
                 else {
-                    Log.d("devicesListenersListener", "listeners working 10");
+                    Log.d("devicesListenersListener", "listeners working");
                     callback.onListenersWork();
                 }
             }
         }, ListenersWaitingTimeWorking);
     }
 
-    public static void setDevicesListenersNotWorking(DevicesListenerWatcherCallback callback) {
-        Log.d("devicesListenersListener", "start "+ListenersWaitingTimeNotWorking);
-        if (MyApp.My_PROJECT.projectName.equals("P0003") || MyApp.My_PROJECT.projectName.equals("Seafront")) {
-            ListenersWaitingTimeNotWorking = 3 * 60 * 1000;
-        }
-        else if (MyApp.My_PROJECT.projectName.equals("apiTest") || MyApp.My_PROJECT.projectName.equals("P0001")) {
-            ListenersWaitingTimeNotWorking = 10 * 60 * 1000;
-        }
-
+    public static void setDevicesListenersNotWorking(List<CheckinDevice> devices,DevicesListenerWatcherCallback callback) {
+//        if (MyApp.My_PROJECT.projectName.equals("P0003") || MyApp.My_PROJECT.projectName.equals("Seafront")) {
+//            ListenersWaitingTimeNotWorking = 3 * 60 * 1000;
+//        }
+//        else if (MyApp.My_PROJECT.projectName.equals("apiTest") || MyApp.My_PROJECT.projectName.equals("P0001")) {
+//            ListenersWaitingTimeNotWorking = 10 * 60 * 1000;
+//        }
+//        else if (MyApp.My_PROJECT.projectName.equals("P0007")) {
+//            ListenersWaitingTimeNotWorking = 2 * 60 * 1000;
+//        }
+        int minutes = getDevicesListenersWatcherTime(false, devices);
+        ListenersWaitingTimeNotWorking = (long) minutes * 60 * 1000;
+        Log.d("devicesListenersListener", "start "+minutes);
         if (ListenersTimerWorking == null) {
             ListenersTimerWorking = new Timer();
         }
@@ -800,15 +908,67 @@ public class Tuya {
             public void run() {
                 long now = Calendar.getInstance(Locale.getDefault()).getTimeInMillis();
                 if (now > (LastListenersActionTime + ListenersWaitingTimeNotWorking)) {
-                    Log.d("devicesListenersListener", "listeners stop 5");
+                    Log.d("devicesListenersListener", "listeners stop");
                     callback.onListenersStop();
                 }
                 else {
-                    Log.d("devicesListenersListener", "listeners working 5");
+                    Log.d("devicesListenersListener", "listeners working");
                     callback.onListenersWork();
                 }
             }
         }, ListenersWaitingTimeNotWorking);
+    }
+
+    static int getDevicesListenersWatcherTime(boolean working, List<CheckinDevice> allDevices) {
+        Log.d("devicesListenersListener", allDevices.size()+" all devices");
+        List<CheckinDevice> onlineDevices = getOnlineDevices(allDevices);
+        Log.d("devicesListenersListener", onlineDevices.size()+" device online");
+        if (onlineDevices.size() <= 100) {
+            Log.d("devicesListenersListener", " <= 100");
+            if (working) {
+                return 10;
+            }
+            else {
+                return 6;
+            }
+        }
+        else if ( onlineDevices.size() <= 300) {
+            Log.d("devicesListenersListener", " <= 300");
+            if (working) {
+                return 8;
+            }
+            else {
+                return 5;
+            }
+        }
+        else if ( onlineDevices.size() <= 500) {
+            Log.d("devicesListenersListener", " <= 500");
+            if (working) {
+                return 6;
+            }
+            else {
+                return 4;
+            }
+        }
+        else {
+            Log.d("devicesListenersListener", " > 500");
+            if (working) {
+                return 4;
+            }
+            else {
+                return 3;
+            }
+        }
+    }
+
+    static List<CheckinDevice> getOnlineDevices(List<CheckinDevice> allDevices) {
+        List<CheckinDevice> onlineDevices = new ArrayList<>();
+        for(CheckinDevice cd : allDevices) {
+            if (cd.device.getIsOnline()) {
+                onlineDevices.add(cd);
+            }
+        }
+        return onlineDevices;
     }
 
     static void implementStopActions(Activity act) {
@@ -841,6 +1001,7 @@ public class Tuya {
     }
 
     public static void deleteHomesFromLocalStorage(LocalDataStore storage) {
+        Log.d("reGetData" , "delete all homes");
         int count = storage.getInteger("homesCount");
         for (int i=0;i<count;i++) {
             storage.deleteObject("home"+i);

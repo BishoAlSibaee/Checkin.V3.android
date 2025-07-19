@@ -168,6 +168,7 @@ public class CheckinDevice extends DeviceBean implements getDeviceInfo, SetIniti
             my_room.devicesDataReference.child(device.name).addValueEventListener(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    Log.d("doorStatus"+device.name , snapshot.getChildrenCount()+"");
                     for (DataSnapshot ds : snapshot.getChildren()) {
                         if (!Objects.requireNonNull(ds.getKey()).equals("id")) {
                             if (ds.child("type").getValue() != null && ds.child("name").getValue() != null) {
@@ -189,7 +190,7 @@ public class CheckinDevice extends DeviceBean implements getDeviceInfo, SetIniti
                                     dp.device = me;
                                     deviceDPS.add(dp);
                                 }
-                                else if (Objects.requireNonNull(ds.child("type").getValue()).toString().equals(DpTypes.Enum.toString())) {
+                                else if (Objects.requireNonNull(ds.child("type").getValue()).toString().equals(DpTypes.Enum.toString()) || Objects.requireNonNull(ds.child("type").getValue()).toString().equals("enum")) {
                                     DeviceDPEnum dp = new DeviceDPEnum(Long.parseLong(ds.getKey()), Objects.requireNonNull(ds.child("name").getValue()).toString(),DpTypes.Enum,me);
                                     Object[] values = new Object[(int) ds.child("data").getChildrenCount()];
                                     Object[] keys = new Object[(int) ds.child("data").getChildrenCount()];
@@ -349,5 +350,17 @@ public class CheckinDevice extends DeviceBean implements getDeviceInfo, SetIniti
             }
         }
         return null;
+    }
+
+    public boolean isGateway() {
+        return this.device.name.contains("Gateway");
+    }
+
+    public boolean isPower() {
+        return this.device.name.contains("Power");
+    }
+
+    public boolean isService() {
+        return this.device.name.contains("Service");
     }
 }
